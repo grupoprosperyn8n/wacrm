@@ -65,3 +65,20 @@ export interface ActivityItem {
   /** Optional deep-link for the whole row (not all items have a target). */
   href?: string
 }
+
+// ── Channel metrics ─────────────────────────────────────────────────
+
+export interface ChannelMetricPoint {
+  /** Channel type string stored in conversations/messages. */
+  channel: string
+  /** Human-readable label for the UI. */
+  channelLabel: string
+  /** Messages from this channel today (customer + agent). */
+  messagesToday: number
+  /** Conversations created today with this channel. */
+  newConversationsToday: number
+  /** Currently open conversations on this channel. */
+  openConversations: number
+  /** Total contacts linked to this channel (subset is nice-to-have). */
+  totalContacts: number
+}

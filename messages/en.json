@@ -22,6 +22,7 @@
     "contacts": "Contacts",
     "pipelines": "Pipelines",
     "broadcasts": "Broadcasts",
+    "channels": "Channels",
     "automations": "Automations",
     "flows": "Flows",
     "aiAgents": "AI Agents",
@@ -765,6 +766,46 @@
         "progressDesc": "Processing {current} of {total} recipients...",
         "toastFailedPreview": "Failed to load preview data"
       }
+    }
+  },
+  "Channels": {
+    "description": "Configure and manage your messaging channels (WhatsApp, Telegram, Facebook, Instagram, Web Chat).",
+    "addChannel": "Add Channel",
+    "name": "Name",
+    "type": "Type",
+    "status": "Status",
+    "created": "Created",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": "No channels configured yet.",
+    "copyWebhookUrl": "Copy webhook URL",
+    "form": {
+      "title": "{editing, select, true {Edit} other {Add}} Channel",
+      "nameLabel": "Channel Name",
+      "namePlaceholder": "e.g., Production WhatsApp",
+      "typeLabel": "Type",
+      "configLabel": "Configuration",
+      "configNote": "Provider-specific settings are stored here as JSON.",
+      "isActiveLabel": "Active",
+      "cancel": "Cancel",
+      "save": "Save",
+      "update": "Update",
+      "toastCreated": "Channel created",
+      "toastUpdated": "Channel updated",
+      "toastError": "Failed to save channel"
+    },
+    "detail": {
+      "title": "Channel Details",
+      "webhookUrl": "Webhook URL",
+      "copyUrl": "Copy",
+      "copySuccess": "Copied",
+      "back": "Back to channels",
+      "status": "Status",
+      "toggleActive": "{is_active, select, true {Deactivate} other {Activate}}",
+      "confirmDelete": "Are you sure you want to delete this channel?",
+      "delete": "Delete",
+      "deleteToast": "Channel deleted",
+      "deleteError": "Failed to delete channel"
     }
   },
   "Automations": {

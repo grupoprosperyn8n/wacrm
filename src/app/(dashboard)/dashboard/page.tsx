@@ -13,6 +13,7 @@ import {
 
 import {
   loadActivity,
+  loadChannelMetrics,
   loadConversationsSeries,
   loadMetrics,
   loadPipelineDonut,
@@ -20,6 +21,7 @@ import {
 } from '@/lib/dashboard/queries'
 import type {
   ActivityItem,
+  ChannelMetricPoint,
   ConversationsSeriesPoint,
   MetricsBundle,
   PipelineDonutData,
@@ -33,6 +35,7 @@ import { ConversationsChart } from '@/components/dashboard/conversations-chart'
 import { PipelineDonut } from '@/components/dashboard/pipeline-donut'
 import { ResponseTimeChart } from '@/components/dashboard/response-time-chart'
 import { ActivityFeed } from '@/components/dashboard/activity-feed'
+import { ChannelMetricsCards } from '@/components/dashboard/channel-metrics-cards'
 
 import { useTranslations } from 'next-intl'
 
@@ -64,6 +67,9 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityItem[] | null>(null)
   const [activityLoading, setActivityLoading] = useState(true)
 
+  const [channelMetrics, setChannelMetrics] = useState<ChannelMetricPoint[] | null>(null)
+  const [channelMetricsLoading, setChannelMetricsLoading] = useState(true)
+
   const loadAll = useCallback(() => {
     const db = createClient()
 
@@ -89,6 +95,11 @@ export default function DashboardPage() {
       .then((r) => setResponseTime(r))
       .catch((err) => console.error('[dashboard] response time failed:', err))
       .finally(() => setResponseTimeLoading(false))
+
+    void loadChannelMetrics(db)
+      .then((c) => setChannelMetrics(c))
+      .catch((err) => console.error('[dashboard] channel metrics failed:', err))
+      .finally(() => setChannelMetricsLoading(false))
 
     // Fetch up to 50 so the biggest page-size option in the feed
     // (50 rows) is already in memory — switching sizes then becomes
@@ -187,6 +198,12 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Channel metrics per channel */}
+      <ChannelMetricsCards
+        metrics={channelMetrics ?? []}
+        loading={channelMetricsLoading}
+      />
 
       {/* Quick actions */}
       <QuickActions />

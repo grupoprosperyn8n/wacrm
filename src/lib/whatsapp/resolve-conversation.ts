@@ -187,6 +187,7 @@ async function findOrCreateConversationRow(
       account_id: accountId,
       user_id: ownerUserId,
       contact_id: contactId,
+      channel: 'whatsapp',
     })
     .select('id')
     .single();

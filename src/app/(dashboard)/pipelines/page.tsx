@@ -141,13 +141,17 @@ export default function PipelinesPage() {
   }, [supabase, accountId]);
 
   // Initial load + seed-if-empty
+  // accountId may not be available on first render (fetchProfile is async).
+  // Only attempt seed when accountId is truthy; the dependency on accountId
+  // ensures the effect re-runs once it resolves, avoiding the bug where
+  // seedAttempted is set before accountId is ready, preventing retry.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       let list = await loadPipelines();
 
-      if (list.length === 0 && !seedAttempted.current) {
+      if (list.length === 0 && accountId && !seedAttempted.current) {
         seedAttempted.current = true;
         const seeded = await seedDefaultPipeline();
         if (seeded) list = await loadPipelines();
@@ -167,7 +171,7 @@ export default function PipelinesPage() {
     return () => {
       cancelled = true;
     };
-  }, [loadPipelines, seedDefaultPipeline]);
+  }, [loadPipelines, seedDefaultPipeline, accountId]);
 
   // Load stages + deals whenever selected pipeline changes.
   // Clearing on no-selection is a legitimate sync with URL/prop

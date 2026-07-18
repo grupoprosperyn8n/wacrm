@@ -9,6 +9,7 @@ import {
 } from './date-utils'
 import type {
   ActivityItem,
+  ChannelMetricPoint,
   ConversationsSeriesPoint,
   MetricsBundle,
   PipelineDonutData,
@@ -97,6 +98,64 @@ export async function loadMetrics(db: DB): Promise<MetricsBundle> {
       previous: messagesYesterday.count ?? 0,
     },
   }
+}
+
+// ── Channel metrics (per-channel KPIs) ──────────────────────────────
+
+const CHANNEL_LABELS: Record<string, string> = {
+  whatsapp: 'WhatsApp',
+  telegram: 'Telegram',
+  facebook: 'Facebook Messenger',
+  instagram: 'Instagram DM',
+  web: 'Web Chat',
+}
+
+const CHANNELS = ['whatsapp', 'telegram', 'facebook', 'instagram', 'web'] as const
+
+export async function loadChannelMetrics(db: DB): Promise<ChannelMetricPoint[]> {
+  const todayStart = startOfLocalDay().toISOString()
+
+  const results = await Promise.all(
+    CHANNELS.map(async (ch) => {
+      const [messagesToday, newConvsToday, openConvs, contactsCount] = await Promise.all([
+        // Messages today for this channel
+        db
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('channel', ch)
+          .gte('created_at', todayStart),
+        // Conversations created today for this channel
+        db
+          .from('conversations')
+          .select('id', { count: 'exact', head: true })
+          .eq('channel', ch)
+          .gte('created_at', todayStart),
+        // Open conversations for this channel
+        db
+          .from('conversations')
+          .select('id', { count: 'exact', head: true })
+          .eq('channel', ch)
+          .eq('status', 'open'),
+        // Contacts linked to conversations of this channel (distinct contacts)
+        db
+          .from('conversations')
+          .select('contact_id', { count: 'exact', head: true })
+          .eq('channel', ch)
+          .not('contact_id', 'is', null),
+      ])
+
+      return {
+        channel: ch,
+        channelLabel: CHANNEL_LABELS[ch] ?? ch,
+        messagesToday: messagesToday.count ?? 0,
+        newConversationsToday: newConvsToday.count ?? 0,
+        openConversations: openConvs.count ?? 0,
+        totalContacts: contactsCount.count ?? 0,
+      }
+    }),
+  )
+
+  return results
 }
 
 // --- 2. Conversations over time ---------------------------------------

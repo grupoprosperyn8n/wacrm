@@ -1084,6 +1084,7 @@ async function findOrCreateConversation(
       account_id: accountId,
       user_id: configOwnerUserId,
       contact_id: contactId,
+      channel: 'whatsapp',
     })
     .select()
     .single()

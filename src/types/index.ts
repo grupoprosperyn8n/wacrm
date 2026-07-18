@@ -646,3 +646,20 @@ export interface QuickReply {
   created_at: string;
   updated_at: string;
 }
+
+// ============================================================
+// Multi-channel support (migration 038)
+// ============================================================
+
+export type ChannelType = 'whatsapp' | 'telegram' | 'facebook' | 'instagram' | 'web';
+
+export interface Channel {
+  id: string;
+  account_id: string;
+  name: string;
+  type: ChannelType;
+  config: Record<string, unknown>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}

@@ -18,7 +18,9 @@ import type {
   AssignConversationStepConfig,
 } from '@/types'
 import { supabaseAdmin } from './admin-client'
-import { engineSendText, engineSendTemplate, engineSendInteractive } from './meta-send'
+import { engineSendTemplate, engineSendInteractive } from './meta-send'
+import { engineDispatcherSend } from './engine-send'
+import type { ChannelType } from '@/lib/messaging/dispatcher'
 import { validateInteractivePayload } from '@/lib/whatsapp/interactive'
 import { isDeliverableUrl } from '@/lib/webhooks/ssrf'
 
@@ -353,15 +355,14 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       if (!args.contactId) throw new Error('send_message needs a contact')
       const text = interpolate(cfg.text, args)
       if (!text.trim()) throw new Error('send_message has empty text')
-      const conversationId = await resolveConversationId(args)
-      const { whatsapp_message_id } = await engineSendText({
+      const { conversationId, channel } = await resolveConversationId(args)
+      const { messageId } = await engineDispatcherSend({
         accountId: args.automation.account_id,
-        userId: args.automation.user_id,
         conversationId,
-        contactId: args.contactId,
+        channel,
         text,
       })
-      return `sent via Meta (${whatsapp_message_id})`
+      return `sent via ${channel} (${messageId})`
     }
 
     case 'send_buttons':
@@ -373,7 +374,7 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       // Meta 400 mid-conversation.
       const check = validateInteractivePayload(payload)
       if (!check.ok) throw new Error(check.error)
-      const conversationId = await resolveConversationId(args)
+      const { conversationId } = await resolveConversationId(args)
       const { whatsapp_message_id } = await engineSendInteractive({
         accountId: args.automation.account_id,
         userId: args.automation.user_id,
@@ -388,7 +389,7 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       const cfg = step.step_config as SendTemplateStepConfig
       if (!args.contactId) throw new Error('send_template needs a contact')
       if (!cfg.template_name) throw new Error('send_template needs template_name')
-      const conversationId = await resolveConversationId(args)
+      const { conversationId } = await resolveConversationId(args)
       // Meta templates use positional {{1}}, {{2}}, … placeholders, so
       // we MUST emit params in strict numeric order. Lexicographic sort
       // of "1", "2", …, "10" yields "1", "10", "2", … which silently
@@ -602,19 +603,28 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
  * manual engine POSTs. Throws if none exists — send steps have
  * no meaningful target without a conversation.
  */
-async function resolveConversationId(args: ExecuteArgs): Promise<string> {
+async function resolveConversationId(args: ExecuteArgs): Promise<{ conversationId: string; channel: ChannelType }> {
   const fromCtx = args.context.conversation_id
-  if (fromCtx) return fromCtx
+  if (fromCtx) {
+    const { data, error } = await supabaseAdmin()
+      .from('conversations')
+      .select('id, channel')
+      .eq('id', fromCtx)
+      .maybeSingle()
+    if (error) throw new Error(`conversation lookup failed: ${error.message}`)
+    if (!data?.id) throw new Error('conversation from context not found')
+    return { conversationId: data.id as string, channel: data.channel as ChannelType }
+  }
   if (!args.contactId) throw new Error('cannot resolve conversation: no contact')
   const { data, error } = await supabaseAdmin()
     .from('conversations')
-    .select('id')
+    .select('id, channel')
     .eq('account_id', args.automation.account_id)
     .eq('contact_id', args.contactId)
     .maybeSingle()
   if (error) throw new Error(`conversation lookup failed: ${error.message}`)
   if (!data?.id) throw new Error('no conversation for contact')
-  return data.id as string
+  return { conversationId: data.id as string, channel: data.channel as ChannelType }
 }
 
 export function triggerMatches(automation: Automation, ctx: AutomationContext | undefined): boolean {

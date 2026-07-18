@@ -22,6 +22,7 @@
     "contacts": "Contactos",
     "pipelines": "Tuberías",
     "broadcasts": "Transmisiones",
+    "channels": "Canales",
     "automations": "Automatizaciones",
     "flows": "Flujos",
     "aiAgents": "Agentes de IA",
@@ -765,6 +766,46 @@
         "progressDesc": "Procesando {current} de {total} destinatarios...",
         "toastFailedPreview": "Error al cargar datos de vista previa"
       }
+    }
+  },
+  "Channels": {
+    "description": "Configura y gestiona tus canales de mensajería (WhatsApp, Telegram, Facebook, Instagram, Web Chat).",
+    "addChannel": "Agregar Canal",
+    "name": "Nombre",
+    "type": "Tipo",
+    "status": "Estado",
+    "created": "Creado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "empty": "Aún no hay canales configurados.",
+    "copyWebhookUrl": "Copiar URL del webhook",
+    "form": {
+      "title": "{editing, select, true {Editar} other {Agregar}} Canal",
+      "nameLabel": "Nombre del Canal",
+      "namePlaceholder": "Ej: WhatsApp Producción",
+      "typeLabel": "Tipo",
+      "configLabel": "Configuración",
+      "configNote": "La configuración específica del proveedor se almacena aquí como JSON.",
+      "isActiveLabel": "Activo",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "update": "Actualizar",
+      "toastCreated": "Canal creado",
+      "toastUpdated": "Canal actualizado",
+      "toastError": "Error al guardar el canal"
+    },
+    "detail": {
+      "title": "Detalles del Canal",
+      "webhookUrl": "URL del Webhook",
+      "copyUrl": "Copiar",
+      "copySuccess": "Copiado",
+      "back": "Volver a canales",
+      "status": "Estado",
+      "toggleActive": "{is_active, select, true {Desactivar} other {Activar}}",
+      "confirmDelete": "¿Estás seguro de eliminar este canal?",
+      "delete": "Eliminar",
+      "deleteToast": "Canal eliminado",
+      "deleteError": "Error al eliminar el canal"
     }
   },
   "Automations": {
