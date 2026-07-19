@@ -24,6 +24,12 @@
 .DS_Store
 *.pem
 
+# codegraph
+.codegraph/
+
+# atl skills
+.atl/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -1743,5 +1743,29 @@
       "toastDeleteConfirm": "¿Eliminar esta respuesta rápida?",
       "toastDeleteFailed": "No se pudo eliminar la respuesta rápida."
     }
+  },
+  "SignupPage": {
+    "title": "Crear cuenta",
+    "titleJoin": "Crear cuenta y unirse",
+    "descDefault": "Comienza con la Plantilla CRM para WhatsApp",
+    "descJoin": "Verifica tu correo, luego acepta la invitación para unirte a tu equipo.",
+    "successTitle": "Revisa tu correo",
+    "successDesc": "Hemos enviado un enlace de confirmación a {email}. Revisa tu bandeja de entrada y haz clic en el enlace para verificar tu cuenta.",
+    "backToSignIn": "Volver a iniciar sesión",
+    "fullNameLabel": "Nombre completo",
+    "fullNamePlaceholder": "Juan Pérez",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "tu@ejemplo.com",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "Al menos 6 caracteres",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Repite tu contraseña",
+    "submitLabel": "Crear cuenta",
+    "submittingLabel": "Creando cuenta...",
+    "signInLink": "¿Ya tienes una cuenta?",
+    "signInLabel": "Iniciar sesión",
+    "errorPasswordMismatch": "Las contraseñas no coinciden",
+    "errorPasswordMin": "La contraseña debe tener al menos 6 caracteres",
+    "errorGeneric": "Ocurrió un error durante el registro"
   }
 }

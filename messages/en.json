@@ -1743,5 +1743,29 @@
       "toastDeleteConfirm": "Delete this quick reply?",
       "toastDeleteFailed": "Couldn’t delete the quick reply."
     }
+  },
+  "SignupPage": {
+    "title": "Create account",
+    "titleJoin": "Create account & join",
+    "descDefault": "Get started with CRM Template for WhatsApp",
+    "descJoin": "Verify your email, then accept the invitation to join your team.",
+    "successTitle": "Check your email",
+    "successDesc": "We've sent a confirmation link to {email}. Please check your inbox and click the link to verify your account.",
+    "backToSignIn": "Back to sign in",
+    "fullNameLabel": "Full name",
+    "fullNamePlaceholder": "John Doe",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordPlaceholder": "Repeat your password",
+    "submitLabel": "Create account",
+    "submittingLabel": "Creating account...",
+    "signInLink": "Already have an account?",
+    "signInLabel": "Sign in",
+    "errorPasswordMismatch": "Passwords do not match",
+    "errorPasswordMin": "Password must be at least 6 characters",
+    "errorGeneric": "An error occurred during sign up"
   }
 }
