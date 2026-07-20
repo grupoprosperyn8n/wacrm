@@ -1241,6 +1241,7 @@
   "Settings": {
     "pageTitle": "Configuración",
     "pageDesc": "Todo en un solo lugar — tu cuenta y tu espacio de trabajo. Elige una sección para gestionarla.",
+    "sectionsAria": "Secciones de configuración",
     "overview": {
       "notSetup": "Aún no configurado",
       "connected": "Conectado",
@@ -1598,6 +1599,7 @@
       "mode": "Modo",
       "useMode": "Usar modo {mode}",
       "active": "Activo",
+      "colorModeAria": "Modo de color",
       "accentColor": "Color de acento",
       "useTheme": "Usar tema {name}"
     },

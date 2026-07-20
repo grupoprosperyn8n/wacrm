@@ -1241,6 +1241,7 @@
   "Settings": {
     "pageTitle": "Settings",
     "pageDesc": "Everything in one place — your account and your workspace. Pick a section to manage it.",
+    "sectionsAria": "Settings sections",
     "overview": {
       "notSetup": "Not set up yet",
       "connected": "Connected",
@@ -1598,6 +1599,7 @@
       "mode": "Mode",
       "useMode": "Use {mode} mode",
       "active": "Active",
+      "colorModeAria": "Color mode",
       "accentColor": "Accent color",
       "useTheme": "Use {name} theme"
     },
