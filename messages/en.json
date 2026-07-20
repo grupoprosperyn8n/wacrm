@@ -488,7 +488,6 @@
     }
   },
   "Notifications": {
-    "page": {
       "title": "Notifications",
       "subtitle": "Stay up to date with notifications from your team.",
       "empty": "No notifications yet",
@@ -501,7 +500,6 @@
       "conversationNote": "{user} added a note",
       "broadcastComplete": "Broadcast completed",
       "broadcastFailed": "Broadcast failed"
-    }
   },
   "Pipelines": {
     "page": {

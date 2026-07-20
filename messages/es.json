@@ -488,7 +488,6 @@
     }
   },
   "Notifications": {
-    "page": {
       "title": "Notificaciones",
       "subtitle": "Mantente al día con las notificaciones de tu equipo.",
       "empty": "Aún sin notificaciones",
@@ -501,7 +500,6 @@
       "conversationNote": "{user} añadió una nota",
       "broadcastComplete": "Transmisión completada",
       "broadcastFailed": "Transmisión fallida"
-    }
   },
   "Pipelines": {
     "page": {
