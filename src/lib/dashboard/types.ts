@@ -58,12 +58,29 @@ export type ActivityKind =
 export interface ActivityItem {
   id: string
   kind: ActivityKind
-  /** Primary line of text rendered in the feed. Pre-formatted. */
-  text: string
   /** ISO timestamp the item happened at, drives relative-time + sort. */
   at: string
   /** Optional deep-link for the whole row (not all items have a target). */
   href?: string
+  // ── Structured data for i18n rendering (text is built in TSX) ──
+  /** Contact / actor name for message, contact, and automation items. */
+  actorName?: string
+  /** Message content_text (short preview). */
+  messageContent?: string
+  /** Deal title. */
+  dealTitle?: string
+  /** Pipeline stage name the deal is in. */
+  stageName?: string
+  /** Broadcast name. */
+  broadcastName?: string
+  /** Broadcast status: 'sent', 'completed', 'failed', 'draft'. */
+  broadcastStatus?: string
+  /** Total recipients for a broadcast. */
+  totalRecipients?: number
+  /** Automation name. */
+  automationName?: string
+  /** Automation status: 'failed', 'triggered'. */
+  automationStatus?: string
 }
 
 // ── Channel metrics ─────────────────────────────────────────────────

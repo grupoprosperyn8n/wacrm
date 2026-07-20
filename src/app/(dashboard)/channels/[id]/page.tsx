@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -31,9 +30,20 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { ChannelFormFields } from '@/components/channels/channel-form-fields';
 import type { Channel, ChannelType } from '@/types';
 import { toast } from 'sonner';
 import { ArrowLeft, Copy, Loader2, Trash2 } from 'lucide-react';
+
+const TYPE_ICONS: Record<string, string> = {
+  whatsapp: '💬',
+  telegram: '✈️',
+  facebook: '👍',
+  instagram: '📸',
+  web: '🌐',
+};
+
+const CHANNEL_TYPES: ChannelType[] = ['whatsapp', 'telegram', 'facebook', 'instagram', 'web'];
 
 export default function ChannelDetailPage() {
   const t = useTranslations('Channels');
@@ -49,7 +59,7 @@ export default function ChannelDetailPage() {
 
   const [name, setName] = useState('');
   const [chanType, setChanType] = useState<ChannelType>('telegram');
-  const [config, setConfig] = useState('{}');
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
@@ -60,7 +70,7 @@ export default function ChannelDetailPage() {
         .eq('id', channelId)
         .single();
       if (error || !data) {
-        toast.error('Channel not found');
+        toast.error(t('detail.notFound'));
         router.push('/channels');
         return;
       }
@@ -68,24 +78,35 @@ export default function ChannelDetailPage() {
       setChannel(ch);
       setName(ch.name);
       setChanType(ch.type);
-      setConfig(JSON.stringify(ch.config, null, 2));
+      // Hydrate fieldValues from the stored config JSON
+      const storedConfig = ch.config as Record<string, unknown>;
+      const hydrated: Record<string, string> = {};
+      for (const [key, val] of Object.entries(storedConfig)) {
+        hydrated[key] = typeof val === 'string' ? val : JSON.stringify(val);
+      }
+      setFieldValues(hydrated);
       setIsActive(ch.is_active);
       setLoading(false);
     }
     load();
   }, [channelId, supabase, router]);
 
+  const handleFieldChange = (key: string, value: string) => {
+    setFieldValues((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleSave = async () => {
     if (!name.trim() || !channel) return;
     setSaving(true);
-    let parsedConfig: Record<string, unknown>;
-    try {
-      parsedConfig = JSON.parse(config);
-    } catch {
-      toast.error(t('form.toastError'));
-      setSaving(false);
-      return;
+
+    // Build the JSON config from type-specific fields
+    const parsedConfig: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fieldValues)) {
+      if (value.trim()) {
+        parsedConfig[key] = value.trim();
+      }
     }
+
     const { error } = await supabase
       .from('channels')
       .update({
@@ -100,7 +121,7 @@ export default function ChannelDetailPage() {
       toast.error(t('form.toastError') + ': ' + error.message);
       return;
     }
-    toast.success(t('detail.toastUpdated'));
+    toast.success(t('form.toastUpdated'));
     setChannel({
       ...channel,
       name: name.trim(),
@@ -119,7 +140,7 @@ export default function ChannelDetailPage() {
       toast.error(t('form.toastError') + ': ' + error.message);
       return;
     }
-    toast.success(t('detail.toastDeleted'));
+    toast.success(t('detail.deleteToast'));
     router.push('/channels');
     router.refresh();
   };
@@ -138,7 +159,7 @@ export default function ChannelDetailPage() {
   if (loading) {
     return (
       <div className="p-6 max-w-2xl mx-auto text-center py-12 text-muted-foreground">
-        Loading...
+        {t('loading')}
       </div>
     );
   }
@@ -159,7 +180,7 @@ export default function ChannelDetailPage() {
             <Badge variant={isActive ? 'default' : 'secondary'}>
               {isActive ? t('active') : t('inactive')}
             </Badge>
-            <span className="font-mono">{channel.type}</span>
+            <span className="font-mono">{t('type.' + channel.type)}</span>
           </p>
         </div>
         <div className="flex gap-2">
@@ -199,7 +220,7 @@ export default function ChannelDetailPage() {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My Telegram Bot"
+              placeholder={t('form.namePlaceholder')}
             />
           </div>
 
@@ -208,34 +229,37 @@ export default function ChannelDetailPage() {
             <Select
               value={chanType}
               onValueChange={(val: string | null) => {
-                if (val === 'whatsapp' || val === 'telegram' || val === 'facebook' || val === 'instagram' || val === 'web')
+                if (val === 'whatsapp' || val === 'telegram' || val === 'facebook' || val === 'instagram' || val === 'web') {
                   setChanType(val);
+                  setFieldValues({});
+                }
               }}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(['whatsapp', 'telegram', 'facebook', 'instagram', 'web'] as const).map(
-                  (ct) => (
-                    <SelectItem key={ct} value={ct}>
-                      {ct.charAt(0).toUpperCase() + ct.slice(1)}
-                    </SelectItem>
-                  ),
-                )}
+                {CHANNEL_TYPES.map((ct) => (
+                  <SelectItem key={ct} value={ct}>
+                    {t('type.' + ct)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="config">{t('form.configLabel')}</Label>
-            <Textarea
-              id="config"
-              value={config}
-              onChange={(e) => setConfig(e.target.value)}
-              rows={8}
-              className="font-mono text-xs"
-            />
+            <Label>{t('form.configLabel')}</Label>
+            <div className="rounded-lg border p-4 bg-muted/30">
+              <ChannelFormFields
+                channelType={chanType}
+                config={fieldValues}
+                onChange={handleFieldChange}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t('form.configNote')}
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -250,7 +274,7 @@ export default function ChannelDetailPage() {
           <div className="flex gap-2 pt-2">
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              {t('detail.save')}
+              {t('form.save')}
             </Button>
           </div>
         </CardContent>

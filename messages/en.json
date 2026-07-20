@@ -90,7 +90,13 @@
       "timeS": "{sec}s ago",
       "timeM": "{min}m ago",
       "timeH": "{hr}h ago",
-      "timeD": "{day}d ago"
+      "timeD": "{day}d ago",
+      "message": "New message from {name}",
+      "contact": "New contact: {name}",
+      "dealWithStage": "{title} moved to {stage}",
+      "dealUpdated": "{title} updated",
+      "broadcast": "{name} sent to {count} contacts — {status, select, sent {Sent} completed {Completed} failed {Failed} draft {Draft} other {Unknown}}",
+      "automation": "{name} {status, select, failed {failed for} triggered {triggered for}} {who}"
     },
     "conversationsChart": {
       "title": "Conversations Over Time",
@@ -124,6 +130,13 @@
     },
     "emptyState": {
       "title": "Not enough data yet"
+    },
+    "channelCards": {
+      "perChannelOverview": "Per-channel Overview",
+      "messagesToday": "Messages today",
+      "newConversations": "New conversations",
+      "openConversations": "Open conversations",
+      "totalContacts": "Total contacts"
     }
   },
   "Inbox": {
@@ -474,6 +487,22 @@
       "toastDeleted": "Deleted \"{name}\"."
     }
   },
+  "Notifications": {
+    "page": {
+      "title": "Notifications",
+      "subtitle": "Stay up to date with notifications from your team.",
+      "empty": "No notifications yet",
+      "emptyHint": "Conversations that other team members assign to you will appear here.",
+      "markAllAsRead": "Mark all as read",
+      "filterAll": "All",
+      "filterUnread": "Unread",
+      "markAsRead": "Mark as read",
+      "conversationAssigned": "{user} assigned you a conversation",
+      "conversationNote": "{user} added a note",
+      "broadcastComplete": "Broadcast completed",
+      "broadcastFailed": "Broadcast failed"
+    }
+  },
   "Pipelines": {
     "page": {
       "selectPipeline": "Select Pipeline",
@@ -778,14 +807,22 @@
     "active": "Active",
     "inactive": "Inactive",
     "empty": "No channels configured yet.",
+    "loading": "Loading...",
     "copyWebhookUrl": "Copy webhook URL",
+    "type": {
+      "telegram": "Telegram",
+      "whatsapp": "WhatsApp",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "web": "Web Chat"
+    },
     "form": {
       "title": "{editing, select, true {Edit} other {Add}} Channel",
       "nameLabel": "Channel Name",
       "namePlaceholder": "e.g., Production WhatsApp",
       "typeLabel": "Type",
       "configLabel": "Configuration",
-      "configNote": "Provider-specific settings are stored here as JSON.",
+      "configNote": "Fill in the fields for your channel type. The settings are stored securely.",
       "isActiveLabel": "Active",
       "cancel": "Cancel",
       "save": "Save",
@@ -793,6 +830,40 @@
       "toastCreated": "Channel created",
       "toastUpdated": "Channel updated",
       "toastError": "Failed to save channel"
+    },
+    "telegram": {
+      "botToken": "Bot Token",
+      "botTokenPlaceholder": "e.g., 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    },
+    "whatsapp": {
+      "phoneNumberId": "Phone Number ID",
+      "phoneNumberIdPlaceholder": "e.g., 123456789012345",
+      "accessToken": "Access Token",
+      "accessTokenPlaceholder": "Paste your Meta WhatsApp access token"
+    },
+    "facebook": {
+      "pageId": "Facebook Page ID",
+      "pageIdPlaceholder": "e.g., 123456789012345",
+      "accessToken": "Page Access Token",
+      "accessTokenPlaceholder": "Paste your Facebook page access token",
+      "appSecret": "App Secret",
+      "appSecretPlaceholder": "Paste your Facebook app secret",
+      "verifyToken": "Verify Token",
+      "verifyTokenPlaceholder": "A custom token for webhook verification"
+    },
+    "instagram": {
+      "businessAccountId": "Instagram Business Account ID",
+      "businessAccountIdPlaceholder": "e.g., 17841405822304914",
+      "accessToken": "Access Token",
+      "accessTokenPlaceholder": "Paste your Instagram access token"
+    },
+    "web": {
+      "title": "Widget Title",
+      "titlePlaceholder": "e.g., Support Chat",
+      "welcomeMessage": "Welcome Message",
+      "welcomeMessagePlaceholder": "e.g., Hi! How can we help you today?",
+      "brandColor": "Brand Color",
+      "brandColorPlaceholder": "e.g., #3B82F6"
     },
     "detail": {
       "title": "Channel Details",
@@ -803,9 +874,12 @@
       "status": "Status",
       "toggleActive": "{is_active, select, true {Deactivate} other {Activate}}",
       "confirmDelete": "Are you sure you want to delete this channel?",
+      "confirmDeleteDesc": "This action cannot be undone. The channel will be permanently removed.",
       "delete": "Delete",
       "deleteToast": "Channel deleted",
-      "deleteError": "Failed to delete channel"
+      "deleteError": "Failed to delete channel",
+      "notFound": "Channel not found",
+      "edit": "Edit"
     }
   },
   "Automations": {
@@ -1525,9 +1599,56 @@
       "step4_5": "Subscribe to \"messages\" webhook field",
       "metaDocs": "Meta WhatsApp API Documentation"
     },
+    "telegram": {
+      "title": "Telegram connection",
+      "description": "Connect your Telegram bot. Manage your bot token, test the connection, and configure the webhook.",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "connectedDesc": "Connected as {username}",
+      "connectedDescGeneric": "Connected successfully",
+      "notConnectedDesc": "Configure your bot token below to connect Telegram.",
+      "botCredentials": "Bot Credentials",
+      "botCredentialsDesc": "Enter the bot token from BotFather to connect your Telegram bot.",
+      "botToken": "Bot Token",
+      "botTokenPlaceholder": "Enter your bot token (e.g., 123456:ABC-DEF1234ghIkl...)",
+      "tokenHint": "Token is hidden for security. Re-enter it to update configuration.",
+      "channelName": "Channel Name",
+      "channelNamePlaceholder": "Optional: give this channel a name",
+      "saving": "Saving...",
+      "saveConfig": "Save Configuration",
+      "testConnection": "Test API Connection",
+      "webhookTitle": "Webhook URL",
+      "webhookDesc": "Use this URL as the webhook in your bot's settings (via BotFather or setWebhook).",
+      "webhookUrl": "Webhook Callback URL",
+      "webhookCopied": "Webhook URL copied to clipboard",
+      "webhookSet": "Webhook registered — Telegram will deliver messages here",
+      "webhookNotSet": "Webhook not registered — Telegram will not deliver messages",
+      "setupInstructions": "Setup Instructions",
+      "setupInstructionsDesc": "Follow these steps to create your Telegram bot.",
+      "step1": "Create a Telegram Bot",
+      "step1_1": "Open Telegram and search for @BotFather.",
+      "step1_2": "Send /newbot to BotFather.",
+      "step1_3": "Choose a name for your bot (e.g., My CRM Bot).",
+      "step1_4": "Choose a username for your bot (must end in 'bot', e.g., MyCRMBot).",
+      "openBotFather": "Open BotFather",
+      "step2": "Get Your Bot Token",
+      "step2_1": "After creating the bot, BotFather sends a message with your token.",
+      "step2_2": "Copy the token (looks like: 123456:ABC-DEF1234ghIkl-).",
+      "step2_3": "Paste it in the Bot Token field above and click Save Configuration.",
+      "step3": "Test Your Connection",
+      "step3_1": "After saving the token, click 'Test API Connection'.",
+      "step3_2": "If successful, you'll see your bot's username and status.",
+      "step3_3": "The webhook URL will be automatically configured.",
+      "step4": "Configure Webhook",
+      "step4_1": "The webhook URL is automatically set when you save the configuration.",
+      "step4_2": "If the automatic setup fails, copy the URL above.",
+      "step4_3": "Use the setWebhook Telegram API to register it manually.",
+      "apiDocs": "Telegram Bot API Documentation"
+    },
     "sections": {
       "overview": "Overview",
       "profile": "Your profile",
+      "telegram": "Telegram",
       "security": "Login & security",
       "appearance": "Appearance",
       "whatsapp": "WhatsApp",

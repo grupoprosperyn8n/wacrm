@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { ChannelMetricPoint } from '@/lib/dashboard/types'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 /* ── Channel icon + colour map ─────────────────────────────────── */
 
@@ -42,6 +43,8 @@ export function ChannelMetricsCards({
   metrics,
   loading = false,
 }: ChannelMetricsCardsProps) {
+  const t = useTranslations('Dashboard')
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -54,7 +57,7 @@ export function ChannelMetricsCards({
 
   return (
     <section>
-      <h3 className="mb-4 text-lg font-semibold">Per-channel Overview</h3>
+      <h3 className="mb-4 text-lg font-semibold">{t('channelCards.perChannelOverview')}</h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {metrics.map((m) => (
           <ChannelCard key={m.channel} metric={m} />
@@ -67,6 +70,7 @@ export function ChannelMetricsCards({
 /* ── Individual channel card ────────────────────────────────────── */
 
 function ChannelCard({ metric }: { metric: ChannelMetricPoint }) {
+  const t = useTranslations('Dashboard')
   const config = CHANNEL_CONFIG[metric.channel] ?? {
     icon: MessageSquare,
     dot: 'bg-muted-foreground',
@@ -85,10 +89,10 @@ function ChannelCard({ metric }: { metric: ChannelMetricPoint }) {
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent className="space-y-2 pb-4">
-        <StatRow label="Messages today" value={metric.messagesToday} />
-        <StatRow label="New conversations" value={metric.newConversationsToday} />
-        <StatRow label="Open conversations" value={metric.openConversations} />
-        <StatRow label="Total contacts" value={metric.totalContacts} subtle />
+        <StatRow label={t('channelCards.messagesToday')} value={metric.messagesToday} />
+        <StatRow label={t('channelCards.newConversations')} value={metric.newConversationsToday} />
+        <StatRow label={t('channelCards.openConversations')} value={metric.openConversations} />
+        <StatRow label={t('channelCards.totalContacts')} value={metric.totalContacts} subtle />
       </CardContent>
     </Card>
   )

@@ -377,7 +377,7 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
     items.push({
       id: `msg-${m.id}`,
       kind: 'message',
-      text: `New message from ${who}`,
+      actorName: who,
       at: m.created_at,
       href: `/inbox?c=${m.conversation_id}`,
     })
@@ -387,7 +387,7 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
     items.push({
       id: `contact-${c.id}`,
       kind: 'contact',
-      text: `New contact: ${c.name || c.phone}`,
+      actorName: c.name || c.phone,
       at: c.created_at,
       href: '/contacts',
     })
@@ -403,9 +403,8 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
     items.push({
       id: `deal-${d.id}`,
       kind: 'deal',
-      text: stage?.name
-        ? `Deal "${d.title}" in ${stage.name}`
-        : `Deal "${d.title}" updated`,
+      dealTitle: d.title,
+      stageName: stage?.name ?? undefined,
       at: d.updated_at,
       href: '/pipelines',
     })
@@ -418,14 +417,12 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
     total_recipients: number
     created_at: string
   }>) {
-    const label =
-      b.status === 'sent'
-        ? `sent to ${b.total_recipients} contacts`
-        : `${b.status} (${b.total_recipients} recipients)`
     items.push({
       id: `broadcast-${b.id}`,
       kind: 'broadcast',
-      text: `Broadcast "${b.name}" ${label}`,
+      broadcastName: b.name,
+      broadcastStatus: b.status,
+      totalRecipients: b.total_recipients,
       at: b.created_at,
       href: '/broadcasts',
     })
@@ -446,7 +443,9 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
     items.push({
       id: `auto-${l.id}`,
       kind: 'automation',
-      text: `Automation "${autoName}" ${l.status === 'failed' ? 'failed for' : 'triggered for'} ${who}`,
+      actorName: who,
+      automationName: autoName,
+      automationStatus: l.status,
       at: l.created_at,
     })
   }

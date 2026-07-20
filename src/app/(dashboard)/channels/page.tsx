@@ -25,6 +25,14 @@ import { Badge } from '@/components/ui/badge';
 import { Copy, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
+const TYPE_ICONS: Record<string, string> = {
+  whatsapp: '💬',
+  telegram: '✈️',
+  facebook: '👍',
+  instagram: '📸',
+  web: '🌐',
+};
+
 export default function ChannelsListPage() {
   const t = useTranslations('Channels');
   const router = useRouter();
@@ -87,7 +95,7 @@ export default function ChannelsListPage() {
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Loading...</p>
+              <p>{t('loading')}</p>
             </div>
           ) : channels.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -112,7 +120,7 @@ export default function ChannelsListPage() {
                     onClick={() => router.push(`/channels/${ch.id}`)}
                   >
                     <TableCell className="font-medium">{ch.name}</TableCell>
-                    <TableCell className="font-mono text-sm">{ch.type}</TableCell>
+                    <TableCell className="font-mono text-sm">{TYPE_ICONS[ch.type] ?? ''} {t('type.' + ch.type)}</TableCell>
                     <TableCell>
                       <Badge variant={ch.is_active ? 'default' : 'secondary'}>
                         {ch.is_active ? t('active') : t('inactive')}

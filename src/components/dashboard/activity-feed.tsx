@@ -103,7 +103,7 @@ export function ActivityFeed({ items, loading }: ActivityFeedProps) {
                     <Icon className="h-3.5 w-3.5" />
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                    {it.text}
+                    {activityText(it, t)}
                   </span>
                   <span className="flex-shrink-0 text-xs text-muted-foreground tabular-nums">
                     {relativeTime(it.at, t)}
@@ -155,6 +155,34 @@ export function ActivityFeed({ items, loading }: ActivityFeedProps) {
       )}
     </section>
   )
+}
+
+function activityText(
+  it: ActivityItem,
+  t: ReturnType<typeof useTranslations>,
+): string {
+  switch (it.kind) {
+    case 'message':
+      return t('message', { name: it.actorName ?? 'Unknown' })
+    case 'contact':
+      return t('contact', { name: it.actorName ?? 'Unknown' })
+    case 'deal':
+      return it.stageName
+        ? t('dealWithStage', { title: it.dealTitle ?? '', stage: it.stageName })
+        : t('dealUpdated', { title: it.dealTitle ?? '' })
+    case 'broadcast':
+      return t('broadcast', {
+        name: it.broadcastName ?? '',
+        count: it.totalRecipients ?? 0,
+        status: it.broadcastStatus ?? 'draft',
+      })
+    case 'automation':
+      return t('automation', {
+        name: it.automationName ?? 'Automation',
+        who: it.actorName ?? 'a contact',
+        status: it.automationStatus ?? 'triggered',
+      })
+  }
 }
 
 function relativeTime(iso: string, t: ReturnType<typeof useTranslations>): string {

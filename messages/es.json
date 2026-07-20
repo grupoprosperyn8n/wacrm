@@ -90,7 +90,13 @@
       "timeS": "hace {sec}s",
       "timeM": "hace {min}m",
       "timeH": "hace {hr}h",
-      "timeD": "hace {day}d"
+      "timeD": "hace {day}d",
+      "message": "Nuevo mensaje de {name}",
+      "contact": "Nuevo contacto: {name}",
+      "dealWithStage": "{title} movido a {stage}",
+      "dealUpdated": "{title} actualizado",
+      "broadcast": "{name} enviado a {count} contactos — {status, select, sent {Enviado} completed {Completado} failed {Fallido} draft {Borrador} other {Desconocido}}",
+      "automation": "{name} {status, select, failed {falló para} triggered {se activó para}} {who}"
     },
     "conversationsChart": {
       "title": "Conversaciones en el tiempo",
@@ -124,6 +130,13 @@
     },
     "emptyState": {
       "title": "Aún no hay suficientes datos"
+    },
+    "channelCards": {
+      "perChannelOverview": "Resumen por canal",
+      "messagesToday": "Mensajes hoy",
+      "newConversations": "Nuevas conversaciones",
+      "openConversations": "Conversaciones abiertas",
+      "totalContacts": "Total contactos"
     }
   },
   "Inbox": {
@@ -474,6 +487,22 @@
       "toastDeleted": "Eliminado \"{name}\"."
     }
   },
+  "Notifications": {
+    "page": {
+      "title": "Notificaciones",
+      "subtitle": "Mantente al día con las notificaciones de tu equipo.",
+      "empty": "Aún sin notificaciones",
+      "emptyHint": "Las conversaciones que otros miembros del equipo te asignen aparecerán aquí.",
+      "markAllAsRead": "Marcar todo como leído",
+      "filterAll": "Todas",
+      "filterUnread": "No leídas",
+      "markAsRead": "Marcar como leída",
+      "conversationAssigned": "{user} te asignó una conversación",
+      "conversationNote": "{user} añadió una nota",
+      "broadcastComplete": "Transmisión completada",
+      "broadcastFailed": "Transmisión fallida"
+    }
+  },
   "Pipelines": {
     "page": {
       "selectPipeline": "Seleccionar tubería",
@@ -778,14 +807,22 @@
     "active": "Activo",
     "inactive": "Inactivo",
     "empty": "Aún no hay canales configurados.",
+    "loading": "Cargando...",
     "copyWebhookUrl": "Copiar URL del webhook",
+    "type": {
+      "telegram": "Telegram",
+      "whatsapp": "WhatsApp",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "web": "Web Chat"
+    },
     "form": {
       "title": "{editing, select, true {Editar} other {Agregar}} Canal",
       "nameLabel": "Nombre del Canal",
       "namePlaceholder": "Ej: WhatsApp Producción",
       "typeLabel": "Tipo",
       "configLabel": "Configuración",
-      "configNote": "La configuración específica del proveedor se almacena aquí como JSON.",
+      "configNote": "Completa los campos para tu tipo de canal. Los datos se almacenan de forma segura.",
       "isActiveLabel": "Activo",
       "cancel": "Cancelar",
       "save": "Guardar",
@@ -793,6 +830,40 @@
       "toastCreated": "Canal creado",
       "toastUpdated": "Canal actualizado",
       "toastError": "Error al guardar el canal"
+    },
+    "telegram": {
+      "botToken": "Token del Bot",
+      "botTokenPlaceholder": "Ej: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    },
+    "whatsapp": {
+      "phoneNumberId": "ID de Número de Teléfono",
+      "phoneNumberIdPlaceholder": "Ej: 123456789012345",
+      "accessToken": "Token de Acceso",
+      "accessTokenPlaceholder": "Pega tu token de acceso de Meta WhatsApp"
+    },
+    "facebook": {
+      "pageId": "ID de Página de Facebook",
+      "pageIdPlaceholder": "Ej: 123456789012345",
+      "accessToken": "Token de Acceso de Página",
+      "accessTokenPlaceholder": "Pega tu token de acceso de la página de Facebook",
+      "appSecret": "App Secret",
+      "appSecretPlaceholder": "Pega el App Secret de tu aplicación de Facebook",
+      "verifyToken": "Token de Verificación",
+      "verifyTokenPlaceholder": "Un token personalizado para verificar el webhook"
+    },
+    "instagram": {
+      "businessAccountId": "ID de Cuenta de Negocio de Instagram",
+      "businessAccountIdPlaceholder": "Ej: 17841405822304914",
+      "accessToken": "Token de Acceso",
+      "accessTokenPlaceholder": "Pega tu token de acceso de Instagram"
+    },
+    "web": {
+      "title": "Título del Widget",
+      "titlePlaceholder": "Ej: Chat de Soporte",
+      "welcomeMessage": "Mensaje de Bienvenida",
+      "welcomeMessagePlaceholder": "Ej: ¡Hola! ¿En qué podemos ayudarte?",
+      "brandColor": "Color de Marca",
+      "brandColorPlaceholder": "Ej: #3B82F6"
     },
     "detail": {
       "title": "Detalles del Canal",
@@ -803,9 +874,12 @@
       "status": "Estado",
       "toggleActive": "{is_active, select, true {Desactivar} other {Activar}}",
       "confirmDelete": "¿Estás seguro de eliminar este canal?",
+      "confirmDeleteDesc": "Esta acción no se puede deshacer. El canal será eliminado permanentemente.",
       "delete": "Eliminar",
       "deleteToast": "Canal eliminado",
-      "deleteError": "Error al eliminar el canal"
+      "deleteError": "Error al eliminar el canal",
+      "notFound": "Canal no encontrado",
+      "edit": "Editar"
     }
   },
   "Automations": {
@@ -1525,9 +1599,56 @@
       "step4_5": "Suscríbete al campo de webhook \"messages\"",
       "metaDocs": "Documentación de Meta WhatsApp API"
     },
+    "telegram": {
+      "title": "Conexión de Telegram",
+      "description": "Conecta tu bot de Telegram. Administra el token del bot, prueba la conexión y configura el webhook.",
+      "connected": "Conectado",
+      "notConnected": "No conectado",
+      "connectedDesc": "Conectado como {username}",
+      "connectedDescGeneric": "Conectado exitosamente",
+      "notConnectedDesc": "Configura el token de tu bot para conectar Telegram.",
+      "botCredentials": "Credenciales del Bot",
+      "botCredentialsDesc": "Ingresa el token del bot de BotFather para conectar tu bot de Telegram.",
+      "botToken": "Token del Bot",
+      "botTokenPlaceholder": "Ingresa el token de tu bot (ej., 123456:ABC-DEF1234ghIkl...)",
+      "tokenHint": "El token está oculto por seguridad. Vuelve a ingresarlo para actualizar la configuración.",
+      "channelName": "Nombre del Canal",
+      "channelNamePlaceholder": "Opcional: dale un nombre a este canal",
+      "saving": "Guardando...",
+      "saveConfig": "Guardar configuración",
+      "testConnection": "Probar conexión API",
+      "webhookTitle": "URL del Webhook",
+      "webhookDesc": "Usa esta URL como webhook en la configuración de tu bot (a través de BotFather o setWebhook).",
+      "webhookUrl": "URL de callback del Webhook",
+      "webhookCopied": "URL del webhook copiada al portapapeles",
+      "webhookSet": "Webhook registrado — Telegram entregará los mensajes aquí",
+      "webhookNotSet": "Webhook no registrado — Telegram no entregará mensajes",
+      "setupInstructions": "Instrucciones de configuración",
+      "setupInstructionsDesc": "Sigue estos pasos para crear tu bot de Telegram.",
+      "step1": "Crear un bot de Telegram",
+      "step1_1": "Abre Telegram y busca @BotFather.",
+      "step1_2": "Envía /newbot a BotFather.",
+      "step1_3": "Elige un nombre para tu bot (ej., Mi CRM Bot).",
+      "step1_4": "Elige un nombre de usuario para tu bot (debe terminar en 'bot', ej., MiCRMBot).",
+      "openBotFather": "Abrir BotFather",
+      "step2": "Obtener el token de tu bot",
+      "step2_1": "Después de crear el bot, BotFather envía un mensaje con tu token.",
+      "step2_2": "Copia el token (se ve así: 123456:ABC-DEF1234ghIkl-).",
+      "step2_3": "Pégalo en el campo Token del Bot y haz clic en Guardar configuración.",
+      "step3": "Probar tu conexión",
+      "step3_1": "Después de guardar el token, haz clic en 'Probar conexión API'.",
+      "step3_2": "Si es exitoso, verás el nombre de usuario de tu bot y su estado.",
+      "step3_3": "La URL del webhook se configurará automáticamente.",
+      "step4": "Configurar webhook",
+      "step4_1": "La URL del webhook se establece automáticamente al guardar la configuración.",
+      "step4_2": "Si la configuración automática falla, copia la URL de arriba.",
+      "step4_3": "Usa la API setWebhook de Telegram para registrarlo manualmente.",
+      "apiDocs": "Documentación de la API de Telegram Bots"
+    },
     "sections": {
       "overview": "Resumen",
       "profile": "Tu perfil",
+      "telegram": "Telegram",
       "security": "Inicio de sesión y seguridad",
       "appearance": "Apariencia",
       "whatsapp": "WhatsApp",
