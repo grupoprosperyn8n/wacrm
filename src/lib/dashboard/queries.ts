@@ -106,8 +106,8 @@ const CHANNEL_LABELS: Record<string, string> = {
   whatsapp: 'WhatsApp',
   telegram: 'Telegram',
   facebook: 'Facebook Messenger',
-  instagram: 'Instagram DM',
-  web: 'Web Chat',
+  instagram: 'Instagram',
+  web: 'Chat Web',
 }
 
 const CHANNELS = ['whatsapp', 'telegram', 'facebook', 'instagram', 'web'] as const
