@@ -152,7 +152,8 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
       {
         step_type: 'send_buttons',
         step_config: {
-          body: { text: '¿Qué tipo de información buscas?' },
+          kind: 'buttons',
+          body: '¿Qué tipo de información buscas?',
           buttons: [
             { id: 'servicios', title: 'Servicios' },
             { id: 'precios', title: 'Precios' },
@@ -190,7 +191,9 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
       {
         step_type: 'send_list',
         step_config: {
-          body: { text: 'Elige una categoría:' },
+          kind: 'list',
+          button_label: 'Ver opciones',
+          body: 'Elige una categoría:',
           sections: [
             {
               title: 'Servicios',

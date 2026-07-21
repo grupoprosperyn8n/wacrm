@@ -66,12 +66,32 @@ interface InteractiveBuilderProps {
  * — the same check the server runs before sending. Shared by the inbox
  * composer, the automation Send node, and the quick-replies manager.
  */
+/**
+ * Infer kind from shape when legacy data lacks it (pre-v2 templates stored
+ * `body` as `{text:"…"}` and had no `kind` field). Without this fallback the
+ * ListEditor fires `sections.reduce()` on `undefined` → crash.
+ */
+function inferKind(value: InteractiveMessagePayload): 'buttons' | 'list' {
+  if (value.kind === 'buttons' || value.kind === 'list') return value.kind;
+  // fallback: buttons payloads have a `buttons` array, list payloads have `sections`
+  return 'buttons' in value && Array.isArray((value as InteractiveButtonsPayload).buttons)
+    ? 'buttons'
+    : 'list';
+}
+
 export function InteractiveBuilder({
   value,
   onChange,
   showPreview = true,
 }: InteractiveBuilderProps) {
   const [advanced, setAdvanced] = useState(false);
+  const kind = inferKind(value);
+  // Normalise legacy body (pre-v2 templates stored body as {text:"…"}).
+  const safeBody: string =
+    typeof value.body === 'string' ? value.body
+      : typeof (value.body as Record<string, unknown> | null)?.text === 'string'
+        ? (value.body as Record<string, unknown>).text as string
+        : '';
   const validation = validateInteractivePayload(value);
 
   const setField = (patch: Partial<InteractiveMessagePayload>) =>
@@ -79,12 +99,11 @@ export function InteractiveBuilder({
 
   const switchKind = (kind: "buttons" | "list") => {
     if (kind === value.kind) return;
-    const shared = { body: value.body, header: value.header, footer: value.footer };
-    onChange(
-      kind === "buttons"
-        ? { ...blankButtonsPayload(), ...shared }
-        : { ...blankListPayload(), ...shared },
-    );
+    if (kind === "buttons") {
+      onChange({ ...blankButtonsPayload(), body: safeBody, header: value.header, footer: value.footer });
+    } else {
+      onChange({ ...blankListPayload(), body: safeBody, header: value.header, footer: value.footer });
+    }
   };
 
   return (
@@ -93,20 +112,20 @@ export function InteractiveBuilder({
         {/* Kind toggle */}
         <div className="flex gap-2">
           <KindButton
-            active={value.kind === "buttons"}
+            active={kind === "buttons"}
             label="Reply buttons"
             onClick={() => switchKind("buttons")}
           />
           <KindButton
-            active={value.kind === "list"}
+            active={kind === "list"}
             label="List"
             onClick={() => switchKind("list")}
           />
         </div>
 
-        <Field label="Body" counter={`${value.body.length}/${INTERACTIVE_LIMITS.bodyMaxLength}`}>
+        <Field label="Body" counter={`${safeBody.length}/${INTERACTIVE_LIMITS.bodyMaxLength}`}>
           <Textarea
-            value={value.body}
+            value={safeBody}
             maxLength={INTERACTIVE_LIMITS.bodyMaxLength}
             onChange={(e) => setField({ body: e.target.value })}
             placeholder="What the customer reads above the options"
