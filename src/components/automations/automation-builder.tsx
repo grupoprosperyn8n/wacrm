@@ -73,6 +73,7 @@ export interface BuilderStep {
   cid: string
   step_type: AutomationStepType
   step_config: Record<string, unknown>
+  /** step_config stores _notes internally for persistence via toApiSteps(). */
   branches?: { yes: BuilderStep[]; no: BuilderStep[] }
 }
 
@@ -645,7 +646,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
     const node: BuilderStep = {
       cid: cid(),
       step_type: type,
-      step_config: blankConfig(type),
+      step_config: { ...blankConfig(type), _notes: "" },
       branches: type === "condition" ? { yes: [], no: [] } : undefined,
     }
     setState((s) => ({ ...s, steps: insertAt(s.steps, parent, index, node) }))
@@ -1122,7 +1123,14 @@ function StepRenderer({
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                 {isCondition ? "Condition" : step.step_type === "wait" ? "Wait" : "Action"}
               </div>
-              <div className="truncate text-sm font-medium text-foreground">{t(`steps.${meta.label}`)}</div>
+              <div className="flex items-center gap-1.5">
+                <span className="truncate text-sm font-medium text-foreground">
+                  {t(`steps.${meta.label}`)}
+                </span>
+                {(step.step_config as any)._notes && (
+                  <FileText className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-label="Tiene notas" />
+                )}
+              </div>
               <div className="truncate text-[11px] text-muted-foreground">{previewFor(step)}</div>
             </div>
             <ChevronDown
@@ -1288,215 +1296,239 @@ function StepEditor({
   const set = (patch: Record<string, unknown>) =>
     onChange({ ...step, step_config: { ...cfg, ...patch } })
 
-  switch (step.step_type) {
-    case "send_message":
-      return (
-        <FieldBlock label={t("config.messageText")}>
-          <Textarea
-            value={(cfg.text as string) ?? ""}
-            onChange={(e) => set({ text: e.target.value })}
-            placeholder={t("config.placeholderMessageText")}
-            className="min-h-24 bg-muted text-foreground"
-          />
-        </FieldBlock>
-      )
-    case "send_buttons":
-    case "send_list":
-      // The whole step_config IS the interactive payload; the shared
-      // builder edits it in place (and enforces Meta's limits + preview).
-      return (
-        <InteractiveBuilder
-          value={asInteractive(cfg)}
-          onChange={(payload) =>
-            onChange({ ...step, step_config: toStepConfig(payload) })
-          }
-        />
-      )
-    case "send_template":
-      return (
-        <SendTemplateFields
-          templateName={(cfg.template_name as string) ?? ""}
-          language={(cfg.language as string) ?? ""}
-          onChange={(patch) => set(patch)}
-          t={t}
-        />
-      )
-    case "add_tag":
-    case "remove_tag":
-      return (
-        <FieldBlock label={t("config.tagLabel")}>
-          <TagSelect
-            value={(cfg.tag_id as string) ?? ""}
-            onChange={(v) => set({ tag_id: v })}
-            t={t}
-          />
-        </FieldBlock>
-      )
-    case "assign_conversation":
-      return (
-        <>
-          <FieldBlock label={t("config.modeLabel")}>
-            <select
-              value={(cfg.mode as string) ?? "round_robin"}
-              onChange={(e) => set({ mode: e.target.value })}
-              className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
-            >
-              <option value="round_robin">{t("config.modes.round_robin")}</option>
-              <option value="specific">{t("config.modes.specific")}</option>
-            </select>
-          </FieldBlock>
-          {cfg.mode === "specific" && (
-            <FieldBlock label={t("config.agentLabel")}>
-              <AgentSelect
-                value={(cfg.agent_id as string) ?? ""}
-                onChange={(v) => set({ agent_id: v })}
-                t={t}
-              />
-            </FieldBlock>
-          )}
-        </>
-      )
-    case "update_contact_field":
-      return (
-        <>
-          <FieldBlock label={t("config.fieldLabel")}>
-            <ContactFieldSelect
-              value={(cfg.field as string) ?? "name"}
-              onChange={(v) => set({ field: v })}
-              t={t}
+  const configFields = (() => {
+    switch (step.step_type) {
+      case "send_message":
+        return (
+          <FieldBlock label={t("config.messageText")}>
+            <Textarea
+              value={(cfg.text as string) ?? ""}
+              onChange={(e) => set({ text: e.target.value })}
+              placeholder={t("config.placeholderMessageText")}
+              className="min-h-24 bg-muted text-foreground"
             />
           </FieldBlock>
-          <FieldBlock label={t("config.valueLabel")}>
-            <Input
-              value={(cfg.value as string) ?? ""}
-              onChange={(e) => set({ value: e.target.value })}
-              placeholder={t("config.placeholderValue")}
-              className="bg-muted text-foreground"
-            />
-          </FieldBlock>
-        </>
-      )
-    case "create_deal":
-      return (
-        <>
-          <DealPipelineFields
-            pipelineId={(cfg.pipeline_id as string) ?? ""}
-            stageId={(cfg.stage_id as string) ?? ""}
+        )
+      case "send_buttons":
+      case "send_list":
+        // The whole step_config IS the interactive payload; the shared
+        // builder edits it in place (and enforces Meta's limits + preview).
+        return (
+          <InteractiveBuilder
+            value={asInteractive(cfg)}
+            onChange={(payload) =>
+              onChange({ ...step, step_config: toStepConfig(payload) })
+            }
+          />
+        )
+      case "send_template":
+        return (
+          <SendTemplateFields
+            templateName={(cfg.template_name as string) ?? ""}
+            language={(cfg.language as string) ?? ""}
             onChange={(patch) => set(patch)}
             t={t}
           />
-          <FieldBlock label={t("config.titleLabel")}>
-            <Input
-              value={(cfg.title as string) ?? ""}
-              onChange={(e) => set({ title: e.target.value })}
-              className="bg-muted text-foreground"
+        )
+      case "add_tag":
+      case "remove_tag":
+        return (
+          <FieldBlock label={t("config.tagLabel")}>
+            <TagSelect
+              value={(cfg.tag_id as string) ?? ""}
+              onChange={(v) => set({ tag_id: v })}
+              t={t}
             />
           </FieldBlock>
-          <FieldBlock label={t("config.valueLabel")}>
-            <Input
-              type="number"
-              value={(cfg.value as number) ?? 0}
-              onChange={(e) => set({ value: Number(e.target.value) })}
-              className="bg-muted text-foreground"
-            />
-          </FieldBlock>
-        </>
-      )
-    case "wait":
-      return (
-        <div className="grid grid-cols-2 gap-2">
-          <FieldBlock label={t("config.amountLabel")}>
-            <Input
-              type="number"
-              min={1}
-              value={(cfg.amount as number) ?? 1}
-              onChange={(e) => set({ amount: Math.max(1, Number(e.target.value)) })}
-              className="bg-muted text-foreground"
-            />
-          </FieldBlock>
-          <FieldBlock label={t("config.unitLabel")}>
-            <select
-              value={(cfg.unit as string) ?? "hours"}
-              onChange={(e) => set({ unit: e.target.value })}
-              className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
-            >
-              <option value="minutes">{t("config.units.minutes")}</option>
-              <option value="hours">{t("config.units.hours")}</option>
-              <option value="days">{t("config.units.days")}</option>
-            </select>
-          </FieldBlock>
-        </div>
-      )
-    case "condition":
-      return (
-        <>
-          <FieldBlock label={t("config.subjectLabel")}>
-            <select
-              value={(cfg.subject as string) ?? "tag_presence"}
-              onChange={(e) => set({ subject: e.target.value })}
-              className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
-            >
-              <option value="tag_presence">{t("config.subjects.tag_presence")}</option>
-              <option value="contact_field">{t("config.subjects.contact_field")}</option>
-              <option value="message_content">{t("config.subjects.message_content")}</option>
-              <option value="time_of_day">{t("config.subjects.time_of_day")}</option>
-            </select>
-          </FieldBlock>
-          <FieldBlock label={t("config.operandLabel")}>
-            <Input
-              placeholder={
-                cfg.subject === "time_of_day"
-                  ? t("config.placeholderTime")
-                  : cfg.subject === "contact_field"
-                  ? t("config.placeholderContact")
-                  : cfg.subject === "tag_presence"
-                  ? t("config.placeholderTag")
-                  : ""
-              }
-              value={(cfg.operand as string) ?? ""}
-              onChange={(e) => set({ operand: e.target.value })}
-              className="bg-muted text-foreground"
-            />
-          </FieldBlock>
-          {(cfg.subject === "contact_field" || cfg.subject === "message_content") && (
-            <FieldBlock label="Value">
+        )
+      case "assign_conversation":
+        return (
+          <>
+            <FieldBlock label={t("config.modeLabel")}>
+              <select
+                value={(cfg.mode as string) ?? "round_robin"}
+                onChange={(e) => set({ mode: e.target.value })}
+                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
+              >
+                <option value="round_robin">{t("config.modes.round_robin")}</option>
+                <option value="specific">{t("config.modes.specific")}</option>
+              </select>
+            </FieldBlock>
+            {cfg.mode === "specific" && (
+              <FieldBlock label={t("config.agentLabel")}>
+                <AgentSelect
+                  value={(cfg.agent_id as string) ?? ""}
+                  onChange={(v) => set({ agent_id: v })}
+                  t={t}
+                />
+              </FieldBlock>
+            )}
+          </>
+        )
+      case "update_contact_field":
+        return (
+          <>
+            <FieldBlock label={t("config.fieldLabel")}>
+              <ContactFieldSelect
+                value={(cfg.field as string) ?? "name"}
+                onChange={(v) => set({ field: v })}
+                t={t}
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.valueLabel")}>
               <Input
                 value={(cfg.value as string) ?? ""}
                 onChange={(e) => set({ value: e.target.value })}
+                placeholder={t("config.placeholderValue")}
                 className="bg-muted text-foreground"
               />
             </FieldBlock>
-          )}
-        </>
-      )
-    case "send_webhook":
-      return (
-        <>
-          <FieldBlock label={t("config.urlLabel")}>
-            <Input
-              value={(cfg.url as string) ?? ""}
-              onChange={(e) => set({ url: e.target.value })}
-              className="bg-muted text-foreground"
+          </>
+        )
+      case "create_deal":
+        return (
+          <>
+            <DealPipelineFields
+              pipelineId={(cfg.pipeline_id as string) ?? ""}
+              stageId={(cfg.stage_id as string) ?? ""}
+              onChange={(patch) => set(patch)}
+              t={t}
             />
-          </FieldBlock>
-          <FieldBlock label={t("config.bodyTemplateLabel")}>
-            <Textarea
-              value={(cfg.body_template as string) ?? ""}
-              onChange={(e) => set({ body_template: e.target.value })}
-              className="min-h-20 bg-muted font-mono text-xs text-foreground"
-            />
-          </FieldBlock>
-        </>
-      )
-    case "close_conversation":
-      return (
-        <p className="text-xs text-muted-foreground">
-          {t("config.closeConversationHint", { defaultValue: "Sets the conversation status to \"closed\". No configuration needed." })}
-        </p>
-      )
-    default:
-      return null
-  }
+            <FieldBlock label={t("config.titleLabel")}>
+              <Input
+                value={(cfg.title as string) ?? ""}
+                onChange={(e) => set({ title: e.target.value })}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.valueLabel")}>
+              <Input
+                type="number"
+                value={(cfg.value as number) ?? 0}
+                onChange={(e) => set({ value: Number(e.target.value) })}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+          </>
+        )
+      case "wait":
+        return (
+          <div className="grid grid-cols-2 gap-2">
+            <FieldBlock label={t("config.amountLabel")}>
+              <Input
+                type="number"
+                min={1}
+                value={(cfg.amount as number) ?? 1}
+                onChange={(e) => set({ amount: Math.max(1, Number(e.target.value)) })}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.unitLabel")}>
+              <select
+                value={(cfg.unit as string) ?? "hours"}
+                onChange={(e) => set({ unit: e.target.value })}
+                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
+              >
+                <option value="minutes">{t("config.units.minutes")}</option>
+                <option value="hours">{t("config.units.hours")}</option>
+                <option value="days">{t("config.units.days")}</option>
+              </select>
+            </FieldBlock>
+          </div>
+        )
+      case "condition":
+        return (
+          <>
+            <FieldBlock label={t("config.subjectLabel")}>
+              <select
+                value={(cfg.subject as string) ?? "tag_presence"}
+                onChange={(e) => set({ subject: e.target.value })}
+                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
+              >
+                <option value="tag_presence">{t("config.subjects.tag_presence")}</option>
+                <option value="contact_field">{t("config.subjects.contact_field")}</option>
+                <option value="message_content">{t("config.subjects.message_content")}</option>
+                <option value="time_of_day">{t("config.subjects.time_of_day")}</option>
+              </select>
+            </FieldBlock>
+            <FieldBlock label={t("config.operandLabel")}>
+              <Input
+                placeholder={
+                  cfg.subject === "time_of_day"
+                    ? t("config.placeholderTime")
+                    : cfg.subject === "contact_field"
+                    ? t("config.placeholderContact")
+                    : cfg.subject === "tag_presence"
+                    ? t("config.placeholderTag")
+                    : ""
+                }
+                value={(cfg.operand as string) ?? ""}
+                onChange={(e) => set({ operand: e.target.value })}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+            {(cfg.subject === "contact_field" || cfg.subject === "message_content") && (
+              <FieldBlock label="Value">
+                <Input
+                  value={(cfg.value as string) ?? ""}
+                  onChange={(e) => set({ value: e.target.value })}
+                  className="bg-muted text-foreground"
+                />
+              </FieldBlock>
+            )}
+          </>
+        )
+      case "send_webhook":
+        return (
+          <>
+            <FieldBlock label={t("config.urlLabel")}>
+              <Input
+                value={(cfg.url as string) ?? ""}
+                onChange={(e) => set({ url: e.target.value })}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.bodyTemplateLabel")}>
+              <Textarea
+                value={(cfg.body_template as string) ?? ""}
+                onChange={(e) => set({ body_template: e.target.value })}
+                className="min-h-20 bg-muted font-mono text-xs text-foreground"
+              />
+            </FieldBlock>
+          </>
+        )
+      case "close_conversation":
+        return (
+          <p className="text-xs text-muted-foreground">
+            {t("config.closeConversationHint", { defaultValue: "Sets the conversation status to \"closed\". No configuration needed." })}
+          </p>
+        )
+      default:
+        return null
+    }
+  })()
+
+  return (
+    <>
+      {configFields}
+      {/* Notes / documentación al estilo n8n — campo de texto colapsable para
+          que el usuario pueda etiquetar cada paso con su explicación. */}
+      <details className="group mt-3 border-t border-border pt-3">
+        <summary className="flex cursor-pointer items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+          <FileText className="h-3.5 w-3.5 shrink-0" />
+          {t("config.notes")}
+          <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
+        </summary>
+        <Textarea
+          value={(step.step_config?._notes as string) ?? ""}
+          onChange={(e) => onChange({ ...step, step_config: { ...step.step_config, _notes: e.target.value } })}
+          placeholder={t("config.notesPlaceholder")}
+          className="mt-2 min-h-16 bg-muted text-xs text-foreground"
+        />
+        <p className="mt-1 text-[10px] text-muted-foreground">{t("config.notesHint")}</p>
+      </details>
+    </>
+  )
 }
 
 function FieldBlock({
@@ -1736,7 +1768,7 @@ export function fromServerSteps(nodes: ServerStepNode[]): BuilderStep[] {
   return nodes.map((n) => ({
     cid: cid(),
     step_type: n.step_type as AutomationStepType,
-    step_config: n.step_config ?? {},
+    step_config: (n.step_config as Record<string, unknown>) ?? {},
     branches:
       n.step_type === "condition"
         ? {

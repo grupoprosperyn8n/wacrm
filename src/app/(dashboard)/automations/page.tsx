@@ -15,6 +15,10 @@ import {
   Clock,
   Users,
   PhoneCall,
+  Image,
+  MessageSquare,
+  Globe,
+  Send,
   Loader2,
 } from "lucide-react"
 
@@ -49,6 +53,10 @@ const TEMPLATE_ORDER: TemplateSlug[] = [
   "out_of_office",
   "lead_qualifier",
   "follow_up_reminder",
+  "instagram_dm",
+  "facebook",
+  "web_chat",
+  "telegram",
 ]
 
 const TEMPLATE_ICON: Record<TemplateSlug, typeof Zap> = {
@@ -56,6 +64,10 @@ const TEMPLATE_ICON: Record<TemplateSlug, typeof Zap> = {
   out_of_office: Clock,
   lead_qualifier: Users,
   follow_up_reminder: PhoneCall,
+  instagram_dm: Image,
+  facebook: MessageSquare,
+  web_chat: Globe,
+  telegram: Send,
 }
 
 export default function AutomationsPage() {

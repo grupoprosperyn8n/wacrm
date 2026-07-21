@@ -10,6 +10,10 @@ export type TemplateSlug =
   | 'out_of_office'
   | 'lead_qualifier'
   | 'follow_up_reminder'
+  | 'instagram_dm'
+  | 'facebook'
+  | 'web_chat'
+  | 'telegram'
 
 export interface TemplateStepSeed {
   step_type: AutomationStepType
@@ -122,6 +126,171 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
           text:
             "Just circling back — did you have any other questions for us? Happy to help!",
         },
+      },
+    ],
+  },
+  instagram_dm: {
+    slug: 'instagram_dm',
+    name: 'Instagram DM',
+    description:
+      'Automatically reply when a contact mentions Instagram — welcomes them and offers menu options.',
+    trigger_type: 'keyword_match',
+    trigger_config: {
+      keywords: ['instagram', 'ig', 'insta'],
+      match_type: 'contains',
+    },
+    steps: [
+      {
+        step_type: 'send_message',
+        step_config: {
+          text:
+            '¡Gracias por contactarnos desde Instagram! 📸 Ahora estás en nuestro canal de WhatsApp. Cuéntanos, ¿qué te gustaría saber?',
+          _notes:
+            'Mensaje de bienvenida enviado automáticamente cuando el usuario menciona Instagram.',
+        },
+      },
+      {
+        step_type: 'send_buttons',
+        step_config: {
+          body: { text: '¿Qué tipo de información buscas?' },
+          buttons: [
+            { id: 'servicios', title: 'Servicios' },
+            { id: 'precios', title: 'Precios' },
+            { id: 'soporte', title: 'Soporte' },
+          ],
+          _notes: 'Botones rápidos con las opciones más comunes de consulta.',
+        },
+      },
+      {
+        step_type: 'add_tag',
+        step_config: { tag: 'instagram_lead' },
+      },
+    ],
+  },
+  facebook: {
+    slug: 'facebook',
+    name: 'Facebook',
+    description:
+      'Handle contacts arriving from Facebook Messenger with a welcome message and a list menu of services.',
+    trigger_type: 'keyword_match',
+    trigger_config: {
+      keywords: ['facebook', 'fb', 'messenger'],
+      match_type: 'contains',
+    },
+    steps: [
+      {
+        step_type: 'send_message',
+        step_config: {
+          text:
+            '¡Hola! Has llegado desde Facebook Messenger 👍 Te damos la bienvenida a nuestro servicio de atención por WhatsApp. Selecciona una opción para empezar:',
+          _notes:
+            'Primer contacto — presenta el canal y guía al usuario a elegir una opción.',
+        },
+      },
+      {
+        step_type: 'send_list',
+        step_config: {
+          body: { text: 'Elige una categoría:' },
+          sections: [
+            {
+              title: 'Servicios',
+              rows: [
+                {
+                  id: 'productos',
+                  title: 'Productos',
+                  description: 'Catálogo completo',
+                },
+                {
+                  id: 'cotizacion',
+                  title: 'Cotización',
+                  description: 'Solicita un presupuesto',
+                },
+                {
+                  id: 'soporte',
+                  title: 'Soporte técnico',
+                  description: 'Ayuda especializada',
+                },
+              ],
+            },
+          ],
+          _notes:
+            'Menú interactivo tipo lista — permite al usuario explorar servicios.',
+        },
+      },
+      {
+        step_type: 'assign_conversation',
+        step_config: { mode: 'round_robin' },
+      },
+    ],
+  },
+  web_chat: {
+    slug: 'web_chat',
+    name: 'Web Chat',
+    description:
+      'Simple welcome flow for web chat contacts — greets them, waits briefly, then auto-assigns to an agent.',
+    trigger_type: 'new_message_received',
+    trigger_config: {},
+    steps: [
+      {
+        step_type: 'send_message',
+        step_config: {
+          text:
+            '🖥️ ¡Bienvenido a nuestro chat web! Un agente te atenderá en breve. Mientras tanto, ¿hay algo en específico en lo que podamos ayudarte?',
+          _notes:
+            'Mensaje automático al recibir el primer mensaje del contacto en el chat web.',
+        },
+      },
+      {
+        step_type: 'wait',
+        step_config: { amount: 5, unit: 'minutes' },
+      },
+      {
+        step_type: 'assign_conversation',
+        step_config: { mode: 'round_robin' },
+      },
+    ],
+  },
+  telegram: {
+    slug: 'telegram',
+    name: 'Telegram',
+    description:
+      'Respond to Telegram referrals with a condition — shows different messages during vs. outside business hours.',
+    trigger_type: 'keyword_match',
+    trigger_config: {
+      keywords: ['telegram', 'tg'],
+      match_type: 'contains',
+    },
+    steps: [
+      {
+        step_type: 'condition',
+        step_config: {
+          subject: 'time_of_day',
+          operand: '09:00-18:00',
+          _notes:
+            'Evalúa si la hora actual está dentro del horario laboral (9am–6pm).',
+        },
+      },
+      {
+        step_type: 'send_message',
+        step_config: {
+          text:
+            '¡Gracias por contactarnos desde Telegram! 💬 Estamos en horario laboral (9am–6pm) y te atenderemos en breve. ¿En qué podemos ayudarte?',
+          _notes:
+            'Rama SÍ — se envía cuando el contacto escribe dentro del horario laboral.',
+        },
+        parent_index: 0,
+        branch: 'yes',
+      },
+      {
+        step_type: 'send_message',
+        step_config: {
+          text:
+            '¡Gracias por contactarnos desde Telegram! 💬 Nuestro horario es de 9am a 6pm. Te responderemos en cuanto abramos. ¡Gracias por tu paciencia!',
+          _notes:
+            'Rama NO — se envía cuando el contacto escribe fuera del horario laboral.',
+        },
+        parent_index: 0,
+        branch: 'no',
       },
     ],
   },

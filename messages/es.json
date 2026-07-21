@@ -926,6 +926,22 @@
         "follow_up_reminder": {
           "name": "Recordatorio de seguimiento",
           "description": "Envía un aviso si un contacto no ha respondido en 24 horas."
+        },
+        "instagram_dm": {
+          "name": "Instagram DM",
+          "description": "Automatiza respuestas para mensajes directos de Instagram."
+        },
+        "facebook": {
+          "name": "Facebook",
+          "description": "Gestiona conversaciones automáticas en Facebook Messenger."
+        },
+        "web_chat": {
+          "name": "Chat Web",
+          "description": "Automatiza conversaciones desde el chat de tu sitio web."
+        },
+        "telegram": {
+          "name": "Telegram",
+          "description": "Responde automáticamente a mensajes de Telegram."
         }
       },
       "triggerLabels": {
@@ -1121,7 +1137,10 @@
         "matchType": "Tipo de coincidencia",
         "matchContains": "Contiene",
         "matchExact": "Exacta",
-        "closeConversationHint": "Establece el estado de la conversación como \"cerrada\". No se necesita configuración."
+        "closeConversationHint": "Establece el estado de la conversación como \"cerrada\". No se necesita configuración.",
+        "notes": "Notas",
+        "notesPlaceholder": "Escribe notas para este paso...",
+        "notesHint": "Las notas se guardan localmente y no afectan el comportamiento de la automatización."
       }
     }
   },

@@ -926,6 +926,22 @@
         "follow_up_reminder": {
           "name": "Follow-up Reminder",
           "description": "Send a nudge if a contact has not replied within 24 hours."
+        },
+        "instagram_dm": {
+          "name": "Instagram DM",
+          "description": "Automate responses for Instagram direct messages."
+        },
+        "facebook": {
+          "name": "Facebook",
+          "description": "Handle automatic conversations on Facebook Messenger."
+        },
+        "web_chat": {
+          "name": "Web Chat",
+          "description": "Automate conversations from your website chat widget."
+        },
+        "telegram": {
+          "name": "Telegram",
+          "description": "Automatically reply to Telegram messages."
         }
       },
       "triggerLabels": {
@@ -1121,7 +1137,10 @@
         "matchType": "Match type",
         "matchContains": "Contains",
         "matchExact": "Exact",
-        "closeConversationHint": "Sets the conversation status to \"closed\". No configuration needed."
+        "closeConversationHint": "Sets the conversation status to \"closed\". No configuration needed.",
+        "notes": "Notes",
+        "notesPlaceholder": "Write notes for this step...",
+        "notesHint": "Notes are saved locally and don't affect automation behavior."
       }
     }
   },
