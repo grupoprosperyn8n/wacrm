@@ -106,7 +106,7 @@ export default function NotificationsPage() {
         .eq("id", id)
         .is("read_at", null);
       if (updateErr) {
-        toast.error("Failed to mark notification as read");
+        toast.error(t('markReadError'));
         load();
       }
     },
@@ -139,7 +139,7 @@ export default function NotificationsPage() {
       .is("read_at", null);
     setMarkingAll(false);
     if (updateErr) {
-      toast.error("Failed to mark all as read");
+      toast.error(t('markAllError'));
       load();
     }
   }, [unreadIds.length, load]);
@@ -149,7 +149,7 @@ export default function NotificationsPage() {
       <div className="flex h-64 flex-col items-center justify-center gap-2">
         <p className="text-sm text-destructive">{error}</p>
         <Button variant="outline" onClick={() => window.location.reload()}>
-          Retry
+          {t('retry')}
         </Button>
       </div>
     );
@@ -242,7 +242,7 @@ export default function NotificationsPage() {
                       </span>
                       {isUnread && (
                         <span
-                          aria-label="Unread"
+                          aria-label={t('unreadAria')}
                           className="h-2 w-2 flex-shrink-0 rounded-full bg-primary"
                         />
                       )}
