@@ -50,14 +50,14 @@ export function triggerMeta(t: AutomationTriggerType | string): TriggerMeta {
   )
 }
 
-export function formatRelative(iso: string | null | undefined): string {
-  if (!iso) return 'never'
+export function formatRelative(iso: string | null | undefined, t?: (key: string, opts?: Record<string, string | number | Date>) => string): string {
+  if (!iso) return t ? t("never", { n: 0 }) : "never"
   const then = new Date(iso).getTime()
-  if (Number.isNaN(then)) return 'never'
+  if (Number.isNaN(then)) return t ? t("never", { n: 0 }) : "never"
   const diffSec = Math.round((Date.now() - then) / 1000)
-  if (diffSec < 60) return 'just now'
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`
-  if (diffSec < 2_592_000) return `${Math.floor(diffSec / 86400)}d ago`
+  if (diffSec < 60) return t ? t("justNow", { n: 0 }) : "just now"
+  if (diffSec < 3600) return t ? t("minutesAgo", { n: Math.floor(diffSec / 60) }) : `${Math.floor(diffSec / 60)}m ago`
+  if (diffSec < 86400) return t ? t("hoursAgo", { n: Math.floor(diffSec / 3600) }) : `${Math.floor(diffSec / 3600)}h ago`
+  if (diffSec < 2_592_000) return t ? t("daysAgo", { n: Math.floor(diffSec / 86400) }) : `${Math.floor(diffSec / 86400)}d ago`
   return new Date(iso).toLocaleDateString()
 }
