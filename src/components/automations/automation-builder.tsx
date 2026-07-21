@@ -1085,12 +1085,20 @@ function StepRenderer({
   const Icon = meta.icon
   const expanded = props.expandedId === step.cid
   const isCondition = step.step_type === "condition"
+  // send_buttons/send_list render the InteractiveBuilder with preview
+  // sidebar (md:w-[280px]), body textarea, header/footer grid, and
+  // buttons/list editors — 320px is too cramped. Give them 560px so
+  // the form fields aren't compressed into a column half that width.
+  const isInteractive =
+    step.step_type === "send_buttons" || step.step_type === "send_list"
   // Card widths on mobile fill the full canvas column (max-w-2xl px-4
   // still keeps them reasonable). On sm+ the original fixed widths
   // come back so the flow visual stays recognisable.
   const width = isCondition
     ? "w-full max-w-[400px] sm:w-[400px]"
-    : "w-full max-w-[320px] sm:w-80"
+    : isInteractive
+      ? "w-full max-w-[560px] sm:w-[560px]"
+      : "w-full max-w-[320px] sm:w-80"
 
   return (
     <>
