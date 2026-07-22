@@ -701,6 +701,105 @@ function validateNode(
       break;
     }
 
+    case "http_request": {
+      const cfg = node.config as {
+        url?: string;
+        method?: string;
+        response_var?: string;
+        headers?: Array<{ key: string; value: string }>;
+        next_node_key?: string;
+      };
+      if (!cfg.url?.trim()) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "url",
+          message: "HTTP Request node needs a URL.",
+        });
+      } else if (!/^https?:\/\/.+/.test(cfg.url.trim())) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "url",
+          message: "URL must start with http:// or https://.",
+        });
+      }
+      if (!cfg.response_var?.trim()) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "response_var",
+          message: "HTTP Request needs a variable name to store the response.",
+        });
+      }
+      if (!cfg.next_node_key) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "next_node_key",
+          message: "HTTP Request must point to a next node.",
+        });
+      } else if (!knownKeys.has(cfg.next_node_key)) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "next_node_key",
+          message: `HTTP Request points to non-existent node "${cfg.next_node_key}".`,
+        });
+      }
+      break;
+    }
+
+    case "ai_reply": {
+      const cfg = node.config as {
+        system_prompt?: string;
+        user_prompt_template?: string;
+        response_var?: string;
+        next_node_key?: string;
+      };
+      if (!cfg.system_prompt?.trim() && !cfg.user_prompt_template?.trim()) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "system_prompt",
+          message: "AI Reply needs at least a system prompt or user prompt template.",
+        });
+      }
+      if (!cfg.response_var?.trim()) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "response_var",
+          message: "AI Reply needs a variable name to store the response.",
+        });
+      }
+      if (!cfg.next_node_key) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "next_node_key",
+          message: "AI Reply must point to a next node.",
+        });
+      } else if (!knownKeys.has(cfg.next_node_key)) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "next_node_key",
+          message: `AI Reply points to non-existent node "${cfg.next_node_key}".`,
+        });
+      }
+      break;
+    }
+
     case "handoff":
     case "end":
       // Terminal nodes have no outgoing edges; nothing to validate
@@ -751,7 +850,9 @@ function outgoingEdges(node: NodeInput): string[] {
     case "send_message":
     case "send_media":
     case "collect_input":
-    case "set_tag": {
+    case "set_tag":
+    case "http_request":
+    case "ai_reply": {
       const cfg = node.config as { next_node_key?: string };
       return cfg.next_node_key ? [cfg.next_node_key] : [];
     }

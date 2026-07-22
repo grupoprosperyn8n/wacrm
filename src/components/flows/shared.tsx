@@ -19,12 +19,14 @@
 import {
   Flag,
   GitFork,
+  Globe,
   Inbox,
   ListChecks,
   ListPlus,
   MessageCircle,
   Paperclip,
   PlayCircle,
+  Sparkles,
   Tag,
   UserPlus,
   Workflow,
@@ -41,16 +43,18 @@ import { cn } from '@/lib/utils';
 // ============================================================
 
 export type NodeType =
-  | 'start'
-  | 'send_message'
-  | 'send_buttons'
-  | 'send_list'
-  | 'send_media'
-  | 'collect_input'
-  | 'condition'
-  | 'set_tag'
-  | 'handoff'
-  | 'end';
+  | "start"
+  | "send_message"
+  | "send_buttons"
+  | "send_list"
+  | "send_media"
+  | "collect_input"
+  | "condition"
+  | "set_tag"
+  | "http_request"
+  | "ai_reply"
+  | "handoff"
+  | "end";
 
 export interface BuilderNode {
   node_key: string;
@@ -166,6 +170,20 @@ export const NODE_META: Record<
     blurb: 'Ends the flow',
     category: 'flow',
   },
+  http_request: {
+    label: 'HTTP Request',
+    icon: Globe,
+    color: 'text-violet-400',
+    blurb: 'Executes an HTTP request and saves the response',
+    category: 'logic',
+  },
+  ai_reply: {
+    label: 'AI Reply',
+    icon: Sparkles,
+    color: 'text-amber-400',
+    blurb: 'Generates a reply using AI',
+    category: 'logic',
+  },
 };
 
 /**
@@ -207,6 +225,8 @@ const NODE_HUE: Record<NodeType, { l: number; c: number; h: number }> = {
   set_tag: { l: 0.65, c: 0.15, h: 350 }, // pink
   handoff: { l: 0.65, c: 0.17, h: 16 }, // rose — hands off
   end: { l: 0.55, c: 0.01, h: 260 }, // neutral grey — terminal
+  http_request: { l: 0.65, c: 0.16, h: 40 }, // amber — http fetch
+  ai_reply: { l: 0.62, c: 0.15, h: 290 }, // violet — AI generation
 };
 
 export interface NodeColors {
@@ -423,6 +443,29 @@ export function summarizeNode(
     case 'handoff': {
       const note = typeof cfg.note === 'string' ? cfg.note : '';
       return note.length > 0 ? truncate(note) : null;
+    }
+    case 'http_request': {
+      const url = typeof cfg.url === 'string' ? cfg.url : '';
+      const method = typeof cfg.method === 'string' ? cfg.method : 'GET';
+      const responseVar = typeof cfg.response_var === 'string' ? cfg.response_var : '';
+      if (!url) return null;
+      const methodStr = responseVar
+        ? `${method} ${truncate(url, 40)} → vars.${responseVar}`
+        : `${method} ${truncate(url, 60)}`;
+      return methodStr;
+    }
+    case 'ai_reply': {
+      const prompt =
+        typeof cfg.system_prompt === 'string' && cfg.system_prompt.length > 0
+          ? cfg.system_prompt
+          : typeof cfg.user_prompt_template === 'string'
+            ? cfg.user_prompt_template
+            : '';
+      const responseVar = typeof cfg.response_var === 'string' ? cfg.response_var : '';
+      if (!prompt) return responseVar ? `→ vars.${responseVar}` : null;
+      return responseVar
+        ? `${truncate(prompt, 50)} → vars.${responseVar}`
+        : truncate(prompt);
     }
   }
 }

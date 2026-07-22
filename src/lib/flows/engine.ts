@@ -40,6 +40,9 @@ import {
   engineSendText,
 } from "./meta-send";
 import { decideFallback, resolveFallbackPolicy } from "./fallback";
+import { loadAiConfig } from "@/lib/ai/config";
+import { generateReply } from "@/lib/ai/generate";
+import type { ChatMessage } from "@/lib/ai/types";
 import {
   type CollectInputNodeConfig,
   type ConditionNodeConfig,
@@ -48,6 +51,8 @@ import {
   type FlowNodeRow,
   type FlowRow,
   type FlowRunRow,
+  type HttpRequestNodeConfig,
+  type AiReplyNodeConfig,
   type ParsedInbound,
   type SendButtonsNodeConfig,
   type SendListNodeConfig,
@@ -116,7 +121,9 @@ export function isAutoAdvancing(node_type: string): boolean {
     node_type === "send_message" ||
     node_type === "send_media" ||
     node_type === "condition" ||
-    node_type === "set_tag"
+    node_type === "set_tag" ||
+    node_type === "http_request" ||
+    node_type === "ai_reply"
   );
 }
 
@@ -726,6 +733,91 @@ async function advanceFromNodeKey(
         // strand the customer mid-flow.
         await logEvent(db, run.id, "error", node.node_key, {
           reason: "set_tag_failed",
+          detail: err instanceof Error ? err.message : String(err),
+        });
+      }
+      currentKey = cfg.next_node_key;
+      continue;
+    }
+    if (node.node_type === "http_request") {
+      const cfg = node.config as unknown as HttpRequestNodeConfig;
+      try {
+        const url = interpolateVars(cfg.url, run.vars);
+        const headers: Record<string, string> = {};
+        for (const h of cfg.headers ?? []) {
+          if (h.key) headers[h.key] = interpolateVars(h.value, run.vars);
+        }
+        const body = cfg.body_template
+          ? interpolateVars(cfg.body_template, run.vars)
+          : undefined;
+        const fetchOpts: RequestInit & { signal: AbortSignal } = {
+          method: cfg.method ?? "GET",
+          headers,
+          signal: AbortSignal.timeout(15_000),
+        };
+        if (body && cfg.method !== "GET") fetchOpts.body = body;
+
+        const resp = await fetch(url, fetchOpts as RequestInit);
+        const responseText = await resp.text();
+
+        run.vars = { ...run.vars, [cfg.response_var]: responseText };
+
+        await logEvent(db, run.id, "node_entered", node.node_key, {
+          url,
+          method: cfg.method ?? "GET",
+          status: resp.status,
+          response_var: cfg.response_var,
+        });
+      } catch (err) {
+        run.vars = {
+          ...run.vars,
+          [cfg.response_var]: `ERR: ${err instanceof Error ? err.message : String(err)}`,
+        };
+        await logEvent(db, run.id, "error", node.node_key, {
+          reason: "http_request_failed",
+          detail: err instanceof Error ? err.message : String(err),
+        });
+      }
+      currentKey = cfg.next_node_key;
+      continue;
+    }
+    if (node.node_type === "ai_reply") {
+      const cfg = node.config as unknown as AiReplyNodeConfig;
+      try {
+        const aiConfig = await loadAiConfig(db, run.account_id);
+        if (!aiConfig) {
+          run.vars = { ...run.vars, [cfg.response_var]: "ERR: AI not configured for this account" };
+          currentKey = cfg.next_node_key;
+          continue;
+        }
+        const systemPrompt = cfg.system_prompt
+          ? interpolateVars(cfg.system_prompt, run.vars)
+          : "";
+        const userContent = cfg.user_prompt_template
+          ? interpolateVars(cfg.user_prompt_template, run.vars)
+          : "";
+        const messages: ChatMessage[] = userContent
+          ? [{ role: "user" as const, content: userContent }]
+          : [];
+
+        const result = await generateReply({
+          config: aiConfig,
+          systemPrompt,
+          messages,
+        });
+
+        run.vars = { ...run.vars, [cfg.response_var]: result.text };
+
+        await logEvent(db, run.id, "node_entered", node.node_key, {
+          response_var: cfg.response_var,
+        });
+      } catch (err) {
+        run.vars = {
+          ...run.vars,
+          [cfg.response_var]: `ERR: ${err instanceof Error ? err.message : String(err)}`,
+        };
+        await logEvent(db, run.id, "error", node.node_key, {
+          reason: "ai_reply_failed",
           detail: err instanceof Error ? err.message : String(err),
         });
       }

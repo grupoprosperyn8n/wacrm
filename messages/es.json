@@ -1290,7 +1290,17 @@
         "filenamePlaceholder": "factura.pdf",
         "advanceAfterSending": "Después de enviar, avanzar a",
         "pickNextNode": "Elige un siguiente nodo…",
-        "none": "— Ninguno —"
+        "none": "— Ninguno —",
+        "url": "URL",
+        "method": "Método HTTP",
+        "headers": "Encabezados",
+        "headerKey": "Clave",
+        "headerValue": "Valor",
+        "addHeader": "Añadir encabezado",
+        "bodyTemplate": "Cuerpo (plantilla)",
+        "responseVar": "Variable de respuesta",
+        "systemPrompt": "System prompt",
+        "userPromptTemplate": "Instrucción (plantilla)"
       },
       "categories": {
         "messaging": "Mensajería",
@@ -1329,6 +1339,14 @@
         "set_tag": {
           "label": "Etiquetar contacto",
           "blurb": "Añade o quita una etiqueta de contacto"
+        },
+        "http_request": {
+          "label": "HTTP Request",
+          "blurb": "Ejecuta una petición HTTP y guarda la respuesta"
+        },
+        "ai_reply": {
+          "label": "Respuesta IA",
+          "blurb": "Genera una respuesta con inteligencia artificial"
         },
         "handoff": {
           "label": "Transferir a agente",

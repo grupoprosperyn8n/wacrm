@@ -195,6 +195,131 @@ export function NodeConfigForm({
         />
       );
 
+    case "http_request": {
+      const hc = cfg as {
+        url?: string;
+        method?: string;
+        headers?: Array<{ key: string; value: string }>;
+        body_template?: string;
+        response_var?: string;
+        next_node_key?: string;
+      };
+      const headers = hc.headers ?? [];
+      const setHeader = (idx: number, patch: Partial<{ key: string; value: string }>) =>
+        onUpdateConfig({
+          headers: headers.map((h, i) => (i === idx ? { ...h, ...patch } : h)),
+        });
+      const addHeader = () =>
+        onUpdateConfig({ headers: [...headers, { key: "", value: "" }] });
+      const removeHeader = (idx: number) =>
+        onUpdateConfig({ headers: headers.filter((_, i) => i !== idx) });
+      return (
+        <div className="space-y-3">
+          <TextRow
+            label={t("url")}
+            value={hc.url ?? ""}
+            onChange={(v) => onUpdateConfig({ url: v })}
+          />
+          <div>
+            <label className="text-xs font-medium mb-1 block">{t("method")}</label>
+            <Select
+              value={hc.method ?? "GET"}
+              onValueChange={(v) => onUpdateConfig({ method: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-1 block">{t("headers")}</label>
+            {headers.map((h, i) => (
+              <div key={i} className="flex gap-2 mb-2">
+                <Input
+                  placeholder={t("headerKey")}
+                  value={h.key}
+                  onChange={(e) => setHeader(i, { key: e.target.value })}
+                  className="flex-1"
+                />
+                <Input
+                  placeholder={t("headerValue")}
+                  value={h.value}
+                  onChange={(e) => setHeader(i, { value: e.target.value })}
+                  className="flex-1"
+                />
+                <Button variant="ghost" size="icon" onClick={() => removeHeader(i)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button variant="outline" size="sm" onClick={addHeader}>
+              {t("addHeader")}
+            </Button>
+          </div>
+          <TextRow
+            label={t("bodyTemplate")}
+            value={hc.body_template ?? ""}
+            onChange={(v) => onUpdateConfig({ body_template: v })}
+            rows={3}
+          />
+          <TextRow
+            label={t("responseVar")}
+            value={hc.response_var ?? ""}
+            onChange={(v) => onUpdateConfig({ response_var: v })}
+          />
+          <NextNodeRow
+            label={t("advancesTo")}
+            value={hc.next_node_key ?? ""}
+            allNodes={allNodes}
+            currentKey={node.node_key}
+            onChange={(v) => onUpdateConfig({ next_node_key: v })}
+          />
+        </div>
+      );
+    }
+
+    case "ai_reply": {
+      const ac = cfg as {
+        system_prompt?: string;
+        user_prompt_template?: string;
+        response_var?: string;
+        next_node_key?: string;
+      };
+      return (
+        <div className="space-y-3">
+          <TextRow
+            label={t("systemPrompt")}
+            value={ac.system_prompt ?? ""}
+            onChange={(v) => onUpdateConfig({ system_prompt: v })}
+            rows={4}
+          />
+          <TextRow
+            label={t("userPromptTemplate")}
+            value={ac.user_prompt_template ?? ""}
+            onChange={(v) => onUpdateConfig({ user_prompt_template: v })}
+            rows={4}
+          />
+          <TextRow
+            label={t("responseVar")}
+            value={ac.response_var ?? ""}
+            onChange={(v) => onUpdateConfig({ response_var: v })}
+          />
+          <NextNodeRow
+            label={t("advancesTo")}
+            value={ac.next_node_key ?? ""}
+            allNodes={allNodes}
+            currentKey={node.node_key}
+            onChange={(v) => onUpdateConfig({ next_node_key: v })}
+          />
+        </div>
+      );
+    }
+
     case "handoff":
       return (
         <TextRow

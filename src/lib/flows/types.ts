@@ -173,6 +173,22 @@ export interface SetTagNodeConfig {
   next_node_key: string;
 }
 
+export interface HttpRequestNodeConfig {
+  url: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  headers?: Array<{ key: string; value: string }>;
+  body_template?: string;
+  response_var: string;
+  next_node_key: string;
+}
+
+export interface AiReplyNodeConfig {
+  system_prompt: string;
+  user_prompt_template: string;
+  response_var: string;
+  next_node_key: string;
+}
+
 // Terminal nodes carry no config — they just stop the run.
 export type EndNodeConfig = Record<string, never>;
 
@@ -193,6 +209,8 @@ export type FlowNodeConfig =
   | { node_type: "collect_input"; config: CollectInputNodeConfig }
   | { node_type: "condition"; config: ConditionNodeConfig }
   | { node_type: "set_tag"; config: SetTagNodeConfig }
+  | { node_type: "http_request"; config: HttpRequestNodeConfig }
+  | { node_type: "ai_reply"; config: AiReplyNodeConfig }
   | { node_type: "handoff"; config: HandoffNodeConfig }
   | { node_type: "end"; config: EndNodeConfig };
 

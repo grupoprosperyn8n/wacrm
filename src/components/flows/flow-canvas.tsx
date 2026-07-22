@@ -700,6 +700,8 @@ const ADD_NODE_TYPES: NodeType[] = [
   'collect_input',
   'condition',
   'set_tag',
+  'http_request',
+  'ai_reply',
   'handoff',
   'end',
 ];

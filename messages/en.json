@@ -1290,7 +1290,17 @@
         "filenamePlaceholder": "invoice.pdf",
         "advanceAfterSending": "After sending, advance to",
         "pickNextNode": "Pick a next node…",
-        "none": "— None —"
+        "none": "— None —",
+        "url": "URL",
+        "method": "HTTP Method",
+        "headers": "Headers",
+        "headerKey": "Key",
+        "headerValue": "Value",
+        "addHeader": "Add Header",
+        "bodyTemplate": "Body (template)",
+        "responseVar": "Response variable",
+        "systemPrompt": "System prompt",
+        "userPromptTemplate": "Instruction (template)"
       },
       "categories": {
         "messaging": "Messaging",
@@ -1329,6 +1339,14 @@
         "set_tag": {
           "label": "Tag contact",
           "blurb": "Adds or removes a contact tag"
+        },
+        "http_request": {
+          "label": "HTTP Request",
+          "blurb": "Executes an HTTP request and saves the response"
+        },
+        "ai_reply": {
+          "label": "AI Reply",
+          "blurb": "Generates a reply using AI"
         },
         "handoff": {
           "label": "Handoff to agent",
