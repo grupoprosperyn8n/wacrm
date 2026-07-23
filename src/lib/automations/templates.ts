@@ -1,3 +1,5 @@
+import { SYSTEM_SNAPSHOT_TEMPLATE } from '@/lib/templates/metadata'
+import type { TemplateMetadata } from '@/lib/templates/metadata'
 import type {
   AutomationStepConfig,
   AutomationStepType,
@@ -23,7 +25,7 @@ export interface TemplateStepSeed {
   parent_index?: number | null
 }
 
-export interface AutomationTemplateDefinition {
+export interface AutomationTemplateDefinition extends TemplateMetadata {
   slug: TemplateSlug
   name: string
   description: string
@@ -35,6 +37,11 @@ export interface AutomationTemplateDefinition {
 export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefinition> = {
   welcome_message: {
     slug: 'welcome_message',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'support',
+    tags: ['welcome', 'auto-reply', 'tagging'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Welcome Message',
     description: 'Auto-reply to first-time contacts with a greeting.',
     // first_inbound_message (added in PR #33) catches both brand-new
@@ -59,6 +66,11 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
   },
   out_of_office: {
     slug: 'out_of_office',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'support',
+    tags: ['out-of-office', 'hours', 'auto-reply'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Out of Office',
     description: 'Auto-reply during off-hours so nobody is left waiting.',
     trigger_type: 'new_message_received',
@@ -84,6 +96,11 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
   },
   lead_qualifier: {
     slug: 'lead_qualifier',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'sales',
+    tags: ['lead-qualification', 'sales', 'assignment'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Lead Qualifier',
     description: 'Ask qualification questions to filter inbound leads.',
     trigger_type: 'keyword_match',
@@ -111,6 +128,11 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
   },
   follow_up_reminder: {
     slug: 'follow_up_reminder',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'sales',
+    tags: ['follow-up', 'nurture', 'reminder'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Follow-up Reminder',
     description: 'Send a nudge if a contact has not replied within 24 hours.',
     trigger_type: 'new_message_received',
@@ -131,6 +153,11 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
   },
   instagram_dm: {
     slug: 'instagram_dm',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'social',
+    tags: ['instagram', 'dm', 'interactive'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Instagram DM',
     description:
       'Automatically reply when a contact mentions Instagram — welcomes them and offers menu options.',
@@ -170,6 +197,11 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
   },
   facebook: {
     slug: 'facebook',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'social',
+    tags: ['facebook', 'messenger', 'interactive'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Facebook',
     description:
       'Handle contacts arriving from Facebook Messenger with a welcome message and a list menu of services.',
@@ -228,6 +260,11 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
   },
   web_chat: {
     slug: 'web_chat',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'support',
+    tags: ['web-chat', 'welcome', 'assignment'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Web Chat',
     description:
       'Simple welcome flow for web chat contacts — greets them, waits briefly, then auto-assigns to an agent.',
@@ -255,6 +292,11 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
   },
   telegram: {
     slug: 'telegram',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'social',
+    tags: ['telegram', 'hours', 'conditional'],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Telegram',
     description:
       'Respond to Telegram referrals with a condition — shows different messages during vs. outside business hours.',

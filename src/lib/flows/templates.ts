@@ -19,6 +19,8 @@
  * way to add the next template.
  */
 
+import { SYSTEM_SNAPSHOT_TEMPLATE } from '@/lib/templates/metadata';
+import type { TemplateMetadata } from '@/lib/templates/metadata';
 import type {
   CollectInputNodeConfig,
   ConditionNodeConfig,
@@ -55,8 +57,7 @@ export interface FlowTemplateNode {
     | Record<string, unknown>;
 }
 
-export interface FlowTemplate {
-  slug: string;
+export interface FlowTemplate extends TemplateMetadata {
   name: string;
   description: string;
   /** Used by the gallery to surface a relevant icon. lucide-react name. */
@@ -72,6 +73,11 @@ export interface FlowTemplate {
 // ============================================================
 const WELCOME_MENU: FlowTemplate = {
   slug: "welcome_menu",
+  version: "1.0.0",
+  schema_version: 1,
+  category: "support",
+  tags: ["welcome", "routing", "support"],
+  ...SYSTEM_SNAPSHOT_TEMPLATE,
   name: "Menú de bienvenida",
   description:
     "Saluda a los clientes que escriben una palabra clave y dirígelos al agente correcto según si son nuevos o existentes.",
@@ -127,6 +133,11 @@ const WELCOME_MENU: FlowTemplate = {
 // ============================================================
 const FAQ_BOT: FlowTemplate = {
   slug: "faq_bot",
+  version: "1.0.0",
+  schema_version: 1,
+  category: "support",
+  tags: ["faq", "self-service", "support"],
+  ...SYSTEM_SNAPSHOT_TEMPLATE,
   name: "Bot de preguntas frecuentes",
   description:
     "Responde preguntas comunes automáticamente. El cliente elige un tema de una lista; el bot responde y finaliza.",
@@ -227,6 +238,11 @@ const FAQ_BOT: FlowTemplate = {
 // ============================================================
 const LEAD_CAPTURE: FlowTemplate = {
   slug: "lead_capture",
+  version: "1.0.0",
+  schema_version: 1,
+  category: "sales",
+  tags: ["lead-capture", "sales", "handoff"],
+  ...SYSTEM_SNAPSHOT_TEMPLATE,
   name: "Captura de leads",
   description:
     "Saluda a los que escriben por primera vez, captura nombre + correo + empresa y transfiere a ventas con las respuestas en la nota.",

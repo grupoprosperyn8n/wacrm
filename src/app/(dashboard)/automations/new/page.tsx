@@ -36,6 +36,7 @@ export default function NewAutomationPage() {
         trigger_config: tmpl.trigger_config as Record<string, unknown>,
         is_active: false,
         steps,
+        template,
       }
     }
     return {
@@ -45,6 +46,7 @@ export default function NewAutomationPage() {
       trigger_config: {},
       is_active: false,
       steps: [],
+      template: null,
     }
   }, [template, t])
 

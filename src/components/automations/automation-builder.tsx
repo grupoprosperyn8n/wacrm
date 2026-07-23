@@ -87,6 +87,7 @@ export interface BuilderInitial {
   trigger_config: Record<string, unknown>
   is_active: boolean
   steps: BuilderStep[]
+  template?: string | null
 }
 
 // ------------------------------------------------------------
@@ -681,6 +682,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
         trigger_config: state.trigger_config,
         is_active: state.is_active,
         steps: toApiSteps(state.steps),
+        template: state.template ?? undefined,
       }
 
       const res = isEditing

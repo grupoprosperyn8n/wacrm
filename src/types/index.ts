@@ -610,6 +610,9 @@ export interface Automation {
   is_active: boolean;
   execution_count: number;
   last_executed_at?: string | null;
+  source_template_slug?: string | null;
+  source_template_version?: string | null;
+  source_template_schema_version?: number | null;
   created_at: string;
   updated_at: string;
 }

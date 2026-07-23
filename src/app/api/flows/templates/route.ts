@@ -28,6 +28,12 @@ export async function GET() {
     description: t.description,
     icon: t.icon,
     trigger_type: t.trigger_type,
+    version: t.version,
+    schema_version: t.schema_version,
+    category: t.category,
+    tags: t.tags,
+    source: t.source,
+    clone_policy: t.clone_policy,
     node_count: t.nodes.length,
   }))
   return NextResponse.json({ templates })

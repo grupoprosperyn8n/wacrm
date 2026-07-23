@@ -3,7 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole, toErrorResponse } from '@/lib/auth/account'
 import { supabaseAdmin } from '@/lib/automations/admin-client'
 import { getTemplate } from '@/lib/automations/templates'
-import { insertSteps, type BuilderStepInput } from '@/lib/automations/steps-tree'
+import { sanitizeTemplateCloneConfig } from '@/lib/templates/sanitize-clone'
+import {
+  insertSteps,
+  type BuilderStepInput,
+} from '@/lib/automations/steps-tree'
 import {
   validateStepsForActivation,
   validateTriggerForActivation,
@@ -14,13 +18,15 @@ export async function GET() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabase
     .from('automations')
     .select('*')
     .order('created_at', { ascending: false })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ automations: data ?? [] })
 }
 
@@ -38,7 +44,8 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Resolve the caller's account_id — `automations.account_id` is NOT
   // NULL post-017, so an INSERT without it trips the not-null constraint
@@ -52,14 +59,28 @@ export async function POST(request: Request) {
   if (!accountId) {
     return NextResponse.json(
       { error: 'Your profile is not linked to an account.' },
-      { status: 403 },
+      { status: 403 }
     )
   }
 
   const body = await request.json().catch(() => null)
-  if (!body) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  if (!body)
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
 
-  const { name, description, trigger_type, trigger_config, is_active, steps, template } = body
+  const {
+    name,
+    description,
+    trigger_type,
+    trigger_config,
+    is_active,
+    steps,
+    template,
+  } = body
+
+  const templateDefinition =
+    typeof template === 'string' ? getTemplate(template) : null
+  const shouldUseTemplateSeed =
+    !!templateDefinition && (!steps || steps.length === 0)
 
   let effectiveSteps: BuilderStepInput[] | undefined = steps
   let effectiveName = name
@@ -67,8 +88,8 @@ export async function POST(request: Request) {
   let effectiveTriggerType = trigger_type
   let effectiveTriggerConfig = trigger_config
 
-  if (template && (!steps || steps.length === 0)) {
-    const t = getTemplate(template)
+  if (shouldUseTemplateSeed) {
+    const t = templateDefinition
     if (t) {
       effectiveName = effectiveName ?? t.name
       effectiveDescription = effectiveDescription ?? t.description
@@ -81,7 +102,7 @@ export async function POST(request: Request) {
   if (!effectiveName || !effectiveTriggerType) {
     return NextResponse.json(
       { error: 'name and trigger_type are required' },
-      { status: 400 },
+      { status: 400 }
     )
   }
 
@@ -91,45 +112,121 @@ export async function POST(request: Request) {
   // progress mid-build.
   if (is_active) {
     const issues = [
-      ...validateTriggerForActivation(effectiveTriggerType, effectiveTriggerConfig ?? {}),
+      ...validateTriggerForActivation(
+        effectiveTriggerType,
+        effectiveTriggerConfig ?? {}
+      ),
       ...validateStepsForActivation(
-        (effectiveSteps ?? []) as unknown as { step_type: string; step_config: Record<string, unknown> }[],
+        (effectiveSteps ?? []) as unknown as {
+          step_type: string
+          step_config: Record<string, unknown>
+        }[]
       ),
     ]
     if (issues.length > 0) {
       return NextResponse.json(
-        { error: 'Cannot activate automation with invalid configuration', issues },
-        { status: 400 },
+        {
+          error: 'Cannot activate automation with invalid configuration',
+          issues,
+        },
+        { status: 400 }
       )
     }
   }
 
   const admin = supabaseAdmin()
+  const insertPayload = buildAutomationInsert({
+    userId: user.id,
+    accountId,
+    name: effectiveName,
+    description: effectiveDescription,
+    triggerType: effectiveTriggerType,
+    triggerConfig: effectiveTriggerConfig,
+    isActive: is_active,
+    templateDefinition,
+  })
   const { data: automation, error: insertErr } = await admin
     .from('automations')
-    .insert({
-      user_id: user.id,
-      account_id: accountId,
-      name: effectiveName,
-      description: effectiveDescription ?? null,
-      trigger_type: effectiveTriggerType,
-      trigger_config: effectiveTriggerConfig ?? {},
-      is_active: !!is_active,
-    })
+    .insert(insertPayload)
     .select()
     .single()
 
   if (insertErr || !automation) {
     return NextResponse.json(
       { error: insertErr?.message ?? 'insert failed' },
-      { status: 500 },
+      { status: 500 }
     )
   }
 
   if (effectiveSteps && effectiveSteps.length > 0) {
-    const err = await insertSteps(automation.id, effectiveSteps)
+    const stepsForInsert = shouldUseTemplateSeed
+      ? sanitizeTemplateDerivedSteps(effectiveSteps)
+      : effectiveSteps
+    const err = await insertSteps(automation.id, stepsForInsert)
     if (err) return NextResponse.json({ error: err }, { status: 500 })
   }
 
   return NextResponse.json({ automation }, { status: 201 })
+}
+
+export function buildAutomationInsert({
+  userId,
+  accountId,
+  name,
+  description,
+  triggerType,
+  triggerConfig,
+  isActive,
+  templateDefinition,
+}: {
+  userId: string
+  accountId: string
+  name: string
+  description?: string | null
+  triggerType: string
+  triggerConfig?: Record<string, unknown> | null
+  isActive?: boolean
+  templateDefinition?: {
+    slug: string
+    version: string
+    schema_version: number
+  } | null
+}) {
+  const insertPayload: Record<string, unknown> = {
+    user_id: userId,
+    account_id: accountId,
+    name,
+    description: description ?? null,
+    trigger_type: triggerType,
+    trigger_config: triggerConfig ?? {},
+    is_active: !!isActive,
+  }
+
+  if (templateDefinition) {
+    insertPayload.source_template_slug = templateDefinition.slug
+    insertPayload.source_template_version = templateDefinition.version
+    insertPayload.source_template_schema_version =
+      templateDefinition.schema_version
+  }
+
+  return insertPayload
+}
+
+function sanitizeTemplateDerivedSteps(
+  steps: BuilderStepInput[]
+): BuilderStepInput[] {
+  return steps.map((step) => ({
+    ...step,
+    step_config: sanitizeTemplateCloneConfig(step.step_config),
+    branches: step.branches
+      ? {
+          yes: step.branches.yes
+            ? sanitizeTemplateDerivedSteps(step.branches.yes)
+            : undefined,
+          no: step.branches.no
+            ? sanitizeTemplateDerivedSteps(step.branches.no)
+            : undefined,
+        }
+      : undefined,
+  }))
 }

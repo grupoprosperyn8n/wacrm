@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole, toErrorResponse } from '@/lib/auth/account'
 import { supabaseAdmin } from '@/lib/flows/admin-client'
 import { getFlowTemplate } from '@/lib/flows/templates'
+import { sanitizeTemplateCloneConfig } from '@/lib/templates/sanitize-clone'
 
 /**
  * GET /api/flows — list the caller's flows.
@@ -118,6 +119,9 @@ export async function POST(request: Request) {
         trigger_type: template.trigger_type,
         trigger_config: template.trigger_config,
         entry_node_id: template.entry_node_id,
+        source_template_slug: template.slug,
+        source_template_version: template.version,
+        source_template_schema_version: template.schema_version,
       })
       .select()
       .single()
@@ -133,7 +137,7 @@ export async function POST(request: Request) {
           flow_id: flow.id,
           node_key: n.node_key,
           node_type: n.node_type,
-          config: n.config,
+          config: sanitizeTemplateCloneConfig(n.config),
         })),
       )
       if (nodesErr) {
