@@ -11,6 +11,7 @@ import {
 } from "@/components/automations/automation-builder"
 import { AUTOMATION_TEMPLATES, type TemplateSlug } from "@/lib/automations/templates"
 import type { AutomationStepType, AutomationTriggerType } from "@/types"
+import { normalizeChannelTypes } from "@/lib/channels/channel-scope"
 
 export default function NewAutomationPage() {
   const params = useSearchParams()
@@ -35,6 +36,7 @@ export default function NewAutomationPage() {
         trigger_type: tmpl.trigger_type,
         trigger_config: tmpl.trigger_config as Record<string, unknown>,
         is_active: false,
+        channel_types: normalizeChannelTypes(tmpl.channel_types),
         steps,
         template,
       }
@@ -45,6 +47,7 @@ export default function NewAutomationPage() {
       trigger_type: "new_message_received" as AutomationTriggerType,
       trigger_config: {},
       is_active: false,
+      channel_types: normalizeChannelTypes(undefined),
       steps: [],
       template: null,
     }

@@ -613,6 +613,7 @@ export interface Automation {
   source_template_slug?: string | null;
   source_template_version?: string | null;
   source_template_schema_version?: number | null;
+  channel_types?: ChannelType[] | null;
   created_at: string;
   updated_at: string;
 }

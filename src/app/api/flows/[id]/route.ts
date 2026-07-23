@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole, toErrorResponse } from '@/lib/auth/account'
 import { supabaseAdmin } from '@/lib/flows/admin-client'
+import { validateChannelTypes } from '@/lib/channels/channel-scope'
 
 /**
  * GET   /api/flows/[id]  — fetch one flow with its nodes.
@@ -76,6 +77,7 @@ interface PutBody {
   description?: string | null
   trigger_type?: 'keyword' | 'first_inbound_message' | 'manual'
   trigger_config?: Record<string, unknown>
+  channel_types?: unknown
   entry_node_id?: string | null
   fallback_policy?: Record<string, unknown>
   nodes?: Array<{
@@ -116,6 +118,11 @@ export async function PUT(
     )
   }
 
+  const channelTypesResult = validateChannelTypes(body.channel_types)
+  if (!channelTypesResult.ok) {
+    return NextResponse.json({ error: channelTypesResult.error }, { status: 400 })
+  }
+
   const admin = supabaseAdmin()
 
   // Update the flow row first — the body may not include `nodes` (a
@@ -130,6 +137,8 @@ export async function PUT(
   if (body.trigger_type !== undefined) flowPatch.trigger_type = body.trigger_type
   if (body.trigger_config !== undefined)
     flowPatch.trigger_config = body.trigger_config
+  if (body.channel_types !== undefined)
+    flowPatch.channel_types = channelTypesResult.channel_types
   if (body.entry_node_id !== undefined)
     flowPatch.entry_node_id = body.entry_node_id
   if (body.fallback_policy !== undefined)
@@ -211,4 +220,3 @@ export async function DELETE(
   }
   return NextResponse.json({ ok: true })
 }
-

@@ -112,6 +112,39 @@ beforeEach(() => {
 });
 
 describe("runAutomationsForTrigger — tenant isolation", () => {
+  it("filters provider-specific automations by the inbound channel", async () => {
+    h.state.automations = [
+      { ...automationWithUpdateStep(), channel_types: ["instagram"] },
+    ];
+    h.state.steps = [updateStep()];
+
+    await runAutomationsForTrigger({
+      accountId: ACCOUNT,
+      triggerType: "new_message_received",
+      channel: "web",
+      context: {},
+    });
+
+    expect(h.state.fromCalls).toContain("automations");
+    expect(h.state.fromCalls).not.toContain("automation_steps");
+  });
+
+  it("treats a legacy missing scope as all channels", async () => {
+    h.state.owned = { id: "c1" };
+    h.state.automations = [automationWithUpdateStep()];
+    h.state.steps = [updateStep()];
+
+    await runAutomationsForTrigger({
+      accountId: ACCOUNT,
+      triggerType: "new_message_received",
+      channel: "web",
+      contactId: "c1",
+      context: {},
+    });
+
+    expect(h.state.fromCalls).toContain("automation_steps");
+  });
+
   it("refuses to dispatch when the contact is not in the account (GHSA-63cv-2c49-m5v3)", async () => {
     // Ownership lookup returns nothing — the contact belongs to another tenant.
     h.state.owned = null;

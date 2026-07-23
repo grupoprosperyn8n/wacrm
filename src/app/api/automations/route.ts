@@ -4,6 +4,7 @@ import { requireRole, toErrorResponse } from '@/lib/auth/account'
 import { supabaseAdmin } from '@/lib/automations/admin-client'
 import { getTemplate } from '@/lib/automations/templates'
 import { sanitizeTemplateCloneConfig } from '@/lib/templates/sanitize-clone'
+import { validateChannelTypes } from '@/lib/channels/channel-scope'
 import {
   insertSteps,
   type BuilderStepInput,
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
     is_active,
     steps,
     template,
+    channel_types,
   } = body
 
   const templateDefinition =
@@ -87,6 +89,7 @@ export async function POST(request: Request) {
   let effectiveDescription = description
   let effectiveTriggerType = trigger_type
   let effectiveTriggerConfig = trigger_config
+  let effectiveChannelTypes = channel_types
 
   if (shouldUseTemplateSeed) {
     const t = templateDefinition
@@ -95,6 +98,7 @@ export async function POST(request: Request) {
       effectiveDescription = effectiveDescription ?? t.description
       effectiveTriggerType = effectiveTriggerType ?? t.trigger_type
       effectiveTriggerConfig = effectiveTriggerConfig ?? t.trigger_config
+      effectiveChannelTypes = effectiveChannelTypes ?? t.channel_types
       effectiveSteps = t.steps as unknown as BuilderStepInput[]
     }
   }
@@ -104,6 +108,11 @@ export async function POST(request: Request) {
       { error: 'name and trigger_type are required' },
       { status: 400 }
     )
+  }
+
+  const channelTypesResult = validateChannelTypes(effectiveChannelTypes)
+  if (!channelTypesResult.ok) {
+    return NextResponse.json({ error: channelTypesResult.error }, { status: 400 })
   }
 
   // Block activation of a clearly broken automation up-front instead of
@@ -143,6 +152,7 @@ export async function POST(request: Request) {
     triggerType: effectiveTriggerType,
     triggerConfig: effectiveTriggerConfig,
     isActive: is_active,
+    channelTypes: channelTypesResult.channel_types,
     templateDefinition,
   })
   const { data: automation, error: insertErr } = await admin
@@ -177,6 +187,7 @@ export function buildAutomationInsert({
   triggerType,
   triggerConfig,
   isActive,
+  channelTypes,
   templateDefinition,
 }: {
   userId: string
@@ -186,6 +197,7 @@ export function buildAutomationInsert({
   triggerType: string
   triggerConfig?: Record<string, unknown> | null
   isActive?: boolean
+  channelTypes?: unknown
   templateDefinition?: {
     slug: string
     version: string
@@ -200,6 +212,7 @@ export function buildAutomationInsert({
     trigger_type: triggerType,
     trigger_config: triggerConfig ?? {},
     is_active: !!isActive,
+    channel_types: validateChannelTypes(channelTypes).channel_types,
   }
 
   if (templateDefinition) {

@@ -821,6 +821,12 @@
       "instagram": "Instagram",
       "web": "Web Chat"
     },
+    "scope": {
+      "label": "Canales de activación",
+      "help": "Elegí dónde puede ejecutarse esta automatización o flujo.",
+      "all": "Todos los canales",
+      "selected": "{count} canales seleccionados"
+    },
     "form": {
       "title": "{editing, select, true {Editar} other {Agregar}} Canal",
       "nameLabel": "Nombre del Canal",
@@ -890,7 +896,7 @@
   "Automations": {
     "list": {
       "title": "Automatizaciones",
-      "subtitle": "Construye flujos de trabajo que reaccionan automáticamente a eventos de WhatsApp®.",
+      "subtitle": "Construye flujos de trabajo que reaccionan automáticamente a eventos de tus canales.",
       "create": "Crear automatización",
       "retry": "Reintentar",
       "templatesTitle": "Plantillas de inicio rápido",
@@ -945,6 +951,14 @@
         "telegram": {
           "name": "Telegram",
           "description": "Responde automáticamente a mensajes de Telegram."
+        },
+        "support_faq": {
+          "name": "FAQ de soporte",
+          "description": "Responde preguntas frecuentes y deriva los casos que necesitan ayuda."
+        },
+        "lead_capture": {
+          "name": "Captura de leads",
+          "description": "Recopila consultas entrantes y asigna cada oportunidad al equipo comercial."
         }
       },
       "triggerLabels": {
@@ -1187,7 +1201,7 @@
     "list": {
       "title": "Flujos",
       "beta": "Beta",
-      "description": "Construye conversaciones de WhatsApp ramificadas guiadas por botones. Útil para menús, preguntas frecuentes y triaje antes de que un humano intervenga.",
+      "description": "Construye conversaciones multicanal ramificadas. Útil para menús, preguntas frecuentes y triaje antes de que intervenga una persona.",
       "newFlow": "Nuevo flujo",
       "statusDraft": "Borrador",
       "statusActive": "Activo",
@@ -1202,7 +1216,7 @@
       "deleteSuccess": "Flujo eliminado.",
       "deleteError": "No se pudo eliminar el flujo.",
       "emptyTitle": "Aún sin flujos",
-      "emptyDesc": "Construye tu primera conversación — un menú de bienvenida, una consulta de pedidos, un FAQ bot. Los clientes tocan botones; el bot los dirige a la respuesta correcta (o al agente correcto).",
+      "emptyDesc": "Construye tu primera conversación — un menú de bienvenida, una consulta de pedidos o un FAQ. Los clientes reciben la respuesta correcta por el canal que elijas.",
       "createFirst": "Crea tu primer flujo",
       "createTitle": "Crear un nuevo flujo",
       "createDesc": "Empieza desde una plantilla o construye desde cero.",
@@ -1214,6 +1228,9 @@
       "createBlank": "Crear flujo vacío",
       "runCount": "{count} {count, plural, =1 {ejecución} other {ejecuciones}}",
       "edit": "Editar",
+      "duplicate": "Duplicar",
+      "duplicated": "Flujo duplicado.",
+      "duplicateError": "No se pudo duplicar el flujo.",
       "delete": "Eliminar",
       "triggerKeywordNone": "Se activa por palabra clave (ninguna configurada)",
       "triggerKeyword": "Se activa por: {keywords}",
@@ -1228,7 +1245,7 @@
     "logs": {
       "title": "Ejecuciones",
       "description": "Las 50 veces más recientes que este flujo se ejecutó. Expande una fila para ver el registro paso a paso del motor.",
-      "emptyState": "Aún sin ejecuciones. Dispara el flujo desde un número de WhatsApp personal para que aparezca aquí.",
+      "emptyState": "Aún sin ejecuciones. Dispara el flujo desde cualquiera de los canales habilitados para que aparezca aquí.",
       "loadError": "No se pudieron cargar las ejecuciones.",
       "unknownContact": "Contacto desconocido",
       "atNode": "en {node}",
@@ -1355,7 +1372,7 @@
         },
         "send_message": {
           "label": "Enviar mensaje",
-          "blurb": "Envía un mensaje de texto de WhatsApp"
+          "blurb": "Envía un mensaje de texto por el canal habilitado"
         },
         "send_buttons": {
           "label": "Enviar botones",

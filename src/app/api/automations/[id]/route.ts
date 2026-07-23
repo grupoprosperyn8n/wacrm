@@ -11,6 +11,7 @@ import {
   validateStepsForActivation,
   validateTriggerForActivation,
 } from '@/lib/automations/validate'
+import { validateChannelTypes } from '@/lib/channels/channel-scope'
 
 async function requireUser() {
   const supabase = await createClient()
@@ -84,8 +85,19 @@ export async function PATCH(
     'trigger_type',
     'trigger_config',
     'is_active',
+    'channel_types',
   ] as const) {
-    if (k in body) update[k] = body[k]
+    if (k in body) {
+      if (k === 'channel_types') {
+        const result = validateChannelTypes(body[k])
+        if (!result.ok) {
+          return NextResponse.json({ error: result.error }, { status: 400 })
+        }
+        update[k] = result.channel_types
+      } else {
+        update[k] = body[k]
+      }
+    }
   }
 
   // If this PATCH leaves the automation active (either explicitly

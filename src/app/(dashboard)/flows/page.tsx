@@ -7,6 +7,7 @@ import {
   Workflow,
   Plus,
   Trash2,
+  Copy,
   Pencil,
   Loader2,
   MessageSquare,
@@ -33,6 +34,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { normalizeChannelTypes } from "@/lib/channels/channel-scope";
+import type { ChannelType } from "@/types";
 
 /**
  * Flows list page.
@@ -53,6 +56,7 @@ interface FlowRow {
   last_executed_at: string | null;
   created_at: string;
   updated_at: string;
+  channel_types?: ChannelType[] | null;
 }
 
 const STATUS_LABELS = (t: ReturnType<typeof useTranslations>): Record<FlowRow["status"], string> => ({
@@ -74,6 +78,7 @@ interface TemplateSummary {
   icon: "MessageSquare" | "HelpCircle" | "UserPlus";
   trigger_type: string;
   node_count: number;
+  channel_types: ChannelType[];
 }
 
 const TEMPLATE_ICONS = {
@@ -194,6 +199,28 @@ export default function FlowsPage() {
     }
   }
 
+  async function handleDuplicate(flow: FlowRow) {
+    setCreating(true);
+    try {
+      const res = await fetch("/api/flows", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source_flow_id: flow.id }),
+      });
+      if (!res.ok) {
+        throw new Error(actionErrorMessage(res.status, t("duplicateError"), t));
+      }
+      const json = (await res.json()) as { flow: FlowRow };
+      setFlows((prev) => [json.flow, ...prev]);
+      toast.success(t("duplicated"));
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : t("duplicateError"));
+    } finally {
+      setCreating(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -239,6 +266,7 @@ export default function FlowsPage() {
               key={flow.id}
               flow={flow}
               onEdit={() => router.push(`/flows/${flow.id}`)}
+              onDuplicate={() => void handleDuplicate(flow)}
               onDelete={() => handleDelete(flow)}
               t={t}
             />
@@ -368,15 +396,18 @@ function EmptyState({
 function FlowCard({
   flow,
   onEdit,
+  onDuplicate,
   onDelete,
   t,
 }: {
   flow: FlowRow;
   onEdit: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
   t: ReturnType<typeof useTranslations>;
 }) {
   const triggerSummary = describeTrigger(flow, t);
+  const channelsT = useTranslations("Channels");
   const StatusIcon =
     flow.status === "active"
       ? PlayCircle
@@ -408,6 +439,13 @@ function FlowCard({
         {flow.description || triggerSummary}
       </p>
 
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        <span className="font-medium">{channelsT("scope.label")}:</span>{" "}
+        {normalizeChannelTypes(flow.channel_types)
+          .map((channel) => channelsT(`type.${channel}`))
+          .join(", ")}
+      </p>
+
       <div className="mt-4 flex items-center gap-3 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <MessageSquare className="h-3 w-3" />
@@ -419,6 +457,10 @@ function FlowCard({
         <Button variant="ghost" size="sm" onClick={onEdit}>
           <Pencil className="h-3.5 w-3.5" />
           {t("edit")}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDuplicate}>
+          <Copy className="h-3.5 w-3.5" />
+          {t("duplicate")}
         </Button>
         <Button
           variant="ghost"

@@ -41,6 +41,7 @@ import {
   useFlowEditor,
   type BuilderState,
 } from "./flow-editor-state";
+import { ChannelScopeSelector } from "@/components/channels/channel-scope-selector";
 
 export function EditorHeader() {
   const router = useRouter();
@@ -169,6 +170,12 @@ export function EditorHeader() {
         placeholder="Add a short description (internal — customers don't see this)"
         aria-label="Flow description"
         className="w-full max-w-[78ch] rounded-md border border-transparent bg-transparent px-2 py-1 text-[13px] text-muted-foreground outline-none transition-colors placeholder:text-muted-foreground/60 hover:bg-muted/50 focus:border-primary focus:bg-transparent focus:text-foreground"
+      />
+      <ChannelScopeSelector
+        value={state.channel_types}
+        onChange={(channel_types) =>
+          setState((current) => ({ ...current, channel_types }))
+        }
       />
     </div>
   );

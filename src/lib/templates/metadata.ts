@@ -1,3 +1,5 @@
+import type { ChannelType } from '@/types'
+
 export type TemplateSource = 'system';
 export type TemplateClonePolicy = 'snapshot';
 
@@ -7,6 +9,7 @@ export interface TemplateMetadata {
   schema_version: number;
   category: string;
   tags: string[];
+  channel_types: ChannelType[];
   source: TemplateSource;
   clone_policy: TemplateClonePolicy;
 }

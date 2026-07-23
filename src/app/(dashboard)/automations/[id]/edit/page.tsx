@@ -12,6 +12,7 @@ import {
   type ServerStepNode,
 } from "@/components/automations/automation-builder"
 import type { AutomationTriggerType } from "@/types"
+import { normalizeChannelTypes } from "@/lib/channels/channel-scope"
 
 export default function EditAutomationPage({
   params,
@@ -41,6 +42,7 @@ export default function EditAutomationPage({
         trigger_type: body.automation.trigger_type as AutomationTriggerType,
         trigger_config: body.automation.trigger_config ?? {},
         is_active: !!body.automation.is_active,
+        channel_types: normalizeChannelTypes(body.automation.channel_types),
         steps: fromServerSteps((body.steps ?? []) as ServerStepNode[]),
       })
     }

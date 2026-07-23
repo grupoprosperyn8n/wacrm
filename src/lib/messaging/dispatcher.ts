@@ -24,11 +24,11 @@ import { dispatchWebhookEvent } from '@/lib/webhooks/deliver';
 import { findExistingContact, isUniqueViolation } from '@/lib/contacts/dedupe';
 import { resolveAuditUserId } from '@/lib/api/v1/contacts';
 import type { ParsedInbound } from '@/lib/flows/types';
-import type { AutomationTriggerType } from '@/types';
+import type { AutomationTriggerType, ChannelType } from '@/types';
 
 // ── Supported channel types ──────────────────────────────────────
 
-export type ChannelType = 'whatsapp' | 'telegram' | 'facebook' | 'instagram' | 'web';
+export type { ChannelType } from '@/types';
 
 export interface OutboundSendParams {
   accountId: string;
@@ -335,6 +335,7 @@ export async function processInboundText(
       userId: botUserId,
       contactId: contactOutcome.contact.id,
       conversationId,
+      channel,
       message: { kind: 'text', text, meta_message_id: externalMessageId } satisfies ParsedInbound,
       isFirstInboundMessage,
     }).catch(() => null);
@@ -348,6 +349,7 @@ export async function processInboundText(
       runAutomationsForTrigger({
         accountId,
         triggerType,
+        channel,
         contactId: contactOutcome.contact.id,
       }).catch(() => {});
     }
@@ -359,6 +361,7 @@ export async function processInboundText(
       runAutomationsForTrigger({
         accountId,
         triggerType: 'keyword_match',
+        channel,
         contactId: contactOutcome.contact.id,
       }).catch(() => {});
 

@@ -47,6 +47,7 @@ import {
 import { AUTOMATION_TEMPLATES, type TemplateSlug } from "@/lib/automations/templates"
 import { triggerMeta, formatRelative } from "@/lib/automations/trigger-meta"
 import { cn } from "@/lib/utils"
+import { normalizeChannelTypes } from "@/lib/channels/channel-scope"
 
 const TEMPLATE_ORDER: TemplateSlug[] = [
   "welcome_message",
@@ -57,6 +58,8 @@ const TEMPLATE_ORDER: TemplateSlug[] = [
   "facebook",
   "web_chat",
   "telegram",
+  "support_faq",
+  "lead_capture",
 ]
 
 const TEMPLATE_ICON: Record<TemplateSlug, typeof Zap> = {
@@ -68,6 +71,8 @@ const TEMPLATE_ICON: Record<TemplateSlug, typeof Zap> = {
   facebook: MessageSquare,
   web_chat: Globe,
   telegram: Send,
+  support_faq: MessageCircle,
+  lead_capture: Users,
 }
 
 export default function AutomationsPage() {
@@ -291,6 +296,7 @@ function AutomationCard({
   t: ReturnType<typeof useTranslations>
 }) {
   const meta = triggerMeta(automation.trigger_type)
+  const channelsT = useTranslations("Channels")
   return (
     <li className="rounded-xl border border-border bg-card transition-colors hover:border-border">
       <div className="flex items-center gap-4 p-4">
@@ -337,6 +343,12 @@ function AutomationCard({
             <span aria-hidden>·</span>
             <span>{formatRelative(automation.last_executed_at, t)}</span>
           </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            <span className="font-medium">{channelsT("scope.label")}:</span>{" "}
+            {normalizeChannelTypes(automation.channel_types)
+              .map((channel) => channelsT(`type.${channel}`))
+              .join(", ")}
+          </p>
         </button>
 
         <div className="flex items-center gap-3">

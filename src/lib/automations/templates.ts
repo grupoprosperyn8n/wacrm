@@ -1,4 +1,5 @@
 import { SYSTEM_SNAPSHOT_TEMPLATE } from '@/lib/templates/metadata'
+import { ALL_CHANNEL_TYPES } from '@/lib/channels/channel-scope'
 import type { TemplateMetadata } from '@/lib/templates/metadata'
 import type {
   AutomationStepConfig,
@@ -16,6 +17,8 @@ export type TemplateSlug =
   | 'facebook'
   | 'web_chat'
   | 'telegram'
+  | 'support_faq'
+  | 'lead_capture'
 
 export interface TemplateStepSeed {
   step_type: AutomationStepType
@@ -41,6 +44,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'support',
     tags: ['welcome', 'auto-reply', 'tagging'],
+    channel_types: [...ALL_CHANNEL_TYPES],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Welcome Message',
     description: 'Auto-reply to first-time contacts with a greeting.',
@@ -70,6 +74,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'support',
     tags: ['out-of-office', 'hours', 'auto-reply'],
+    channel_types: [...ALL_CHANNEL_TYPES],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Out of Office',
     description: 'Auto-reply during off-hours so nobody is left waiting.',
@@ -100,6 +105,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'sales',
     tags: ['lead-qualification', 'sales', 'assignment'],
+    channel_types: [...ALL_CHANNEL_TYPES],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Lead Qualifier',
     description: 'Ask qualification questions to filter inbound leads.',
@@ -132,6 +138,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'sales',
     tags: ['follow-up', 'nurture', 'reminder'],
+    channel_types: [...ALL_CHANNEL_TYPES],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Follow-up Reminder',
     description: 'Send a nudge if a contact has not replied within 24 hours.',
@@ -157,6 +164,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'social',
     tags: ['instagram', 'dm', 'interactive'],
+    channel_types: ['instagram'],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Instagram DM',
     description:
@@ -201,6 +209,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'social',
     tags: ['facebook', 'messenger', 'interactive'],
+    channel_types: ['facebook'],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Facebook',
     description:
@@ -264,6 +273,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'support',
     tags: ['web-chat', 'welcome', 'assignment'],
+    channel_types: ['web'],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Web Chat',
     description:
@@ -296,6 +306,7 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
     schema_version: 1,
     category: 'social',
     tags: ['telegram', 'hours', 'conditional'],
+    channel_types: ['telegram'],
     ...SYSTEM_SNAPSHOT_TEMPLATE,
     name: 'Telegram',
     description:
@@ -336,6 +347,59 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
         },
         parent_index: 0,
         branch: 'no',
+      },
+    ],
+  },
+  support_faq: {
+    slug: 'support_faq',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'support',
+    tags: ['faq', 'support', 'self-service'],
+    channel_types: [...ALL_CHANNEL_TYPES],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
+    name: 'Support FAQ',
+    description: 'Answer common support questions and route customers to an agent when needed.',
+    trigger_type: 'keyword_match',
+    trigger_config: {
+      keywords: ['help', 'support', 'question'],
+      match_type: 'contains',
+    },
+    steps: [
+      {
+        step_type: 'send_message',
+        step_config: {
+          text: 'Thanks for your question. Our support team will help you shortly.',
+        },
+      },
+      {
+        step_type: 'assign_conversation',
+        step_config: { mode: 'round_robin' },
+      },
+    ],
+  },
+  lead_capture: {
+    slug: 'lead_capture',
+    version: '1.0.0',
+    schema_version: 1,
+    category: 'sales',
+    tags: ['lead-capture', 'sales', 'qualification'],
+    channel_types: [...ALL_CHANNEL_TYPES],
+    ...SYSTEM_SNAPSHOT_TEMPLATE,
+    name: 'Lead Capture',
+    description: 'Acknowledge a new lead and route the conversation to sales.',
+    trigger_type: 'first_inbound_message',
+    trigger_config: {},
+    steps: [
+      {
+        step_type: 'send_message',
+        step_config: {
+          text: 'Thanks for reaching out. A sales specialist will be with you shortly.',
+        },
+      },
+      {
+        step_type: 'assign_conversation',
+        step_config: { mode: 'round_robin' },
       },
     ],
   },

@@ -261,6 +261,8 @@ export interface FlowRow {
   source_template_slug?: string | null;
   source_template_version?: string | null;
   source_template_schema_version?: number | null;
+  source_flow_id?: string | null;
+  channel_types?: import("@/types").ChannelType[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -359,6 +361,8 @@ export interface DispatchInboundInput {
   userId: string;
   contactId: string;
   conversationId: string;
+  /** Channel of the inbound conversation; scopes flows and active runs. */
+  channel: import("@/types").ChannelType;
   message: ParsedInbound;
 }
 

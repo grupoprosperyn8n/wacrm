@@ -4,6 +4,7 @@ import { requireRole, toErrorResponse } from '@/lib/auth/account'
 import { supabaseAdmin } from '@/lib/flows/admin-client'
 import { getFlowTemplate } from '@/lib/flows/templates'
 import { sanitizeTemplateCloneConfig } from '@/lib/templates/sanitize-clone'
+import { normalizeChannelTypes, validateChannelTypes } from '@/lib/channels/channel-scope'
 
 /**
  * GET /api/flows — list the caller's flows.
@@ -84,6 +85,7 @@ export async function POST(request: Request) {
         description?: string | null
         trigger_type?: 'keyword' | 'first_inbound_message' | 'manual'
         trigger_config?: Record<string, unknown>
+        channel_types?: unknown
         /**
          * If set, clone the matching template's name + trigger +
          * entry_node_id + nodes[] into a fresh draft for this user.
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
          * provided.
          */
         template_slug?: string
+        source_flow_id?: string
       }
     | null
   if (!body) {
@@ -98,6 +101,97 @@ export async function POST(request: Request) {
   }
 
   const admin = supabaseAdmin()
+
+  const channelTypesResult = validateChannelTypes(body.channel_types)
+  if (!channelTypesResult.ok) {
+    return NextResponse.json({ error: channelTypesResult.error }, { status: 400 })
+  }
+
+  if (body.template_slug && body.source_flow_id) {
+    return NextResponse.json(
+      { error: 'template_slug and source_flow_id cannot be used together' },
+      { status: 400 },
+    )
+  }
+
+  // -------- Existing-flow snapshot clone path --------
+  if (body.source_flow_id) {
+    const { data: source, error: sourceErr } = await admin
+      .from('flows')
+      .select('*')
+      .eq('id', body.source_flow_id)
+      .eq('account_id', accountId)
+      .maybeSingle()
+    if (sourceErr) {
+      return NextResponse.json({ error: sourceErr.message }, { status: 500 })
+    }
+    if (!source) {
+      return NextResponse.json({ error: 'Source flow not found' }, { status: 404 })
+    }
+
+    const { data: sourceNodes, error: sourceNodesErr } = await admin
+      .from('flow_nodes')
+      .select('node_key, node_type, config, position_x, position_y')
+      .eq('flow_id', source.id)
+      .order('created_at', { ascending: true })
+    if (sourceNodesErr) {
+      return NextResponse.json({ error: sourceNodesErr.message }, { status: 500 })
+    }
+
+    const { data: flow, error: flowErr } = await admin
+      .from('flows')
+      .insert({
+        user_id: userId,
+        account_id: accountId,
+        name: body.name?.trim() || `${source.name} (Copy)`,
+        description: body.description ?? source.description,
+        status: 'draft',
+        trigger_type: source.trigger_type,
+        trigger_config: source.trigger_config,
+        entry_node_id: source.entry_node_id,
+        fallback_policy: source.fallback_policy,
+        channel_types:
+          body.channel_types === undefined
+            ? normalizeChannelTypes(source.channel_types)
+            : channelTypesResult.channel_types,
+        source_flow_id: source.id,
+        source_template_slug: source.source_template_slug,
+        source_template_version: source.source_template_version,
+        source_template_schema_version: source.source_template_schema_version,
+        execution_count: 0,
+        last_executed_at: null,
+      })
+      .select()
+      .single()
+    if (flowErr || !flow) {
+      return NextResponse.json(
+        { error: flowErr?.message ?? 'flow insert failed' },
+        { status: 500 },
+      )
+    }
+
+    if (sourceNodes && sourceNodes.length > 0) {
+      const { error: nodesErr } = await admin.from('flow_nodes').insert(
+        sourceNodes.map((node) => ({
+          flow_id: flow.id,
+          node_key: node.node_key,
+          node_type: node.node_type,
+          // This is an explicit same-account duplicate, not a system
+          // template clone. Preserve account-owned resource references;
+          // system template clones remain sanitized below.
+          config: node.config,
+          position_x: node.position_x ?? 0,
+          position_y: node.position_y ?? 0,
+        })),
+      )
+      if (nodesErr) {
+        await admin.from('flows').delete().eq('id', flow.id)
+        return NextResponse.json({ error: nodesErr.message }, { status: 500 })
+      }
+    }
+
+    return NextResponse.json({ flow }, { status: 201 })
+  }
 
   // -------- Template clone path --------
   if (body.template_slug) {
@@ -122,6 +216,10 @@ export async function POST(request: Request) {
         source_template_slug: template.slug,
         source_template_version: template.version,
         source_template_schema_version: template.schema_version,
+        channel_types:
+          body.channel_types === undefined
+            ? template.channel_types
+            : channelTypesResult.channel_types,
       })
       .select()
       .single()
@@ -170,6 +268,7 @@ export async function POST(request: Request) {
       status: 'draft',
       trigger_type,
       trigger_config: body.trigger_config ?? {},
+      channel_types: channelTypesResult.channel_types,
     })
     .select()
     .single()

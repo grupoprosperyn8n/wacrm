@@ -34,6 +34,7 @@ export async function GET() {
     tags: t.tags,
     source: t.source,
     clone_policy: t.clone_policy,
+    channel_types: t.channel_types,
     node_count: t.nodes.length,
   }))
   return NextResponse.json({ templates })

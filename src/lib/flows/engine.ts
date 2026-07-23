@@ -2,7 +2,7 @@
  * Flow runner.
  *
  * The single entry point `dispatchInboundToFlows` is called by the
- * WhatsApp webhook on every inbound message *for an account that has
+ * channel webhook on every inbound message *for an account that has
  * opted into the Flows beta*. It decides whether the message belongs
  * to an active conversation flow (advance it) or matches the entry
  * trigger of an active flow (start a new run) — and reports back to
@@ -54,6 +54,8 @@ import { decideFallback, resolveFallbackPolicy } from "./fallback";
 import { loadAiConfig } from "@/lib/ai/config";
 import { generateReply } from "@/lib/ai/generate";
 import type { ChatMessage } from "@/lib/ai/types";
+import { channelScopeMatches } from "@/lib/channels/channel-scope";
+import type { ChannelType } from "@/types";
 import {
   type CollectInputNodeConfig,
   type ConditionNodeConfig,
@@ -602,6 +604,7 @@ async function loadActiveRunForContact(
   db: AdminClient,
   accountId: string,
   contactId: string,
+  channel: ChannelType,
 ): Promise<FlowRunRow | null> {
   // The partial unique index `idx_one_active_run_per_contact` was
   // rebuilt in migration 017 over `(account_id, contact_id)` — so
@@ -613,10 +616,11 @@ async function loadActiveRunForContact(
   // stale one.
   const { data, error } = await db
     .from("flow_runs")
-    .select("*")
+    .select("*, conversations!inner(channel)")
     .eq("account_id", accountId)
     .eq("contact_id", contactId)
     .eq("status", "active")
+    .eq("conversations.channel", channel)
     .order("started_at", { ascending: false })
     .limit(1);
   if (error) {
@@ -740,6 +744,7 @@ async function findEntryFlow(
   accountId: string,
   message: ParsedInbound,
   isFirstInbound: boolean,
+  channel: ChannelType,
 ): Promise<FlowRow | null> {
   // Only text messages can match an entry trigger. Interactive replies
   // are responses to existing prompts; they never start a new flow.
@@ -758,6 +763,7 @@ async function findEntryFlow(
 
   const typed = flows as FlowRow[];
   for (const flow of typed) {
+    if (!channelScopeMatches(flow.channel_types, channel)) continue;
     if (flow.trigger_type === "keyword") {
       if (matchesKeywordTrigger(
         message.text,
@@ -1390,12 +1396,21 @@ export async function dispatchInboundToFlows(
       db,
       input.accountId,
       input.contactId,
+      input.channel,
     );
+
+    let channelActiveRun = activeRun;
+    if (channelActiveRun) {
+      const activeFlow = await loadFlow(db, channelActiveRun.flow_id);
+      if (!activeFlow || !channelScopeMatches(activeFlow.channel_types, input.channel)) {
+        channelActiveRun = null;
+      }
+    }
 
     // Idempotency — only matters if there's already a run for this
     // contact. For new runs, the partial unique index catches duplicate
     // starts at INSERT time.
-    if (activeRun) {
+    if (channelActiveRun) {
       const dupe = await isDuplicateInbound(
         db,
         input.accountId,
@@ -1405,14 +1420,14 @@ export async function dispatchInboundToFlows(
       if (dupe) {
         return {
           consumed: true,
-          flow_run_id: activeRun.id,
+          flow_run_id: channelActiveRun.id,
           outcome: "duplicate_inbound_ignored",
         };
       }
       // One SELECT for the whole flow's nodes — advance loop is now
       // in-memory. See loadAllNodes.
-      const nodes = await loadAllNodes(db, activeRun.flow_id);
-      return handleReplyForActiveRun(db, activeRun, input.message, nodes);
+      const nodes = await loadAllNodes(db, channelActiveRun.flow_id);
+      return handleReplyForActiveRun(db, channelActiveRun, input.message, nodes);
     }
 
     // No active run → look for a flow whose entry trigger matches.
@@ -1421,6 +1436,7 @@ export async function dispatchInboundToFlows(
       input.accountId,
       input.message,
       input.isFirstInboundMessage,
+      input.channel,
     );
     if (!flow || !flow.entry_node_id) {
       return { consumed: false, outcome: "no_match" };

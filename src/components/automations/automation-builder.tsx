@@ -56,7 +56,9 @@ import type {
   KeywordMatchTriggerConfig,
   MessageTemplate,
   Tag as TagRecord,
+  ChannelType,
 } from "@/types"
+import { ChannelScopeSelector } from "@/components/channels/channel-scope-selector"
 import {
   InteractiveBuilder,
   blankButtonsPayload,
@@ -86,6 +88,7 @@ export interface BuilderInitial {
   trigger_type: AutomationTriggerType
   trigger_config: Record<string, unknown>
   is_active: boolean
+  channel_types: ChannelType[]
   steps: BuilderStep[]
   template?: string | null
 }
@@ -681,6 +684,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
         trigger_type: state.trigger_type,
         trigger_config: state.trigger_config,
         is_active: state.is_active,
+        channel_types: state.channel_types,
         steps: toApiSteps(state.steps),
         template: state.template ?? undefined,
       }
@@ -765,6 +769,10 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
         <div className="absolute inset-0 bg-[radial-gradient(circle,var(--border)_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
         <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-0 px-4 py-10">
           <ResourcesProvider>
+            <ChannelScopeSelector
+              value={state.channel_types}
+              onChange={(channel_types) => patchTop("channel_types", channel_types)}
+            />
             <TriggerCard
               type={state.trigger_type}
               config={state.trigger_config}

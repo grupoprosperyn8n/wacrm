@@ -21,6 +21,7 @@
 
 import { SYSTEM_SNAPSHOT_TEMPLATE } from '@/lib/templates/metadata';
 import type { TemplateMetadata } from '@/lib/templates/metadata';
+import { ALL_CHANNEL_TYPES } from '@/lib/channels/channel-scope';
 import type {
   CollectInputNodeConfig,
   ConditionNodeConfig,
@@ -77,6 +78,7 @@ const WELCOME_MENU: FlowTemplate = {
   schema_version: 1,
   category: "support",
   tags: ["welcome", "routing", "support"],
+  channel_types: [...ALL_CHANNEL_TYPES],
   ...SYSTEM_SNAPSHOT_TEMPLATE,
   name: "Menú de bienvenida",
   description:
@@ -137,6 +139,7 @@ const FAQ_BOT: FlowTemplate = {
   schema_version: 1,
   category: "support",
   tags: ["faq", "self-service", "support"],
+  channel_types: [...ALL_CHANNEL_TYPES],
   ...SYSTEM_SNAPSHOT_TEMPLATE,
   name: "Bot de preguntas frecuentes",
   description:
@@ -242,6 +245,7 @@ const LEAD_CAPTURE: FlowTemplate = {
   schema_version: 1,
   category: "sales",
   tags: ["lead-capture", "sales", "handoff"],
+  channel_types: [...ALL_CHANNEL_TYPES],
   ...SYSTEM_SNAPSHOT_TEMPLATE,
   name: "Captura de leads",
   description:
@@ -302,6 +306,114 @@ const LEAD_CAPTURE: FlowTemplate = {
 };
 
 // ============================================================
+// 4. Support handoff — a compact general-purpose human escalation
+// ============================================================
+const SUPPORT_HANDOFF: FlowTemplate = {
+  slug: "support_handoff",
+  version: "1.0.0",
+  schema_version: 1,
+  category: "support",
+  tags: ["support", "handoff", "human"],
+  channel_types: [...ALL_CHANNEL_TYPES],
+  ...SYSTEM_SNAPSHOT_TEMPLATE,
+  name: "Transferencia a soporte",
+  description:
+    "Confirma que recibiste la consulta y transfiere la conversación a una persona del equipo.",
+  icon: "MessageSquare",
+  trigger_type: "keyword",
+  trigger_config: {
+    keywords: ["soporte", "ayuda", "agente"],
+    match_type: "contains",
+  },
+  entry_node_id: "start",
+  nodes: [
+    {
+      node_key: "start",
+      node_type: "start",
+      config: { next_node_key: "acknowledge" },
+    },
+    {
+      node_key: "acknowledge",
+      node_type: "send_message",
+      config: {
+        text: "Recibí tu consulta. Una persona del equipo te atenderá en breve.",
+        next_node_key: "handoff",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "handoff",
+      node_type: "handoff",
+      config: {
+        note: "El cliente solicitó ayuda de soporte desde una plantilla general.",
+      } as HandoffNodeConfig,
+    },
+  ],
+};
+
+// ============================================================
+// 5. Quote request — captures the need before routing to a human
+// ============================================================
+const QUOTE_REQUEST: FlowTemplate = {
+  slug: "quote_request",
+  version: "1.0.0",
+  schema_version: 1,
+  category: "sales",
+  tags: ["quote", "lead-capture", "sales"],
+  channel_types: [...ALL_CHANNEL_TYPES],
+  ...SYSTEM_SNAPSHOT_TEMPLATE,
+  name: "Solicitud de presupuesto",
+  description:
+    "Recopila qué necesita el cliente y cómo contactarlo antes de transferir la oportunidad a ventas.",
+  icon: "UserPlus",
+  trigger_type: "keyword",
+  trigger_config: {
+    keywords: ["presupuesto", "cotización", "precio"],
+    match_type: "contains",
+  },
+  entry_node_id: "start",
+  nodes: [
+    {
+      node_key: "start",
+      node_type: "start",
+      config: { next_node_key: "intro" },
+    },
+    {
+      node_key: "intro",
+      node_type: "send_message",
+      config: {
+        text: "Perfecto. Te haré dos preguntas rápidas para preparar tu solicitud.",
+        next_node_key: "ask_need",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "ask_need",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "¿Qué producto o servicio estás buscando?",
+        var_key: "request",
+        next_node_key: "ask_contact",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "ask_contact",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Gracias. ¿Cuál es la mejor forma de contactarte?",
+        var_key: "contact_preference",
+        next_node_key: "handoff",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "handoff",
+      node_type: "handoff",
+      config: {
+        note: "Solicitud de presupuesto: {{vars.request}}. Contacto preferido: {{vars.contact_preference}}.",
+      } as HandoffNodeConfig,
+    },
+  ],
+};
+
+// ============================================================
 // Registry
 // ============================================================
 
@@ -309,6 +421,8 @@ const TEMPLATES: Record<string, FlowTemplate> = {
   welcome_menu: WELCOME_MENU,
   faq_bot: FAQ_BOT,
   lead_capture: LEAD_CAPTURE,
+  support_handoff: SUPPORT_HANDOFF,
+  quote_request: QUOTE_REQUEST,
 };
 
 export function getFlowTemplate(slug: string): FlowTemplate | null {

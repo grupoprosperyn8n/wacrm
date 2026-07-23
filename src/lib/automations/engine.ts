@@ -22,7 +22,8 @@ import type {
 import { supabaseAdmin } from './admin-client'
 import { engineSendTemplate, engineSendInteractive } from './meta-send'
 import { engineDispatcherSend } from './engine-send'
-import type { ChannelType } from '@/lib/messaging/dispatcher'
+import type { ChannelType } from '@/types'
+import { channelScopeMatches } from '@/lib/channels/channel-scope'
 import { validateInteractivePayload } from '@/lib/whatsapp/interactive'
 import { isDeliverableUrl } from '@/lib/webhooks/ssrf'
 import { loadAiConfig } from '@/lib/ai/config'
@@ -56,6 +57,8 @@ export interface DispatchInput {
    *  needed (sender identity for outbound messages, log audit). */
   accountId: string
   triggerType: AutomationTriggerType
+  /** Inbound channel used to filter channel-scoped automations. */
+  channel?: ChannelType
   contactId?: string | null
   context?: AutomationContext
 }
@@ -110,6 +113,7 @@ export async function runAutomationsForTrigger(input: DispatchInput): Promise<vo
     if (!automations || automations.length === 0) return
 
     for (const automation of automations as Automation[]) {
+      if (!channelScopeMatches(automation.channel_types, input.channel)) continue
       if (!triggerMatches(automation, input.context)) continue
       try {
         await executeAutomation(automation, input)

@@ -46,6 +46,12 @@ export async function POST(
       trigger_type: original.trigger_type,
       trigger_config: original.trigger_config,
       is_active: false,
+      channel_types: original.channel_types,
+      source_template_slug: original.source_template_slug,
+      source_template_version: original.source_template_version,
+      source_template_schema_version: original.source_template_schema_version,
+      execution_count: 0,
+      last_executed_at: null,
     })
     .select()
     .single()
