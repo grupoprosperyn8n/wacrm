@@ -46,7 +46,7 @@ export default function NewAutomationPage() {
       is_active: false,
       steps: [],
     }
-  }, [template])
+  }, [template, t])
 
   return <AutomationBuilder initial={initial} />
 }

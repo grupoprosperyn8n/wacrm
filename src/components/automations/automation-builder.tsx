@@ -1127,7 +1127,7 @@ function StepRenderer({
                 <span className="truncate text-sm font-medium text-foreground">
                   {t(`steps.${meta.label}`)}
                 </span>
-                {(step.step_config as any)._notes && (
+                {Boolean(step.step_config._notes) && (
                   <FileText className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-label="Tiene notas" />
                 )}
               </div>
