@@ -57,6 +57,10 @@ interface NodeConfigFormProps {
   onUpdateConfig: (patch: Record<string, unknown>) => void;
 }
 
+function sanitizeVarNameInput(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_]/g, "").replace(/^[0-9]+/, "");
+}
+
 export function NodeConfigForm({
   node,
   allNodes,
@@ -199,12 +203,23 @@ export function NodeConfigForm({
       const hc = cfg as {
         url?: string;
         method?: string;
-        headers?: Array<{ key: string; value: string }>;
+        headers?: unknown;
         body_template?: string;
         response_var?: string;
         next_node_key?: string;
       };
-      const headers = hc.headers ?? [];
+      const headers = Array.isArray(hc.headers)
+        ? hc.headers.map((h) => {
+            const row =
+              h && typeof h === "object"
+                ? (h as { key?: unknown; value?: unknown })
+                : {};
+            return {
+              key: typeof row.key === "string" ? row.key : "",
+              value: typeof row.value === "string" ? row.value : "",
+            };
+          })
+        : [];
       const setHeader = (idx: number, patch: Partial<{ key: string; value: string }>) =>
         onUpdateConfig({
           headers: headers.map((h, i) => (i === idx ? { ...h, ...patch } : h)),
@@ -270,7 +285,7 @@ export function NodeConfigForm({
           <TextRow
             label={t("responseVar")}
             value={hc.response_var ?? ""}
-            onChange={(v) => onUpdateConfig({ response_var: v })}
+            onChange={(v) => onUpdateConfig({ response_var: sanitizeVarNameInput(v) })}
           />
           <NextNodeRow
             label={t("advancesTo")}
@@ -307,7 +322,7 @@ export function NodeConfigForm({
           <TextRow
             label={t("responseVar")}
             value={ac.response_var ?? ""}
-            onChange={(v) => onUpdateConfig({ response_var: v })}
+            onChange={(v) => onUpdateConfig({ response_var: sanitizeVarNameInput(v) })}
           />
           <NextNodeRow
             label={t("advancesTo")}

@@ -1299,7 +1299,7 @@
         "addHeader": "Añadir encabezado",
         "bodyTemplate": "Cuerpo (plantilla)",
         "responseVar": "Variable de respuesta",
-        "systemPrompt": "System prompt",
+        "systemPrompt": "Prompt del sistema",
         "userPromptTemplate": "Instrucción (plantilla)"
       },
       "categories": {

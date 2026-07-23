@@ -32,6 +32,17 @@
  *     INSERT raises 23505 and the runner catches & exits.
  */
 
+import type { LookupAddress } from "node:dns";
+import { lookup } from "node:dns/promises";
+import { isIP, type LookupFunction } from "node:net";
+
+import {
+  Agent,
+  fetch as undiciFetch,
+  type RequestInit as UndiciRequestInit,
+  type Response as UndiciResponse,
+} from "undici";
+
 import { supabaseAdmin } from "./admin-client";
 import {
   engineSendInteractiveButtons,
@@ -177,6 +188,415 @@ export function evaluateConditionPredicate(args: {
 // ============================================================
 
 type AdminClient = ReturnType<typeof supabaseAdmin>;
+
+const EXTERNAL_ACTION_TIMEOUT_MS = 15_000;
+const EXTERNAL_ACTION_STALE_MARGIN_MS = 5_000;
+const EXTERNAL_ACTION_STALE_MS =
+  EXTERNAL_ACTION_TIMEOUT_MS + EXTERNAL_ACTION_STALE_MARGIN_MS;
+const MAX_HTTP_URL_BYTES = 8 * 1024;
+const MAX_HTTP_BODY_BYTES = 1024 * 1024;
+const MAX_HTTP_HEADER_COUNT = 64;
+const MAX_HTTP_HEADER_BYTES = 64 * 1024;
+const VAR_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const HTTP_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
+
+const BLOCKED_HEADER_NAMES = new Set([
+  "connection",
+  "content-length",
+  "host",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+]);
+
+function validateResponseVarName(name: unknown): string {
+  if (typeof name !== "string" || !VAR_NAME_RE.test(name)) {
+    throw new Error("invalid_response_var");
+  }
+  return name;
+}
+
+function assertWithinBytes(value: string, maxBytes: number, label: string): void {
+  if (new TextEncoder().encode(value).length > maxBytes) {
+    throw new Error(`${label}_too_large`);
+  }
+}
+
+function publicErrorDetail(err: unknown): string {
+  if (!(err instanceof Error)) return "external_action_failed";
+  if (err.message === "timeout") return "timeout";
+  if (err.name === "AbortError") return "timeout";
+  if (err.message.startsWith("http_status_")) return err.message;
+  if (
+    [
+      "blocked_hostname",
+      "blocked_header_name",
+      "blocked_ip_address",
+      "blocked_resolved_address",
+      "invalid_header_name",
+      "invalid_headers",
+      "invalid_header_value",
+      "invalid_http_method",
+      "invalid_response_var",
+      "invalid_url",
+      "request_body_too_large",
+      "response_body_too_large",
+      "unsupported_protocol",
+      "url_credentials_not_allowed",
+      "url_too_large",
+      "too_many_headers",
+      "headers_too_large",
+    ].includes(err.message)
+  ) {
+    return err.message;
+  }
+  return "external_action_failed";
+}
+
+function normalizeHostname(hostname: string): string {
+  return hostname.replace(/^\[(.*)\]$/, "$1").replace(/\.$/, "").toLowerCase();
+}
+
+function parseIpv4(address: string): number[] | null {
+  const parts = address.split(".");
+  if (parts.length !== 4) return null;
+  const bytes: number[] = [];
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part)) return null;
+    const value = Number(part);
+    if (!Number.isInteger(value) || value < 0 || value > 255) return null;
+    bytes.push(value);
+  }
+  return bytes;
+}
+
+function ipv4ToNumber(address: string): number | null {
+  const bytes = parseIpv4(address);
+  if (!bytes) return null;
+  return (
+    bytes[0] * 256 * 256 * 256 +
+    bytes[1] * 256 * 256 +
+    bytes[2] * 256 +
+    bytes[3]
+  );
+}
+
+function ipv4InRange(address: string, cidr: string): boolean {
+  const ip = ipv4ToNumber(address);
+  const [base, prefixRaw] = cidr.split("/");
+  const baseNum = ipv4ToNumber(base);
+  const prefix = Number(prefixRaw);
+  if (ip === null || baseNum === null || !Number.isInteger(prefix)) return false;
+  const blockSize = Math.pow(2, 32 - prefix);
+  return Math.floor(ip / blockSize) === Math.floor(baseNum / blockSize);
+}
+
+function isPublicIpv4(address: string): boolean {
+  if (!parseIpv4(address)) return false;
+  return ![
+    "0.0.0.0/8",
+    "10.0.0.0/8",
+    "100.64.0.0/10",
+    "127.0.0.0/8",
+    "169.254.0.0/16",
+    "172.16.0.0/12",
+    "192.0.0.0/24",
+    "192.0.2.0/24",
+    "192.168.0.0/16",
+    "198.18.0.0/15",
+    "198.51.100.0/24",
+    "203.0.113.0/24",
+    "224.0.0.0/4",
+    "240.0.0.0/4",
+  ].some((cidr) => ipv4InRange(address, cidr));
+}
+
+function parseIpv6(address: string): number[] | null {
+  const zoneIndex = address.indexOf("%");
+  const clean = (zoneIndex >= 0 ? address.slice(0, zoneIndex) : address).toLowerCase();
+  if (!clean.includes(":")) return null;
+
+  const ipv4Match = clean.match(/(\d{1,3}(?:\.\d{1,3}){3})$/);
+  const ipv4Bytes = ipv4Match ? parseIpv4(ipv4Match[1]) : null;
+  if (ipv4Match && !ipv4Bytes) return null;
+  const ipv6Part = ipv4Match
+    ? clean.slice(0, clean.length - ipv4Match[1].length) + "0:0"
+    : clean;
+  const halves = ipv6Part.split("::");
+  if (halves.length > 2) return null;
+
+  const parseHextets = (part: string): number[] | null => {
+    if (!part) return [];
+    const out: number[] = [];
+    for (const token of part.split(":")) {
+      if (!/^[0-9a-f]{1,4}$/.test(token)) return null;
+      out.push(parseInt(token, 16));
+    }
+    return out;
+  };
+
+  const left = parseHextets(halves[0]);
+  const right = parseHextets(halves[1] ?? "");
+  if (!left || !right) return null;
+  const missing = 8 - left.length - right.length;
+  if (halves.length === 1 && missing !== 0) return null;
+  if (halves.length === 2 && missing < 0) return null;
+  const hextets = [...left, ...Array(Math.max(0, missing)).fill(0), ...right];
+  if (ipv4Bytes) {
+    hextets[6] = ipv4Bytes[0] * 256 + ipv4Bytes[1];
+    hextets[7] = ipv4Bytes[2] * 256 + ipv4Bytes[3];
+  }
+  return hextets.length === 8 ? hextets : null;
+}
+
+function isIpv4MappedIpv6(hextets: number[]): boolean {
+  return (
+    hextets[0] === 0 &&
+    hextets[1] === 0 &&
+    hextets[2] === 0 &&
+    hextets[3] === 0 &&
+    hextets[4] === 0 &&
+    hextets[5] === 0xffff
+  );
+}
+
+function mappedIpv4(hextets: number[]): string {
+  return [
+    Math.floor(hextets[6] / 256),
+    hextets[6] % 256,
+    Math.floor(hextets[7] / 256),
+    hextets[7] % 256,
+  ].join(".");
+}
+
+function isPublicIpv6(address: string): boolean {
+  const hextets = parseIpv6(address);
+  if (!hextets) return false;
+  if (isIpv4MappedIpv6(hextets)) return isPublicIpv4(mappedIpv4(hextets));
+  const allZero = hextets.every((h) => h === 0);
+  if (allZero) return false;
+  if (hextets[0] === 0 && hextets.slice(1, 7).every((h) => h === 0) && hextets[7] === 1) return false;
+  if ((hextets[0] & 0xfe00) === 0xfc00) return false; // fc00::/7 unique local
+  if ((hextets[0] & 0xffc0) === 0xfe80) return false; // fe80::/10 link-local
+  if ((hextets[0] & 0xff00) === 0xff00) return false; // ff00::/8 multicast
+  if (hextets[0] === 0x100 && hextets.slice(1).every((h) => h === 0)) return false; // 100::/64 discard-only
+  if (hextets[0] === 0x2001 && hextets[1] === 0x0db8) return false; // documentation
+  return true;
+}
+
+function isPublicIpAddress(address: string): boolean {
+  const family = isIP(address);
+  if (family === 4) return isPublicIpv4(address);
+  if (family === 6) return isPublicIpv6(address);
+  return false;
+}
+
+function assertPublicHostname(hostname: string): void {
+  if (
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".internal") ||
+    hostname === "metadata.google.internal"
+  ) {
+    throw new Error("blocked_hostname");
+  }
+}
+
+async function lookupPublicAddresses(
+  hostname: string,
+  signal: AbortSignal,
+): Promise<Array<LookupAddress & { family: 4 | 6 }>> {
+  let abortHandler: (() => void) | null = null;
+  const result = await Promise.race([
+    lookup(hostname, { all: true, verbatim: true }),
+    new Promise<never>((_, reject) => {
+      abortHandler = () => reject(new DOMException("Timeout", "AbortError"));
+      if (signal.aborted) abortHandler();
+      else signal.addEventListener("abort", abortHandler, { once: true });
+    }),
+  ]);
+  if (abortHandler) signal.removeEventListener("abort", abortHandler);
+  const publicAddresses = result
+    .map((entry) => {
+      const family = isIP(entry.address);
+      if (family !== 4 && family !== 6) return null;
+      if (!isPublicIpAddress(entry.address)) return null;
+      return { address: entry.address, family };
+    })
+    .filter((entry): entry is LookupAddress & { family: 4 | 6 } => entry !== null);
+  if (!publicAddresses.length || publicAddresses.length !== result.length) {
+    throw new Error("blocked_resolved_address");
+  }
+  return publicAddresses;
+}
+
+interface ValidatedPublicHttpUrl {
+  url: URL;
+  hostname: string;
+  addresses: Array<LookupAddress & { family: 4 | 6 }>;
+}
+
+async function validatePublicHttpUrl(
+  rawUrl: string,
+  signal: AbortSignal,
+): Promise<ValidatedPublicHttpUrl> {
+  assertWithinBytes(rawUrl, MAX_HTTP_URL_BYTES, "url");
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new Error("invalid_url");
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("unsupported_protocol");
+  }
+  if (url.username || url.password) {
+    throw new Error("url_credentials_not_allowed");
+  }
+  const hostname = normalizeHostname(url.hostname);
+  assertPublicHostname(hostname);
+  let addresses: Array<LookupAddress & { family: 4 | 6 }>;
+  if (isIP(hostname)) {
+    if (!isPublicIpAddress(hostname)) throw new Error("blocked_ip_address");
+    addresses = [{ address: hostname, family: isIP(hostname) as 4 | 6 }];
+  } else {
+    addresses = await lookupPublicAddresses(hostname, signal);
+  }
+  return { url, hostname, addresses };
+}
+
+function buildPinnedLookup(
+  expectedHostname: string,
+  addresses: Array<LookupAddress & { family: 4 | 6 }>,
+): LookupFunction {
+  return (hostname, options, callback) => {
+    if (normalizeHostname(hostname) !== expectedHostname) {
+      callback(new Error("unexpected_lookup_hostname"), "", 0);
+      return;
+    }
+    if (options.all) {
+      callback(null, addresses);
+      return;
+    }
+    const [first] = addresses;
+    callback(null, first.address, first.family);
+  };
+}
+
+function buildPinnedHttpAgent(target: ValidatedPublicHttpUrl): Agent {
+  return new Agent({
+    bodyTimeout: EXTERNAL_ACTION_TIMEOUT_MS,
+    headersTimeout: EXTERNAL_ACTION_TIMEOUT_MS,
+    connectTimeout: EXTERNAL_ACTION_TIMEOUT_MS,
+    maxResponseSize: MAX_HTTP_BODY_BYTES,
+    autoSelectFamily: true,
+    autoSelectFamilyAttemptTimeout: 1_000,
+    connect: {
+      lookup: buildPinnedLookup(target.hostname, target.addresses),
+    },
+  });
+}
+
+function isRecentExternalActionClaim(lastAdvancedAt: string): boolean {
+  const advancedAtMs = Date.parse(lastAdvancedAt);
+  return (
+    Number.isFinite(advancedAtMs) &&
+    Date.now() - advancedAtMs <= EXTERNAL_ACTION_STALE_MS
+  );
+}
+
+function buildHttpHeaders(
+  headers: HttpRequestNodeConfig["headers"],
+  vars: Record<string, unknown>,
+): Record<string, string> {
+  if (headers !== undefined && !Array.isArray(headers)) {
+    throw new Error("invalid_headers");
+  }
+  const entries = headers ?? [];
+  if (entries.length > MAX_HTTP_HEADER_COUNT) {
+    throw new Error("too_many_headers");
+  }
+  const out: Record<string, string> = {};
+  let totalBytes = 0;
+  for (const h of entries) {
+    if (!h.key) continue;
+    const key = h.key.trim();
+    const lower = key.toLowerCase();
+    if (!/^[!#$%&'*+.^_`|~0-9a-zA-Z-]+$/.test(key)) {
+      throw new Error("invalid_header_name");
+    }
+    if (BLOCKED_HEADER_NAMES.has(lower) || lower.startsWith("proxy-")) {
+      throw new Error("blocked_header_name");
+    }
+    const value = interpolateVars(h.value ?? "", vars);
+    if (/[\r\n]/.test(key) || /[\r\n]/.test(value)) {
+      throw new Error("invalid_header_value");
+    }
+    totalBytes += new TextEncoder().encode(`${key}: ${value}\r\n`).length;
+    if (totalBytes > MAX_HTTP_HEADER_BYTES) {
+      throw new Error("headers_too_large");
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
+async function readLimitedResponseText(
+  resp: UndiciResponse,
+  signal: AbortSignal,
+): Promise<string> {
+  if (!resp.body) return "";
+  const reader = resp.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      if (signal.aborted) throw new DOMException("Timeout", "AbortError");
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > MAX_HTTP_BODY_BYTES) throw new Error("response_body_too_large");
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+function parseResponseValue(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("timeout")), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 async function loadActiveRunForContact(
   db: AdminClient,
@@ -458,7 +878,7 @@ async function executeHandoff(
     note: cfg.note ?? null,
     assigned_to: cfg.assign_to ?? null,
   });
-  await endRun(db, run.id, "handed_off", "handoff_node");
+  await endRun(db, run.id, "handed_off", "handoff_node", run.vars);
 }
 
 /**
@@ -533,6 +953,7 @@ async function endRun(
   runId: string,
   status: "completed" | "handed_off" | "timed_out" | "failed",
   reason: string,
+  vars?: Record<string, unknown>,
 ): Promise<void> {
   await db
     .from("flow_runs")
@@ -540,6 +961,7 @@ async function endRun(
       status,
       ended_at: new Date().toISOString(),
       end_reason: reason,
+      ...(vars ? { vars } : {}),
     })
     .eq("id", runId);
 }
@@ -556,8 +978,16 @@ async function advanceFromNodeKey(
   run: FlowRunRow,
   startNodeKey: string,
   nodes: Map<string, FlowNodeRow>,
-): Promise<{ outcome: "advanced" | "completed" | "handed_off" }> {
+  opts: { resetRepromptCountOnClaim?: boolean } = {},
+): Promise<{
+  outcome:
+    | "advanced"
+    | "completed"
+    | "handed_off"
+    | "duplicate_inbound_ignored";
+}> {
   let currentKey: string | null = startNodeKey;
+  let resetRepromptCountOnClaim = opts.resetRepromptCountOnClaim ?? false;
   // Defensive cap — if a flow has a cycle (which the validator
   // SHOULD catch but doesn't yet in v1), we bail rather than loop.
   for (let safety = 0; safety < 64; safety += 1) {
@@ -565,7 +995,7 @@ async function advanceFromNodeKey(
       await logEvent(db, run.id, "error", null, {
         reason: "next_node_key was null mid-advance",
       });
-      await endRun(db, run.id, "failed", "missing_next_node");
+      await endRun(db, run.id, "failed", "missing_next_node", run.vars);
       return { outcome: "completed" };
     }
     const node: FlowNodeRow | null = nodes.get(currentKey) ?? null;
@@ -573,8 +1003,33 @@ async function advanceFromNodeKey(
       await logEvent(db, run.id, "error", currentKey, {
         reason: "node_not_found",
       });
-      await endRun(db, run.id, "failed", "node_not_found");
+      await endRun(db, run.id, "failed", "node_not_found", run.vars);
       return { outcome: "completed" };
+    }
+    const claimedAt = new Date().toISOString();
+    const claimed = await advanceCurrentNodeKey(
+      db,
+      run.id,
+      run.current_node_key,
+      currentKey,
+      run.vars,
+      {
+        expectedLastAdvancedAt: run.last_advanced_at,
+        lastAdvancedAt: claimedAt,
+        repromptCount: resetRepromptCountOnClaim ? 0 : undefined,
+      },
+    );
+    if (!claimed) {
+      await logEvent(db, run.id, "error", node.node_key, {
+        reason: "lost_race_during_advance",
+      });
+      return { outcome: "duplicate_inbound_ignored" };
+    }
+    run.current_node_key = currentKey;
+    run.last_advanced_at = claimedAt;
+    if (resetRepromptCountOnClaim) {
+      run.reprompt_count = 0;
+      resetRepromptCountOnClaim = false;
     }
     await logEvent(db, run.id, "node_entered", node.node_key, {
       node_type: node.node_type,
@@ -603,7 +1058,7 @@ async function advanceFromNodeKey(
           reason: "send_text_failed",
           detail: err instanceof Error ? err.message : String(err),
         });
-        await endRun(db, run.id, "failed", "send_text_failed");
+        await endRun(db, run.id, "failed", "send_text_failed", run.vars);
         return { outcome: "completed" };
       }
       currentKey = cfg.next_node_key;
@@ -634,7 +1089,7 @@ async function advanceFromNodeKey(
           reason: "send_media_failed",
           detail: err instanceof Error ? err.message : String(err),
         });
-        await endRun(db, run.id, "failed", "send_media_failed");
+        await endRun(db, run.id, "failed", "send_media_failed", run.vars);
         return { outcome: "completed" };
       }
       currentKey = cfg.next_node_key;
@@ -672,19 +1127,8 @@ async function advanceFromNodeKey(
           reason: "collect_input_prompt_failed",
           detail: err instanceof Error ? err.message : String(err),
         });
-        await endRun(db, run.id, "failed", "collect_input_prompt_failed");
+        await endRun(db, run.id, "failed", "collect_input_prompt_failed", run.vars);
         return { outcome: "completed" };
-      }
-      const advanced = await advanceCurrentNodeKey(
-        db,
-        run.id,
-        run.current_node_key,
-        node.node_key,
-      );
-      if (!advanced) {
-        await logEvent(db, run.id, "error", node.node_key, {
-          reason: "lost_race_during_advance",
-        });
       }
       return { outcome: "advanced" };
     }
@@ -700,7 +1144,7 @@ async function advanceFromNodeKey(
           reason: "condition_evaluation_failed",
           detail: err instanceof Error ? err.message : String(err),
         });
-        await endRun(db, run.id, "failed", "condition_evaluation_failed");
+        await endRun(db, run.id, "failed", "condition_evaluation_failed", run.vars);
         return { outcome: "completed" };
       }
       currentKey =
@@ -741,118 +1185,123 @@ async function advanceFromNodeKey(
     }
     if (node.node_type === "http_request") {
       const cfg = node.config as unknown as HttpRequestNodeConfig;
+      const controller = new AbortController();
+      let agent: Agent | null = null;
+      const timer = setTimeout(
+        () => controller.abort(),
+        EXTERNAL_ACTION_TIMEOUT_MS,
+      );
       try {
-        const url = interpolateVars(cfg.url, run.vars);
-        const headers: Record<string, string> = {};
-        for (const h of cfg.headers ?? []) {
-          if (h.key) headers[h.key] = interpolateVars(h.value, run.vars);
-        }
+        const responseVar = validateResponseVarName(cfg.response_var);
+        const target = await validatePublicHttpUrl(
+          interpolateVars(cfg.url, run.vars),
+          controller.signal,
+        );
+        agent = buildPinnedHttpAgent(target);
+        const method = cfg.method ?? "GET";
+        if (!HTTP_METHODS.has(method)) throw new Error("invalid_http_method");
+        const headers = buildHttpHeaders(cfg.headers, run.vars);
         const body = cfg.body_template
           ? interpolateVars(cfg.body_template, run.vars)
           : undefined;
-        const fetchOpts: RequestInit & { signal: AbortSignal } = {
-          method: cfg.method ?? "GET",
+        if (body !== undefined) {
+          assertWithinBytes(body, MAX_HTTP_BODY_BYTES, "request_body");
+        }
+        const fetchOpts: UndiciRequestInit = {
+          method,
           headers,
-          signal: AbortSignal.timeout(15_000),
+          redirect: "error",
+          signal: controller.signal,
+          dispatcher: agent,
         };
-        if (body && cfg.method !== "GET") fetchOpts.body = body;
+        if (body !== undefined && method !== "GET") fetchOpts.body = body;
 
-        const resp = await fetch(url, fetchOpts as RequestInit);
-        const responseText = await resp.text();
+        const resp = await undiciFetch(target.url, fetchOpts);
+        if (!resp.ok) {
+          throw new Error(`http_status_${resp.status}`);
+        }
+        const responseText = await readLimitedResponseText(
+          resp,
+          controller.signal,
+        );
+        const responseValue = parseResponseValue(responseText);
 
-        run.vars = { ...run.vars, [cfg.response_var]: responseText };
+        run.vars = { ...run.vars, [responseVar]: responseValue };
 
         await logEvent(db, run.id, "node_entered", node.node_key, {
-          url,
-          method: cfg.method ?? "GET",
+          node_type: "http_request",
+          method,
           status: resp.status,
-          response_var: cfg.response_var,
+          response_var: responseVar,
         });
       } catch (err) {
-        run.vars = {
-          ...run.vars,
-          [cfg.response_var]: `ERR: ${err instanceof Error ? err.message : String(err)}`,
-        };
         await logEvent(db, run.id, "error", node.node_key, {
+          node_type: "http_request",
           reason: "http_request_failed",
-          detail: err instanceof Error ? err.message : String(err),
+          detail: publicErrorDetail(err),
         });
+        await endRun(db, run.id, "failed", "http_request_failed", run.vars);
+        return { outcome: "completed" };
+      } finally {
+        clearTimeout(timer);
+        if (agent) await agent.close();
       }
-      currentKey = cfg.next_node_key;
+      currentKey = cfg.next_node_key ?? null;
       continue;
     }
     if (node.node_type === "ai_reply") {
       const cfg = node.config as unknown as AiReplyNodeConfig;
       try {
-        const aiConfig = await loadAiConfig(db, run.account_id);
-        if (!aiConfig) {
-          run.vars = { ...run.vars, [cfg.response_var]: "ERR: AI not configured for this account" };
-          currentKey = cfg.next_node_key;
-          continue;
-        }
-        const systemPrompt = cfg.system_prompt
-          ? interpolateVars(cfg.system_prompt, run.vars)
-          : "";
-        const userContent = cfg.user_prompt_template
-          ? interpolateVars(cfg.user_prompt_template, run.vars)
-          : "";
-        const messages: ChatMessage[] = userContent
-          ? [{ role: "user" as const, content: userContent }]
-          : [];
+        const responseVar = validateResponseVarName(cfg.response_var);
+        const result = await withTimeout(
+          (async () => {
+            const aiConfig = await loadAiConfig(db, run.account_id);
+            if (!aiConfig) {
+              throw new Error("ai_config_missing");
+            }
+            const systemPrompt = cfg.system_prompt
+              ? interpolateVars(cfg.system_prompt, run.vars)
+              : "";
+            const userContent = cfg.user_prompt_template
+              ? interpolateVars(cfg.user_prompt_template, run.vars)
+              : "";
+            const messages: ChatMessage[] = userContent
+              ? [{ role: "user" as const, content: userContent }]
+              : [];
 
-        const result = await generateReply({
-          config: aiConfig,
-          systemPrompt,
-          messages,
-        });
+            return generateReply({
+              config: aiConfig,
+              systemPrompt,
+              messages,
+            });
+          })(),
+          EXTERNAL_ACTION_TIMEOUT_MS,
+        );
 
-        run.vars = { ...run.vars, [cfg.response_var]: result.text };
+        run.vars = { ...run.vars, [responseVar]: result.text };
 
         await logEvent(db, run.id, "node_entered", node.node_key, {
-          response_var: cfg.response_var,
+          node_type: "ai_reply",
+          response_var: responseVar,
         });
       } catch (err) {
-        run.vars = {
-          ...run.vars,
-          [cfg.response_var]: `ERR: ${err instanceof Error ? err.message : String(err)}`,
-        };
         await logEvent(db, run.id, "error", node.node_key, {
+          node_type: "ai_reply",
           reason: "ai_reply_failed",
-          detail: err instanceof Error ? err.message : String(err),
+          detail: publicErrorDetail(err),
         });
+        await endRun(db, run.id, "failed", "ai_reply_failed", run.vars);
+        return { outcome: "completed" };
       }
-      currentKey = cfg.next_node_key;
+      currentKey = cfg.next_node_key ?? null;
       continue;
     }
     if (node.node_type === "send_buttons") {
       await sendButtonsAndSuspend(db, run, node);
-      // Persist the new current_node_key via optimistic UPDATE.
-      const advanced = await advanceCurrentNodeKey(
-        db,
-        run.id,
-        run.current_node_key,
-        node.node_key,
-      );
-      if (!advanced) {
-        await logEvent(db, run.id, "error", node.node_key, {
-          reason: "lost_race_during_advance",
-        });
-      }
       return { outcome: "advanced" };
     }
     if (node.node_type === "send_list") {
       await sendListAndSuspend(db, run, node);
-      const advanced = await advanceCurrentNodeKey(
-        db,
-        run.id,
-        run.current_node_key,
-        node.node_key,
-      );
-      if (!advanced) {
-        await logEvent(db, run.id, "error", node.node_key, {
-          reason: "lost_race_during_advance",
-        });
-      }
       return { outcome: "advanced" };
     }
     if (node.node_type === "handoff") {
@@ -861,21 +1310,21 @@ async function advanceFromNodeKey(
     }
     if (node.node_type === "end") {
       await logEvent(db, run.id, "completed", node.node_key);
-      await endRun(db, run.id, "completed", "end_node");
+      await endRun(db, run.id, "completed", "end_node", run.vars);
       return { outcome: "completed" };
     }
     // Unknown node type — shouldn't happen given the CHECK constraint.
     await logEvent(db, run.id, "error", node.node_key, {
       reason: `unknown_node_type:${node.node_type}`,
     });
-    await endRun(db, run.id, "failed", "unknown_node_type");
+    await endRun(db, run.id, "failed", "unknown_node_type", run.vars);
     return { outcome: "completed" };
   }
   // Safety break — log + fail.
   await logEvent(db, run.id, "error", currentKey, {
     reason: "advance_loop_safety_break",
   });
-  await endRun(db, run.id, "failed", "advance_loop_overflow");
+  await endRun(db, run.id, "failed", "advance_loop_overflow", run.vars);
   return { outcome: "completed" };
 }
 
@@ -890,21 +1339,35 @@ async function advanceCurrentNodeKey(
   runId: string,
   expectedOldKey: string | null,
   newKey: string,
+  vars: Record<string, unknown>,
+  opts: {
+    expectedLastAdvancedAt?: string;
+    lastAdvancedAt?: string;
+    repromptCount?: number;
+  } = {},
 ): Promise<boolean> {
+  const updatePayload: Record<string, unknown> = {
+    current_node_key: newKey,
+    last_advanced_at: opts.lastAdvancedAt ?? new Date().toISOString(),
+    vars,
+  };
+  if (opts.repromptCount !== undefined) {
+    updatePayload.reprompt_count = opts.repromptCount;
+  }
   // PostgREST: when expectedOldKey is null we can't `.eq` (would match
   // any row); use `.is('current_node_key', null)` instead.
   let q = db
     .from("flow_runs")
-    .update({
-      current_node_key: newKey,
-      last_advanced_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", runId)
     .eq("status", "active");
   if (expectedOldKey === null) {
     q = q.is("current_node_key", null);
   } else {
     q = q.eq("current_node_key", expectedOldKey);
+  }
+  if (opts.expectedLastAdvancedAt) {
+    q = q.eq("last_advanced_at", opts.expectedLastAdvancedAt);
   }
   const { data, error } = await q.select("id");
   if (error) {
@@ -996,7 +1459,7 @@ async function handleReplyForActiveRun(
   if (!run.current_node_key) {
     // Defensive — a run with status='active' but no current node is
     // malformed. Fail the run rather than spin.
-    await endRun(db, run.id, "failed", "active_run_missing_current_node");
+    await endRun(db, run.id, "failed", "active_run_missing_current_node", run.vars);
     return {
       consumed: true,
       flow_run_id: run.id,
@@ -1006,8 +1469,29 @@ async function handleReplyForActiveRun(
 
   const currentNode = nodes.get(run.current_node_key) ?? null;
   if (!currentNode) {
-    await endRun(db, run.id, "failed", "current_node_not_found");
+    await endRun(db, run.id, "failed", "current_node_not_found", run.vars);
     return { consumed: true, flow_run_id: run.id, outcome: "no_match" };
+  }
+
+  if (isAutoAdvancing(currentNode.node_type)) {
+    if (isRecentExternalActionClaim(run.last_advanced_at)) {
+      return {
+        consumed: true,
+        flow_run_id: run.id,
+        outcome: "duplicate_inbound_ignored",
+      };
+    }
+    const outcome = await advanceFromNodeKey(
+      db,
+      run,
+      currentNode.node_key,
+      nodes,
+    );
+    return {
+      consumed: true,
+      flow_run_id: run.id,
+      outcome: outcome.outcome,
+    };
   }
 
   // Two ways a reply can advance:
@@ -1016,6 +1500,7 @@ async function handleReplyForActiveRun(
   //
   // Everything else falls through to the fallback policy below.
   let matched: string | null = null;
+  let resetRepromptCountOnClaim = false;
   if (
     message.kind === "interactive_reply" &&
     (currentNode.node_type === "send_buttons" ||
@@ -1029,46 +1514,28 @@ async function handleReplyForActiveRun(
     const cfg = currentNode.config as unknown as CollectInputNodeConfig;
     const captured = message.text.trim();
     if (captured.length > 0 && cfg.var_key) {
-      // Persist captured value + reset reprompt count atomically.
+      // Keep the capture in memory until the next node is claimed. The
+      // claim's CAS persists vars, so concurrent replies cannot overwrite
+      // each other after losing the race.
       const newVars = { ...run.vars, [cfg.var_key]: captured };
-      const { error: capErr } = await db
-        .from("flow_runs")
-        .update({
-          vars: newVars,
-          reprompt_count: 0,
-        })
-        .eq("id", run.id);
-      if (!capErr) {
-        // Mirror the UPDATE in-memory so downstream interpolation in
-        // the advance loop sees the captured var without us having to
-        // re-SELECT the whole row.
-        run.vars = newVars;
-        run.reprompt_count = 0;
-        await logEvent(db, run.id, "node_entered", currentNode.node_key, {
-          captured_key: cfg.var_key,
-          captured_length: captured.length,
-        });
-        matched = cfg.next_node_key;
-      }
+      run.vars = newVars;
+      resetRepromptCountOnClaim = run.reprompt_count !== 0;
+      run.reprompt_count = 0;
+      await logEvent(db, run.id, "node_entered", currentNode.node_key, {
+        captured_key: cfg.var_key,
+        captured_length: captured.length,
+      });
+      matched = cfg.next_node_key;
     }
   }
 
   if (matched) {
-    // Reset reprompt count on a successful match. Skip the write when
-    // already 0 — the collect_input capture branch above already
-    // zeroed it, and interactive-reply matches against a fresh run
-    // (post-prior-reset) are also already 0. The previous re-read of
-    // the whole row was needed only because we weren't mirroring the
-    // capture UPDATE into the in-memory `run`; now that we do, the
-    // local copy is the source of truth.
-    if (run.reprompt_count !== 0) {
-      const { error } = await db
-        .from("flow_runs")
-        .update({ reprompt_count: 0 })
-        .eq("id", run.id);
-      if (!error) run.reprompt_count = 0;
-    }
-    const outcome = await advanceFromNodeKey(db, run, matched, nodes);
+    resetRepromptCountOnClaim =
+      resetRepromptCountOnClaim || run.reprompt_count !== 0;
+    if (resetRepromptCountOnClaim) run.reprompt_count = 0;
+    const outcome = await advanceFromNodeKey(db, run, matched, nodes, {
+      resetRepromptCountOnClaim,
+    });
     return {
       consumed: true,
       flow_run_id: run.id,
@@ -1132,11 +1599,11 @@ async function handleReplyForActiveRun(
     await logEvent(db, run.id, "handoff", run.current_node_key, {
       reason: "fallback_exhausted",
     });
-    await endRun(db, run.id, "handed_off", "fallback_exhausted");
+    await endRun(db, run.id, "handed_off", "fallback_exhausted", run.vars);
     return { consumed: true, flow_run_id: run.id, outcome: "handed_off" };
   }
   // action.type === 'end'
-  await endRun(db, run.id, "completed", "fallback_exhausted_end");
+  await endRun(db, run.id, "completed", "fallback_exhausted_end", run.vars);
   return { consumed: true, flow_run_id: run.id, outcome: "completed" };
 }
 

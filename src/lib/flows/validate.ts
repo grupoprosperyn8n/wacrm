@@ -25,6 +25,112 @@
 
 import { INTERACTIVE_LIMITS } from "@/lib/whatsapp/meta-api";
 
+const VAR_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const HTTP_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
+
+function normalizeHostname(hostname: string): string {
+  return hostname.replace(/^\[(.*)\]$/, "$1").replace(/\.$/, "").toLowerCase();
+}
+
+function parseIpv4(address: string): number[] | null {
+  const parts = address.split(".");
+  if (parts.length !== 4) return null;
+  const bytes: number[] = [];
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part)) return null;
+    const value = Number(part);
+    if (!Number.isInteger(value) || value < 0 || value > 255) return null;
+    bytes.push(value);
+  }
+  return bytes;
+}
+
+function ipv4ToNumber(address: string): number | null {
+  const bytes = parseIpv4(address);
+  if (!bytes) return null;
+  return (
+    bytes[0] * 256 * 256 * 256 +
+    bytes[1] * 256 * 256 +
+    bytes[2] * 256 +
+    bytes[3]
+  );
+}
+
+function ipv4InRange(address: string, cidr: string): boolean {
+  const ip = ipv4ToNumber(address);
+  const [base, prefixRaw] = cidr.split("/");
+  const baseNum = ipv4ToNumber(base);
+  const prefix = Number(prefixRaw);
+  if (ip === null || baseNum === null || !Number.isInteger(prefix)) return false;
+  const blockSize = Math.pow(2, 32 - prefix);
+  return Math.floor(ip / blockSize) === Math.floor(baseNum / blockSize);
+}
+
+function isUnsafeIpv4Literal(hostname: string): boolean {
+  if (!parseIpv4(hostname)) return false;
+  return [
+    "0.0.0.0/8",
+    "10.0.0.0/8",
+    "100.64.0.0/10",
+    "127.0.0.0/8",
+    "169.254.0.0/16",
+    "172.16.0.0/12",
+    "192.0.0.0/24",
+    "192.0.2.0/24",
+    "192.168.0.0/16",
+    "198.18.0.0/15",
+    "198.51.100.0/24",
+    "203.0.113.0/24",
+    "224.0.0.0/4",
+    "240.0.0.0/4",
+  ].some((cidr) => ipv4InRange(hostname, cidr));
+}
+
+function isUnsafeIpv6Literal(hostname: string): boolean {
+  const host = normalizeHostname(hostname);
+  if (!host.includes(":")) return false;
+  return (
+    host === "::" ||
+    host === "::1" ||
+    host.startsWith("fc") ||
+    host.startsWith("fd") ||
+    host.startsWith("fe8") ||
+    host.startsWith("fe9") ||
+    host.startsWith("fea") ||
+    host.startsWith("feb") ||
+    host.startsWith("ff") ||
+    host.startsWith("100:") ||
+    host.startsWith("2001:db8:") ||
+    host === "2001:db8::"
+  );
+}
+
+function validateObviousHttpUrl(
+  rawUrl: string,
+): "invalid" | "credentials" | "blocked" | null {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return rawUrl.includes("{{") ? null : "invalid";
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return "invalid";
+  if (url.username || url.password) return "credentials";
+  const hostname = normalizeHostname(url.hostname);
+  if (
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".internal") ||
+    hostname === "metadata.google.internal" ||
+    isUnsafeIpv4Literal(hostname) ||
+    isUnsafeIpv6Literal(hostname)
+  ) {
+    return "blocked";
+  }
+  return null;
+}
+
 export interface ValidationIssue {
   severity: "error" | "warning";
   scope: "flow" | "trigger" | "node";
@@ -709,30 +815,76 @@ function validateNode(
         headers?: Array<{ key: string; value: string }>;
         next_node_key?: string;
       };
-      if (!cfg.url?.trim()) {
-        issues.push({
+	      if (!cfg.url?.trim()) {
+	        issues.push({
           severity: "error",
           scope: "node",
           node_key: node.node_key,
           field: "url",
-          message: "HTTP Request node needs a URL.",
-        });
-      } else if (!/^https?:\/\/.+/.test(cfg.url.trim())) {
-        issues.push({
+	          message: "HTTP Request node needs a URL.",
+	        });
+	      } else if (!/^https?:\/\/.+/.test(cfg.url.trim())) {
+	        issues.push({
           severity: "error",
           scope: "node",
           node_key: node.node_key,
           field: "url",
-          message: "URL must start with http:// or https://.",
-        });
-      }
-      if (!cfg.response_var?.trim()) {
+	          message: "URL must start with http:// or https://.",
+	        });
+	      } else {
+	        const urlProblem = validateObviousHttpUrl(cfg.url.trim());
+	        if (urlProblem === "invalid") {
+	          issues.push({
+	            severity: "error",
+	            scope: "node",
+	            node_key: node.node_key,
+	            field: "url",
+	            message: "HTTP Request URL must be a valid http:// or https:// URL.",
+	          });
+	        } else if (urlProblem === "credentials") {
+	          issues.push({
+	            severity: "error",
+	            scope: "node",
+	            node_key: node.node_key,
+	            field: "url",
+	            message: "HTTP Request URL must not include credentials.",
+	          });
+	        } else if (urlProblem === "blocked") {
+	          issues.push({
+	            severity: "error",
+	            scope: "node",
+	            node_key: node.node_key,
+	            field: "url",
+	            message:
+	              "HTTP Request URL must not target localhost, internal hostnames, metadata services, or private IP literals.",
+	          });
+	        }
+	      }
+	      if (!cfg.method || !HTTP_METHODS.has(cfg.method)) {
+	        issues.push({
+	          severity: "error",
+	          scope: "node",
+	          node_key: node.node_key,
+	          field: "method",
+	          message: "HTTP Request method must be GET, POST, PUT, PATCH, or DELETE.",
+	        });
+	      }
+	      if (!cfg.response_var?.trim()) {
         issues.push({
           severity: "error",
           scope: "node",
           node_key: node.node_key,
           field: "response_var",
           message: "HTTP Request needs a variable name to store the response.",
+        });
+      } else if (!VAR_NAME_RE.test(cfg.response_var)) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "response_var",
+          message:
+            "HTTP Request response variable must be alphanumeric+underscore and start with a letter or underscore.",
         });
       }
       if (!cfg.next_node_key) {
@@ -778,6 +930,15 @@ function validateNode(
           node_key: node.node_key,
           field: "response_var",
           message: "AI Reply needs a variable name to store the response.",
+        });
+      } else if (!VAR_NAME_RE.test(cfg.response_var)) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "response_var",
+          message:
+            "AI Reply response variable must be alphanumeric+underscore and start with a letter or underscore.",
         });
       }
       if (!cfg.next_node_key) {
