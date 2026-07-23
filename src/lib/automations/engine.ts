@@ -11,6 +11,8 @@ import type {
   SendListStepConfig,
   SendTemplateStepConfig,
   SendWebhookStepConfig,
+  HttpRequestStepConfig,
+  AiReplyStepConfig,
   TagStepConfig,
   UpdateContactFieldStepConfig,
   WaitStepConfig,
@@ -23,6 +25,9 @@ import { engineDispatcherSend } from './engine-send'
 import type { ChannelType } from '@/lib/messaging/dispatcher'
 import { validateInteractivePayload } from '@/lib/whatsapp/interactive'
 import { isDeliverableUrl } from '@/lib/webhooks/ssrf'
+import { loadAiConfig } from '@/lib/ai/config'
+import { generateReply } from '@/lib/ai/generate'
+import type { ChatMessage } from '@/lib/ai/types'
 
 // ------------------------------------------------------------
 // Public API
@@ -577,6 +582,92 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       return `webhook ${res.status}`
     }
 
+    case 'http_request': {
+      const cfg = step.step_config as HttpRequestStepConfig
+      const responseVar = validateResponseVarName(cfg.response_var)
+      const url = interpolate(cfg.url, args)
+      if (!url) throw new Error('http_request needs url')
+      if (new TextEncoder().encode(url).length > 8 * 1024) {
+        throw new Error('http_request URL is too large')
+      }
+      if (!(await isDeliverableUrl(url))) {
+        throw new Error('http_request: destination not allowed')
+      }
+
+      const method = cfg.method ?? 'GET'
+      if (!HTTP_METHODS.has(method)) throw new Error('http_request has an invalid method')
+      const headers = Object.fromEntries(
+        Object.entries(cfg.headers ?? {}).map(([key, value]) => [
+          key,
+          interpolate(String(value), args),
+        ]),
+      )
+      if (Object.keys(headers).length > 64) throw new Error('http_request has too many headers')
+      for (const [key, value] of Object.entries(headers)) {
+        if (BLOCKED_HEADER_NAMES.has(key.toLowerCase())) {
+          throw new Error(`http_request header is not allowed: ${key}`)
+        }
+        if (new TextEncoder().encode(`${key}: ${value}`).length > 64 * 1024) {
+          throw new Error('http_request headers are too large')
+        }
+      }
+      const body = cfg.body_template ? interpolate(cfg.body_template, args) : undefined
+      if (body && new TextEncoder().encode(body).length > 1024 * 1024) {
+        throw new Error('http_request body is too large')
+      }
+      if (body && !Object.keys(headers).some((key) => key.toLowerCase() === 'content-type')) {
+        headers['content-type'] = 'application/json'
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: method === 'GET' || method === 'DELETE' ? undefined : body,
+        redirect: 'manual',
+        signal: AbortSignal.timeout(15_000),
+      })
+      if (!response.ok) throw new Error(`http_request returned ${response.status}`)
+      const declaredLength = Number(response.headers.get('content-length') ?? 0)
+      if (declaredLength > 1_000_000) throw new Error('http_request response is too large')
+
+      const raw = await response.text()
+      if (raw.length > 1_000_000) {
+        throw new Error('http_request response is too large')
+      }
+      const contentType = response.headers.get('content-type') ?? ''
+      let result: unknown = raw
+      if (contentType.includes('json') && raw.trim()) {
+        try {
+          result = JSON.parse(raw)
+        } catch {
+          throw new Error('http_request returned invalid JSON')
+        }
+      }
+      args.context.vars ??= {}
+      args.context.vars[responseVar] = result
+      return `http_request ${response.status}`
+    }
+
+    case 'ai_reply': {
+      const cfg = step.step_config as AiReplyStepConfig
+      const config = await loadAiConfig(db, args.automation.account_id)
+      if (!config) throw new Error('AI is not configured for this account')
+
+      const systemPrompt = [config.systemPrompt, cfg.system_prompt]
+        .filter((value): value is string => Boolean(value?.trim()))
+        .join('\n\n')
+      const userPrompt = cfg.user_prompt_template
+        ? interpolate(cfg.user_prompt_template, args)
+        : args.context.message_text ?? ''
+      if (!userPrompt.trim()) throw new Error('ai_reply needs a user prompt')
+
+      const messages: ChatMessage[] = [{ role: 'user', content: userPrompt }]
+      const result = await generateReply({ config, systemPrompt, messages })
+      args.context.vars ??= {}
+      args.context.vars[validateResponseVarName(cfg.response_var)] = result.text
+      return 'ai_reply generated'
+    }
+
     case 'close_conversation': {
       if (!args.contactId) throw new Error('close_conversation needs a contact')
       await db
@@ -719,6 +810,27 @@ function interpolate(s: string, args: ExecuteArgs): string {
     if (ns === 'vars' && prop) return String(args.context.vars?.[prop] ?? '')
     return ''
   })
+}
+
+const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
+const BLOCKED_HEADER_NAMES = new Set([
+  'connection',
+  'content-length',
+  'host',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+])
+
+function validateResponseVarName(value: unknown): string {
+  if (typeof value !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) {
+    throw new Error('http/ai response variable is invalid')
+  }
+  return value
 }
 
 async function appendResults(

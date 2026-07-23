@@ -92,6 +92,7 @@ export default function FlowsPage() {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,13 +107,13 @@ export default function FlowsPage() {
         }
         const flowsJson = (await flowsRes.json()) as { flows: FlowRow[] };
         if (!cancelled) setFlows(flowsJson.flows ?? []);
-        // Templates endpoint is forward-looking — if it 404s on an
-        // older deployment, gracefully fall through.
         if (tmplRes.ok) {
           const tmplJson = (await tmplRes.json()) as {
             templates: TemplateSummary[];
           };
           if (!cancelled) setTemplates(tmplJson.templates ?? []);
+        } else if (!cancelled) {
+          setTemplatesError(t("templatesLoadError"));
         }
       } catch (err) {
         if (!cancelled) {
@@ -141,7 +142,9 @@ export default function FlowsPage() {
           trigger_config: { keywords: [] },
         }),
       });
-      if (!res.ok) throw new Error(`Create failed: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(actionErrorMessage(res.status, t("createError"), t));
+      }
       const json = (await res.json()) as { flow: FlowRow };
       setCreateOpen(false);
       setNewName("");
@@ -163,8 +166,7 @@ export default function FlowsPage() {
         body: JSON.stringify({ template_slug: slug }),
       });
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error ?? `Clone failed: ${res.status}`);
+        throw new Error(actionErrorMessage(res.status, t("cloneError"), t));
       }
       const json = (await res.json()) as { flow: FlowRow };
       setCreateOpen(false);
@@ -215,7 +217,7 @@ export default function FlowsPage() {
         </div>
         <GatedButton
           canAct={canCreate}
-          gateReason="create flows"
+          gateReason="crear flujos"
           onClick={() => setCreateOpen(true)}
         >
           <Plus className="h-4 w-4" />
@@ -289,6 +291,12 @@ export default function FlowsPage() {
             </div>
           )}
 
+          {templatesError && (
+            <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              {templatesError}
+            </p>
+          )}
+
           <div className="space-y-2 border-t border-border pt-4">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               {t("startBlank")}
@@ -345,7 +353,7 @@ function EmptyState({
       </p>
       <GatedButton
         canAct={canCreate}
-        gateReason="create flows"
+        gateReason="crear flujos"
         onClick={onCreate}
         className="mt-5"
       >
@@ -437,4 +445,14 @@ function describeTrigger(flow: FlowRow, t: ReturnType<typeof useTranslations>): 
     return t("triggerFirstInbound");
   }
   return t("triggerManual");
+}
+
+function actionErrorMessage(
+  status: number,
+  fallback: string,
+  t: ReturnType<typeof useTranslations>,
+): string {
+  if (status === 401) return t("sessionExpired");
+  if (status === 403) return t("permissionError");
+  return fallback;
 }

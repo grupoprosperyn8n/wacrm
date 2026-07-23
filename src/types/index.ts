@@ -454,6 +454,8 @@ export type AutomationStepType =
   | 'wait'
   | 'condition'
   | 'send_webhook'
+  | 'http_request'
+  | 'ai_reply'
   | 'close_conversation';
 
 export type AutomationLogStatus = 'success' | 'partial' | 'failed';
@@ -559,6 +561,22 @@ export interface SendWebhookStepConfig {
   body_template?: string;
 }
 
+export type HttpRequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+export interface HttpRequestStepConfig {
+  url: string;
+  method: HttpRequestMethod;
+  headers?: Record<string, string>;
+  body_template?: string;
+  response_var: string;
+}
+
+export interface AiReplyStepConfig {
+  system_prompt?: string;
+  user_prompt_template?: string;
+  response_var: string;
+}
+
 export type AutomationStepConfig =
   | SendMessageStepConfig
   | SendButtonsStepConfig
@@ -571,6 +589,8 @@ export type AutomationStepConfig =
   | WaitStepConfig
   | ConditionStepConfig
   | SendWebhookStepConfig
+  | HttpRequestStepConfig
+  | AiReplyStepConfig
   | Record<string, never>
   | Record<string, unknown>;
 

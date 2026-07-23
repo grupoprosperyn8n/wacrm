@@ -127,20 +127,24 @@ function validateOne(step: StepLike, path: string, issues: ValidationIssue[]): v
       }
       break
     case 'send_webhook':
-      if (!nonEmpty(c.url)) {
-        issues.push({ path: `${path}.url`, message: 'webhook URL is required' })
-        break
+      validateHttpUrl(c.url, path, 'webhook URL', issues)
+      break
+    case 'http_request':
+      validateHttpUrl(c.url, path, 'La URL HTTP', issues)
+      if (c.method != null && !['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(String(c.method))) {
+        issues.push({ path: `${path}.method`, message: 'El método HTTP no está permitido' })
       }
-      try {
-        const u = new URL(String(c.url))
-        if (u.protocol !== 'http:' && u.protocol !== 'https:') {
-          issues.push({
-            path: `${path}.url`,
-            message: 'webhook URL must use http or https',
-          })
-        }
-      } catch {
-        issues.push({ path: `${path}.url`, message: 'webhook URL is not a valid URL' })
+      if (!nonEmpty(c.response_var)) {
+        issues.push({ path: `${path}.response_var`, message: 'La variable de respuesta HTTP es obligatoria' })
+      } else if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(c.response_var))) {
+        issues.push({ path: `${path}.response_var`, message: 'La variable de respuesta HTTP debe tener un nombre válido' })
+      }
+      break
+    case 'ai_reply':
+      if (!nonEmpty(c.response_var)) {
+        issues.push({ path: `${path}.response_var`, message: 'La variable de respuesta de IA es obligatoria' })
+      } else if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(c.response_var))) {
+        issues.push({ path: `${path}.response_var`, message: 'La variable de respuesta de IA debe tener un nombre válido' })
       }
       break
     case 'close_conversation':
@@ -201,6 +205,36 @@ export function validateTriggerForActivation(
   }
 
   return issues
+}
+
+function validateHttpUrl(
+  value: unknown,
+  path: string,
+  label: string,
+  issues: ValidationIssue[],
+): void {
+  const spanish = label === 'La URL HTTP'
+  if (!nonEmpty(value)) {
+    issues.push({
+      path: `${path}.url`,
+      message: spanish ? `${label} es obligatoria` : `${label} is required`,
+    })
+    return
+  }
+  try {
+    const u = new URL(String(value))
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+      issues.push({
+        path: `${path}.url`,
+        message: spanish ? `${label} debe usar http o https` : `${label} must use http or https`,
+      })
+    }
+  } catch {
+    issues.push({
+      path: `${path}.url`,
+      message: spanish ? `${label} no es una URL válida` : `${label} is not a valid URL`,
+    })
+  }
 }
 
 function nonEmpty(v: unknown): boolean {

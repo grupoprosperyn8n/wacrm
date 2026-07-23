@@ -92,6 +92,77 @@ describe("validateStepsForActivation", () => {
     );
   });
 
+
+  it("validates http_request URL and response variable", () => {
+    const good = validateStepsForActivation([
+      {
+        step_type: "http_request",
+        step_config: {
+          url: "https://api.example.com/orders",
+          method: "POST",
+          headers: { "x-source": "wacrm" },
+          body_template: '{"text":"{{ message.text }}"}',
+          response_var: "api_result",
+        },
+      },
+    ]);
+    expect(good).toEqual([]);
+
+    const missing = validateStepsForActivation([
+      { step_type: "http_request", step_config: { url: "", response_var: "" } },
+    ]);
+    expect(missing).toEqual([
+      { path: "steps[0].url", message: "La URL HTTP es obligatoria" },
+      {
+        path: "steps[0].response_var",
+        message: "La variable de respuesta HTTP es obligatoria",
+      },
+    ]);
+
+    const wrongProtocol = validateStepsForActivation([
+      {
+        step_type: "http_request",
+        step_config: { url: "ftp://files.example.com", response_var: "result" },
+      },
+    ]);
+    expect(wrongProtocol.map((i) => i.message)).toContain(
+      "La URL HTTP debe usar http o https",
+    );
+
+    const garbage = validateStepsForActivation([
+      {
+        step_type: "http_request",
+        step_config: { url: "not a url", response_var: "result" },
+      },
+    ]);
+    expect(garbage.map((i) => i.message)).toContain(
+      "La URL HTTP no es una URL válida",
+    );
+  });
+
+  it("validates ai_reply response variable", () => {
+    expect(
+      validateStepsForActivation([
+        {
+          step_type: "ai_reply",
+          step_config: {
+            system_prompt: "Answer briefly",
+            user_prompt_template: "{{ message.text }}",
+            response_var: "ai_text",
+          },
+        },
+      ]),
+    ).toEqual([]);
+
+    expect(
+      validateStepsForActivation([
+        { step_type: "ai_reply", step_config: { response_var: "" } },
+      ]),
+    ).toEqual([
+      { path: "steps[0].response_var", message: "La variable de respuesta de IA es obligatoria" },
+    ]);
+  });
+
   it("validates assign_conversation only when mode is 'specific'", () => {
     const roundRobinNoAgent = validateStepsForActivation([
       {

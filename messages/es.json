@@ -1000,7 +1000,10 @@
         "wait": "Esperar",
         "condition": "Condición (Si/No)",
         "send_webhook": "Enviar webhook",
-        "close_conversation": "Cerrar conversación"
+        "http_request": "Solicitar HTTP",
+        "ai_reply": "Respuesta con IA",
+        "close_conversation": "Cerrar conversación",
+        "unknown": "Paso desconocido"
       },
       "triggers": {
         "new_message_received": {
@@ -1055,7 +1058,8 @@
       "toasts": {
         "saved": "Automatización guardada",
         "created": "Automatización creada",
-        "saveFailed": "Error al guardar"
+      "saveFailed": "Error al guardar",
+      "issueAt": "Ubicación: {path}"
       },
       "tags": {
         "select": "Seleccionar una etiqueta…",
@@ -1098,6 +1102,23 @@
         "no": "No"
       },
       "addStep": "Añadir paso",
+      "kind": {
+        "action": "Acción",
+        "condition": "Condición",
+        "wait": "Espera"
+      },
+      "actions": {
+        "moveUp": "Mover arriba",
+        "moveDown": "Mover abajo"
+      },
+      "preview": {
+        "noText": "Sin texto todavía",
+        "noBody": "Sin cuerpo todavía",
+        "pickTemplate": "Elegí una plantilla",
+        "when": "Cuando {subject}",
+        "noUrl": "Sin URL",
+        "noResponseVar": "Sin variable de respuesta"
+      },
       "config": {
         "messageText": "Texto del mensaje",
         "placeholderMessageText": "¡Hola! Gracias por contactarnos…",
@@ -1131,15 +1152,29 @@
         "placeholderContact": "nombre / correo / empresa",
         "placeholderTag": "ID de etiqueta",
         "urlLabel": "URL",
+        "httpUrlPlaceholder": "https://api.ejemplo.com/recurso",
+        "methodLabel": "Método HTTP",
         "headersLabel": "Encabezados",
+        "headerNamePlaceholder": "Nombre del encabezado",
+        "headerValuePlaceholder": "Valor del encabezado",
+        "addHeader": "Añadir encabezado",
+        "removeHeader": "Quitar encabezado",
         "placeholderHeaders": "{\"Authorization\": \"Bearer ...\"}",
         "bodyTemplateLabel": "Plantilla del cuerpo",
         "placeholderBody": "{\"id\": \"{{ contact.id }}\"}",
+        "responseVarLabel": "Variable de respuesta",
+        "responseVarPlaceholder": "resultado_api",
+        "aiResponseVarPlaceholder": "respuesta_ia",
+        "systemPromptLabel": "Instrucciones del sistema",
+        "systemPromptPlaceholder": "Define el comportamiento de la IA...",
+        "userPromptTemplateLabel": "Plantilla del mensaje para la IA",
+        "userPromptTemplatePlaceholder": "Usa {{ message.text }} o {{ vars.nombre }}...",
         "matchType": "Tipo de coincidencia",
         "matchContains": "Contiene",
         "matchExact": "Exacta",
         "closeConversationHint": "Establece el estado de la conversación como \"cerrada\". No se necesita configuración.",
         "notes": "Notas",
+        "notesIndicator": "Este paso tiene notas",
         "notesPlaceholder": "Escribe notas para este paso...",
         "notesHint": "Las notas se guardan localmente y no afectan el comportamiento de la automatización."
       }
@@ -1155,8 +1190,11 @@
       "statusActive": "Activo",
       "statusArchived": "Archivado",
       "loadError": "No se pudieron cargar los flujos.",
+      "templatesLoadError": "No se pudieron cargar las plantillas. Podés crear un flujo vacío.",
       "createError": "No se pudo crear el flujo.",
       "cloneError": "Error al clonar",
+      "sessionExpired": "Tu sesión venció. Iniciá sesión nuevamente.",
+      "permissionError": "Tu rol no permite crear o modificar flujos.",
       "deleteConfirm": "¿Eliminar \"{name}\"? Las ejecuciones activas terminarán inmediatamente.",
       "deleteSuccess": "Flujo eliminado.",
       "deleteError": "No se pudo eliminar el flujo.",
@@ -1388,6 +1426,9 @@
       "tagPicked": "{mode} etiqueta {tag}…",
       "tagNone": "{mode} etiqueta (ninguna seleccionada)"
     }
+  },
+  "Shared": {
+    "readOnly": "Solo lectura: tu rol no permite {reason}"
   },
   "Settings": {
     "pageTitle": "Configuración",

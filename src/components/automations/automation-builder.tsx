@@ -33,6 +33,8 @@ import {
   ArrowUp,
   MousePointerClick,
   List,
+  Globe,
+  Bot,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -111,6 +113,8 @@ const STEP_META: Record<AutomationStepType, StepMeta> = {
   wait: { label: "wait", icon: Hourglass, border: "border-l-border" },
   condition: { label: "condition", icon: GitBranch, border: "border-l-amber-500" },
   send_webhook: { label: "send_webhook", icon: Webhook, border: "border-l-primary" },
+  http_request: { label: "http_request", icon: Globe, border: "border-l-indigo-500" },
+  ai_reply: { label: "ai_reply", icon: Bot, border: "border-l-violet-500" },
   close_conversation: { label: "close_conversation", icon: CircleSlash, border: "border-l-primary" },
 }
 
@@ -127,6 +131,8 @@ const ADDABLE_STEPS: AutomationStepType[] = [
   "wait",
   "condition",
   "send_webhook",
+  "http_request",
+  "ai_reply",
   "close_conversation",
 ]
 
@@ -187,6 +193,10 @@ function blankConfig(type: AutomationStepType): Record<string, unknown> {
       return { subject: "tag_presence", operand: "", value: "" }
     case "send_webhook":
       return { url: "", headers: {}, body_template: "" }
+    case "http_request":
+      return { url: "", method: "GET", headers: {}, body_template: "", response_var: "http_response" }
+    case "ai_reply":
+      return { system_prompt: "", user_prompt_template: "", response_var: "ai_response" }
     case "close_conversation":
       return {}
     default:
@@ -694,7 +704,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
           body?.issues?.[0]
         if (firstIssue?.message) {
           toast.error(firstIssue.message, {
-            description: firstIssue.path ? `at ${firstIssue.path}` : undefined,
+            description: firstIssue.path ? t("toasts.issueAt", { path: firstIssue.path }) : undefined,
           })
         } else {
           toast.error(body?.error ?? t("toasts.saveFailed"))
@@ -1082,7 +1092,11 @@ function StepRenderer({
       ? { kind: "root", index }
       : { kind: "branch", parentCid: parentScope.parentCid, branch: parentScope.branch, index },
   ]
-  const meta = STEP_META[step.step_type]
+  const meta = STEP_META[step.step_type] ?? {
+    label: "unknown",
+    icon: Zap,
+    border: "border-l-border",
+  }
   const Icon = meta.icon
   const expanded = props.expandedId === step.cid
   const isCondition = step.step_type === "condition"
@@ -1121,17 +1135,17 @@ function StepRenderer({
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                {isCondition ? "Condition" : step.step_type === "wait" ? "Wait" : "Action"}
+                {isCondition ? t("kind.condition") : step.step_type === "wait" ? t("kind.wait") : t("kind.action")}
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="truncate text-sm font-medium text-foreground">
                   {t(`steps.${meta.label}`)}
                 </span>
                 {Boolean(step.step_config._notes) && (
-                  <FileText className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-label="Tiene notas" />
+                  <FileText className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-label={t("config.notesIndicator")} />
                 )}
               </div>
-              <div className="truncate text-[11px] text-muted-foreground">{previewFor(step)}</div>
+              <div className="truncate text-[11px] text-muted-foreground">{previewFor(step, t)}</div>
             </div>
             <ChevronDown
               className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded && "rotate-180")}
@@ -1149,7 +1163,7 @@ function StepRenderer({
                     variant="ghost"
                     size="icon"
                     disabled={index === 0}
-                    aria-label="Move up"
+                    aria-label={t("actions.moveUp")}
                     onClick={() => props.moveStepAt(path, -1)}
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -1158,7 +1172,7 @@ function StepRenderer({
                     variant="ghost"
                     size="icon"
                     disabled={index === total - 1}
-                    aria-label="Move down"
+                    aria-label={t("actions.moveDown")}
                     onClick={() => props.moveStepAt(path, 1)}
                   >
                     <ArrowDown className="h-4 w-4" />
@@ -1468,7 +1482,7 @@ function StepEditor({
               />
             </FieldBlock>
             {(cfg.subject === "contact_field" || cfg.subject === "message_content") && (
-              <FieldBlock label="Value">
+              <FieldBlock label={t("config.valueLabel")}>
                 <Input
                   value={(cfg.value as string) ?? ""}
                   onChange={(e) => set({ value: e.target.value })}
@@ -1493,6 +1507,83 @@ function StepEditor({
                 value={(cfg.body_template as string) ?? ""}
                 onChange={(e) => set({ body_template: e.target.value })}
                 className="min-h-20 bg-muted font-mono text-xs text-foreground"
+              />
+            </FieldBlock>
+          </>
+        )
+      case "http_request":
+        return (
+          <>
+            <FieldBlock label={t("config.urlLabel")}>
+              <Input
+                value={(cfg.url as string) ?? ""}
+                onChange={(e) => set({ url: e.target.value })}
+                placeholder={t("config.httpUrlPlaceholder")}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.methodLabel")}>
+              <select
+                value={(cfg.method as string) ?? "GET"}
+                onChange={(e) => set({ method: e.target.value })}
+                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
+              >
+                {(["GET", "POST", "PUT", "PATCH", "DELETE"] as const).map((method) => (
+                  <option key={method} value={method}>{method}</option>
+                ))}
+              </select>
+            </FieldBlock>
+            <HttpHeadersFields
+              value={(cfg.headers as Record<string, string>) ?? {}}
+              onChange={(headers) => set({ headers })}
+              t={t}
+            />
+            <FieldBlock label={t("config.bodyTemplateLabel")}>
+              <Textarea
+                rows={3}
+                value={(cfg.body_template as string) ?? ""}
+                onChange={(e) => set({ body_template: e.target.value })}
+                placeholder={t("config.placeholderBody")}
+                className="bg-muted font-mono text-xs text-foreground"
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.responseVarLabel")}>
+              <Input
+                value={(cfg.response_var as string) ?? ""}
+                onChange={(e) => set({ response_var: e.target.value })}
+                placeholder={t("config.responseVarPlaceholder")}
+                className="bg-muted font-mono text-foreground"
+              />
+            </FieldBlock>
+          </>
+        )
+      case "ai_reply":
+        return (
+          <>
+            <FieldBlock label={t("config.systemPromptLabel")}>
+              <Textarea
+                rows={4}
+                value={(cfg.system_prompt as string) ?? ""}
+                onChange={(e) => set({ system_prompt: e.target.value })}
+                placeholder={t("config.systemPromptPlaceholder")}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.userPromptTemplateLabel")}>
+              <Textarea
+                rows={4}
+                value={(cfg.user_prompt_template as string) ?? ""}
+                onChange={(e) => set({ user_prompt_template: e.target.value })}
+                placeholder={t("config.userPromptTemplatePlaceholder")}
+                className="bg-muted text-foreground"
+              />
+            </FieldBlock>
+            <FieldBlock label={t("config.responseVarLabel")}>
+              <Input
+                value={(cfg.response_var as string) ?? ""}
+                onChange={(e) => set({ response_var: e.target.value })}
+                placeholder={t("config.aiResponseVarPlaceholder")}
+                className="bg-muted font-mono text-foreground"
               />
             </FieldBlock>
           </>
@@ -1546,21 +1637,86 @@ function FieldBlock({
   )
 }
 
-function previewFor(step: BuilderStep): string {
+function HttpHeadersFields({
+  value,
+  onChange,
+  t,
+}: {
+  value: Record<string, string>
+  onChange: (value: Record<string, string>) => void
+  t: ReturnType<typeof useTranslations>
+}) {
+  const entries = Object.entries(value)
+  const update = (index: number, key: string, headerValue: string) => {
+    const next = [...entries]
+    next[index] = [key, headerValue]
+    onChange(Object.fromEntries(next.filter(([k]) => k.trim())))
+  }
+  return (
+    <FieldBlock label={t("config.headersLabel")}>
+      <div className="space-y-2">
+        {entries.map(([key, headerValue], index) => (
+          <div key={`${key}-${index}`} className="flex gap-2">
+            <Input
+              value={key}
+              onChange={(e) => update(index, e.target.value, headerValue)}
+              placeholder={t("config.headerNamePlaceholder")}
+              className="bg-muted text-foreground"
+            />
+            <Input
+              value={headerValue}
+              onChange={(e) => update(index, key, e.target.value)}
+              placeholder={t("config.headerValuePlaceholder")}
+              className="bg-muted text-foreground"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("config.removeHeader")}
+              onClick={() => {
+                const next = [...entries]
+                next.splice(index, 1)
+                onChange(Object.fromEntries(next))
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onChange({ ...value, [`X-Header-${entries.length + 1}`]: "" })}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {t("config.addHeader")}
+        </Button>
+      </div>
+    </FieldBlock>
+  )
+}
+
+function previewFor(step: BuilderStep, t: ReturnType<typeof useTranslations>): string {
   switch (step.step_type) {
     case "send_message":
-      return (step.step_config.text as string) || "no text yet"
+      return (step.step_config.text as string) || t("preview.noText")
     case "send_buttons":
     case "send_list":
-      return interactivePayloadPreviewText(asInteractive(step.step_config)) || "no body yet"
+      return interactivePayloadPreviewText(asInteractive(step.step_config)) || t("preview.noBody")
     case "send_template":
-      return (step.step_config.template_name as string) || "pick a template"
+      return (step.step_config.template_name as string) || t("preview.pickTemplate")
     case "wait":
       return `${step.step_config.amount ?? "?"} ${step.step_config.unit ?? ""}`
     case "condition":
-      return `when ${step.step_config.subject ?? "?"}`
+      return t("preview.when", { subject: String(step.step_config.subject ?? "?") })
     case "send_webhook":
-      return (step.step_config.url as string) || "no url"
+      return (step.step_config.url as string) || t("preview.noUrl")
+    case "http_request":
+      return (step.step_config.url as string) || t("preview.noUrl")
+    case "ai_reply":
+      return (step.step_config.response_var as string) || t("preview.noResponseVar")
     default:
       return ""
   }

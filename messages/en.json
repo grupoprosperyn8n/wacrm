@@ -1000,7 +1000,10 @@
         "wait": "Wait",
         "condition": "Condition (If/Else)",
         "send_webhook": "Send Webhook",
-        "close_conversation": "Close Conversation"
+        "http_request": "HTTP Request",
+        "ai_reply": "AI Reply",
+        "close_conversation": "Close Conversation",
+        "unknown": "Unknown step"
       },
       "triggers": {
         "new_message_received": {
@@ -1055,7 +1058,8 @@
       "toasts": {
         "saved": "Automation saved",
         "created": "Automation created",
-        "saveFailed": "Save failed"
+      "saveFailed": "Save failed",
+      "issueAt": "Location: {path}"
       },
       "tags": {
         "select": "Select a tag…",
@@ -1098,6 +1102,23 @@
         "no": "No"
       },
       "addStep": "Add step",
+      "kind": {
+        "action": "Action",
+        "condition": "Condition",
+        "wait": "Wait"
+      },
+      "actions": {
+        "moveUp": "Move up",
+        "moveDown": "Move down"
+      },
+      "preview": {
+        "noText": "No text yet",
+        "noBody": "No body yet",
+        "pickTemplate": "Pick a template",
+        "when": "When {subject}",
+        "noUrl": "No URL",
+        "noResponseVar": "No response variable"
+      },
       "config": {
         "messageText": "Message text",
         "placeholderMessageText": "Hi! Thanks for reaching out…",
@@ -1131,15 +1152,29 @@
         "placeholderContact": "name / email / company",
         "placeholderTag": "tag id",
         "urlLabel": "URL",
+        "httpUrlPlaceholder": "https://api.example.com/resource",
+        "methodLabel": "HTTP method",
         "headersLabel": "Headers",
+        "headerNamePlaceholder": "Header name",
+        "headerValuePlaceholder": "Header value",
+        "addHeader": "Add header",
+        "removeHeader": "Remove header",
         "placeholderHeaders": "{\"Authorization\": \"Bearer ...\"}",
         "bodyTemplateLabel": "Body template",
         "placeholderBody": "{\"id\": \"{{ contact.id }}\"}",
+        "responseVarLabel": "Response variable",
+        "responseVarPlaceholder": "api_result",
+        "aiResponseVarPlaceholder": "ai_response",
+        "systemPromptLabel": "System instructions",
+        "systemPromptPlaceholder": "Define the AI behavior...",
+        "userPromptTemplateLabel": "AI user prompt template",
+        "userPromptTemplatePlaceholder": "Use {{ message.text }} or {{ vars.name }}...",
         "matchType": "Match type",
         "matchContains": "Contains",
         "matchExact": "Exact",
         "closeConversationHint": "Sets the conversation status to \"closed\". No configuration needed.",
         "notes": "Notes",
+        "notesIndicator": "This step has notes",
         "notesPlaceholder": "Write notes for this step...",
         "notesHint": "Notes are saved locally and don't affect automation behavior."
       }
@@ -1155,8 +1190,11 @@
       "statusActive": "Active",
       "statusArchived": "Archived",
       "loadError": "Couldn't load flows.",
+      "templatesLoadError": "Couldn't load templates. You can create a blank flow.",
       "createError": "Couldn't create flow.",
       "cloneError": "Clone failed",
+      "sessionExpired": "Your session expired. Sign in again.",
+      "permissionError": "Your role cannot create or modify flows.",
       "deleteConfirm": "Delete \"{name}\"? Any active runs will end immediately.",
       "deleteSuccess": "Flow deleted.",
       "deleteError": "Couldn't delete flow.",
@@ -1388,6 +1426,9 @@
       "tagPicked": "{mode} tag {tag}…",
       "tagNone": "{mode} tag (none picked)"
     }
+  },
+  "Shared": {
+    "readOnly": "Read-only: your role cannot {reason}"
   },
   "Settings": {
     "pageTitle": "Settings",
