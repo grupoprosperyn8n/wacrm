@@ -56,7 +56,14 @@ function LoginPageInner() {
     });
 
     if (error) {
-      setError(error.message);
+      const normalized = error.message.toLowerCase();
+      if (normalized.includes("invalid login credentials")) {
+        setError(t("errorInvalidCredentials"));
+      } else if (normalized.includes("supabasekey is required")) {
+        setError(t("errorServiceUnavailable"));
+      } else {
+        setError(t("errorGeneric"));
+      }
       setLoading(false);
       return;
     }
