@@ -151,7 +151,8 @@ export default function FlowsPage() {
       router.push(`/flows/${json.flow.id}`);
     } catch (err) {
       console.error(err);
-      toast.error(t("createError"));
+      const msg = err instanceof Error ? err.message : t("createError");
+      toast.error(msg);
     } finally {
       setCreating(false);
     }
