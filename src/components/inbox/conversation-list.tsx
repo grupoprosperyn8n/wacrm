@@ -19,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -35,6 +36,14 @@ interface ConversationListProps {
    */
   resyncToken?: number;
 }
+
+const DATE_LABELS: Record<string, string> = {
+  today: "Hoy",
+  week: "Esta semana",
+  month: "Este mes",
+  year: "Este año",
+  range: "Personalizado",
+};
 
 const CHANNEL_LABEL: Record<string, string> = {
   whatsapp: 'WA',
@@ -73,6 +82,10 @@ export function ConversationList({
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<InboxFilter>("all");
   const [channelFilter, setChannelFilter] = useState<string | null>(null);
+  const [archiveMode, setArchiveMode] = useState(false);
+  const [dateFilter, setDateFilter] = useState<string | null>(null);
+  const [customDateFrom, setCustomDateFrom] = useState("");
+  const [customDateTo, setCustomDateTo] = useState("");
   const [loading, setLoading] = useState(true);
   // Contact-based filters (issue #272). Tags use OR logic (a conversation
   // matches if its contact carries any selected tag), consistent with
@@ -173,6 +186,38 @@ export function ConversationList({
       result = result.filter((c) => c.unread_count > 0);
     } else if (filter !== "all") {
       result = result.filter((c) => c.status === filter);
+    }
+
+    // Archive mode: only show closed
+    if (archiveMode) {
+      result = result.filter((c) => c.status === "closed");
+    }
+
+    // Date filter
+    if (dateFilter && archiveMode) {
+      const now = new Date();
+      result = result.filter((c) => {
+        if (!c.last_message_at) return false;
+        const d = new Date(c.last_message_at);
+        switch (dateFilter) {
+          case "today": return d.toDateString() === now.toDateString();
+          case "week": {
+            const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+            return d >= weekStart;
+          }
+          case "month": return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          case "year": return d.getFullYear() === now.getFullYear();
+          case "range": {
+            if (customDateFrom && d < new Date(customDateFrom)) return false;
+            if (customDateTo) {
+              const to = new Date(customDateTo); to.setHours(23, 59, 59);
+              if (d > to) return false;
+            }
+            return true;
+          }
+          default: return true;
+        }
+      });
     }
 
     // Channel filter
