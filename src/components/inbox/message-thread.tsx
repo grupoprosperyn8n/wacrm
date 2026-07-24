@@ -27,6 +27,9 @@ import {
   RefreshCw,
   PanelRightOpen,
   PanelRightClose,
+  MoreHorizontal,
+  Archive,
+  Trash2,
 } from "lucide-react";
 import { format, isToday, isYesterday, differenceInHours } from "date-fns";
 import { useTranslations } from "next-intl";
