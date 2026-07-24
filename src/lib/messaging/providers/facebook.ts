@@ -141,3 +141,41 @@ export function validateFacebookWebhook(
   }
   return null;
 }
+
+/** Outbound — send text with quick reply buttons via Facebook Graph API. */
+export async function sendFacebookQuickReplies(
+  config: FacebookConfig,
+  recipientId: string,
+  text: string,
+  quickReplies: { id: string; title: string }[],
+): Promise<{ messageId: string; externalMessageId: string }> {
+  const body: Record<string, unknown> = {
+    recipient: { id: recipientId },
+    message: {
+      text,
+      quick_replies: quickReplies.map((qr) => ({
+        content_type: 'text',
+        title: qr.title,
+        payload: qr.id,
+      })),
+    },
+    messaging_type: 'RESPONSE',
+  };
+
+  const res = await fetch(
+    `https://graph.facebook.com/v21.0/${config.page_id}/messages?access_token=${config.page_access_token}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  );
+  const json = await res.json();
+  if (!res.ok || json.error) {
+    throw new Error(
+      `Facebook API error: ${json.error?.message ?? JSON.stringify(json)}`,
+    );
+  }
+  const extId = String(json.message_id ?? '');
+  return { messageId: `fb-${extId}`, externalMessageId: extId };
+}

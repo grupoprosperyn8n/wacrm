@@ -131,3 +131,39 @@ export function validateTelegramWebhook(
   }
   return null;
 }
+
+/** Outbound — send text with inline keyboard buttons via Telegram Bot API. */
+export async function sendTelegramButtons(
+  config: TelegramConfig,
+  chatId: string,
+  text: string,
+  buttons: { id: string; title: string }[],
+): Promise<{ messageId: string; externalMessageId: string }> {
+  const body: Record<string, unknown> = {
+    chat_id: chatId,
+    text,
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: buttons.map((b) => [
+        { text: b.title, callback_data: b.id },
+      ]),
+    },
+  };
+
+  const res = await fetch(
+    `https://api.telegram.org/bot${config.bot_token}/sendMessage`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  );
+  const json = await res.json();
+  if (!res.ok || !json.ok) {
+    throw new Error(
+      `Telegram API error: ${json.description ?? JSON.stringify(json)}`,
+    );
+  }
+  const extId = String(json.result?.message_id ?? '');
+  return { messageId: `tg-${extId}`, externalMessageId: extId };
+}

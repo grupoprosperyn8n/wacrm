@@ -55,7 +55,7 @@ import { loadAiConfig } from "@/lib/ai/config";
 import { generateReply } from "@/lib/ai/generate";
 import type { ChatMessage } from "@/lib/ai/types";
 import { channelScopeMatches } from "@/lib/channels/channel-scope";
-import { dispatcherSend } from "@/lib/messaging/dispatcher";
+import { dispatcherSend, dispatcherSendButtons } from "@/lib/messaging/dispatcher";
 import type { ChannelType } from "@/types";
 import {
   type CollectInputNodeConfig,
@@ -821,18 +821,32 @@ async function sendButtonsAndSuspend(
       })
       .eq("id", run.id);
   } else {
-    // Non-WhatsApp: send the body as plain text with button descriptions
-    const lines = [cfg.text];
-    if (cfg.header_text) lines.unshift(cfg.header_text);
-    if (cfg.footer_text) lines.push(cfg.footer_text);
-    lines.push('');
-    cfg.buttons.forEach((b, i) => lines.push(`${i + 1}. ${b.title}`));
-    await sendTextViaChannel(db, run, lines.join('\n'));
-    await logEvent(db, run.id, "message_sent", node.node_key, {
-      node_type: "send_buttons",
-      channel,
-      fallback_text: true,
-    });
+    // Non-WhatsApp: use channel-native interactive buttons when available
+    const header = [cfg.header_text, cfg.text, cfg.footer_text].filter(Boolean).join('\n\n');
+    const buttons = cfg.buttons.map((b) => ({ id: b.reply_id, title: b.title }));
+    try {
+      const result = await dispatcherSendButtons(
+        db as any, run.account_id, channel as any,
+        run.conversation_id!, header || 'Options:',
+        buttons,
+      );
+      await logEvent(db, run.id, "message_sent", node.node_key, {
+        node_type: "send_buttons",
+        channel,
+      });
+    } catch (err) {
+      // Fallback to plain text if interactive send fails
+      const lines = [cfg.text];
+      if (cfg.header_text) lines.unshift(cfg.header_text);
+      if (cfg.footer_text) lines.push(cfg.footer_text);
+      cfg.buttons.forEach((b, i) => lines.push(`${i + 1}. ${b.title}`));
+      await sendTextViaChannel(db, run, lines.join('\n'));
+      await logEvent(db, run.id, "message_sent", node.node_key, {
+        node_type: "send_buttons",
+        channel,
+        fallback_text: true,
+      });
+    }
   }
   return { outcome: "advanced", node_key: node.node_key };
 }
@@ -880,21 +894,35 @@ async function sendListAndSuspend(
       })
       .eq("id", run.id);
   } else {
-    // Non-WhatsApp: send the body as plain text with list options
-    const lines = [cfg.text];
-    if (cfg.header_text) lines.unshift(cfg.header_text);
-    if (cfg.footer_text) lines.push(cfg.footer_text);
-    lines.push('');
-    for (const section of cfg.sections) {
-      if (section.title) lines.push('── ' + section.title + ' ──');
-      section.rows.forEach((r, i) => lines.push(`${i + 1}. ${r.title}`));
+    // Non-WhatsApp: flatten list sections into interactive buttons when available
+    const header = [cfg.header_text, cfg.text, cfg.footer_text].filter(Boolean).join('\n\n');
+    const allRows = cfg.sections.flatMap((s) => s.rows.map((r) => ({ id: r.reply_id, title: r.title })));
+    try {
+      const result = await dispatcherSendButtons(
+        db as any, run.account_id, channel as any,
+        run.conversation_id!, header || 'Options:',
+        allRows,
+      );
+      await logEvent(db, run.id, "message_sent", node.node_key, {
+        node_type: "send_list",
+        channel,
+      });
+    } catch (err) {
+      // Fallback to plain text
+      const lines = [cfg.text];
+      if (cfg.header_text) lines.unshift(cfg.header_text);
+      if (cfg.footer_text) lines.push(cfg.footer_text);
+      for (const section of cfg.sections) {
+        if (section.title) lines.push('── ' + section.title + ' ──');
+        section.rows.forEach((r, i) => lines.push(`${i + 1}. ${r.title}`));
+      }
+      await sendTextViaChannel(db, run, lines.join('\n'));
+      await logEvent(db, run.id, "message_sent", node.node_key, {
+        node_type: "send_list",
+        channel,
+        fallback_text: true,
+      });
     }
-    await sendTextViaChannel(db, run, lines.join('\n'));
-    await logEvent(db, run.id, "message_sent", node.node_key, {
-      node_type: "send_list",
-      channel,
-      fallback_text: true,
-    });
   }
   return { outcome: "advanced", node_key: node.node_key };
 }

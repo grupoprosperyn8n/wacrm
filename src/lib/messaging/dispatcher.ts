@@ -445,3 +445,69 @@ async function getConversationExternalId(
   }
   return data.phone;
 }
+
+// ── Interactive buttons ───────────────────────────────────────────
+
+export interface InteractiveButton {
+  id: string;
+  title: string;
+}
+
+/**
+ * Send interactive buttons through the appropriate channel.
+ * WhatsApp uses its native interactive buttons,
+ * Telegram uses InlineKeyboardMarkup,
+ * Facebook uses quick_replies.
+ */
+export async function dispatcherSendButtons(
+  db: SupabaseClient,
+  accountId: string,
+  channel: ChannelType,
+  conversationId: string,
+  text: string,
+  buttons: InteractiveButton[],
+): Promise<{ messageId: string; externalMessageId: string }> {
+  const [config, extId] = await Promise.all([
+    getConfigForChannel(db, accountId, channel),
+    getConversationExternalId(db, conversationId),
+  ]);
+
+  switch (channel) {
+    case 'whatsapp': {
+      // WhatsApp is handled by engineSendInteractiveButtons in the engine
+      throw new Error('WhatsApp buttons should use engineSendInteractiveButtons');
+    }
+    case 'telegram': {
+      const { sendTelegramButtons } = await import('./providers/telegram');
+      return sendTelegramButtons(config as any, extId, text, buttons);
+    }
+    case 'facebook': {
+      const { sendFacebookQuickReplies } = await import('./providers/facebook');
+      return sendFacebookQuickReplies(config as any, extId, text, buttons);
+    }
+    default:
+      // Instagram / Web Chat: no native button support yet, send as text
+      const { dispatcherSend } = await import('./dispatcher');
+      const lines = [text, '', ...buttons.map((b, i) => `${i + 1}. ${b.title}`)];
+      return dispatcherSend(db, { accountId, channel, conversationId, text: lines.join('\n') });
+  }
+}
+
+async function getConfigForChannel(
+  db: SupabaseClient,
+  accountId: string,
+  channel: ChannelType,
+): Promise<unknown> {
+  switch (channel) {
+    case 'telegram':
+      return getTelegramConfig(db, accountId);
+    case 'facebook':
+      return getFacebookConfig(db, accountId);
+    case 'instagram':
+      return getInstagramConfig(db, accountId);
+    case 'web':
+      return getWebChatConfig(db, accountId);
+    default:
+      return null;
+  }
+}
