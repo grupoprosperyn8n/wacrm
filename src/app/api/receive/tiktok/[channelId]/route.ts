@@ -22,7 +22,7 @@ export async function POST(
   const { data: channel } = await db.from('channels').select('account_id').eq('id', channelId).maybeSingle()
   if (!channel) return NextResponse.json({ error: 'Channel not found' }, { status: 404 })
 
-  const msg = body.message as Record<string, unknown> | undefined
+  const msg = (body as Record<string, unknown>).message as Record<string, unknown> | undefined
   if (!msg?.text || typeof msg.text !== 'string') return NextResponse.json({ ok: true })
 
   const senderId = String(msg.sender?.id ?? body.sender?.id ?? '')
