@@ -221,13 +221,10 @@ export async function persistInboundMessage(
     .from('messages')
     .insert({
       conversation_id: conversationId,
-      account_id: accountId,
-      role: 'user',
       sender_type: 'customer',
-      content: text,
+      content_text: text,
       channel,
-      channel_message_id: externalMessageId,
-      contact_id: contactId ?? null,
+      message_id: externalMessageId,
     })
     .select('id')
     .single();
