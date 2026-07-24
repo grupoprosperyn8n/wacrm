@@ -387,7 +387,7 @@ export function ContactDetailView({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-popover border-border text-popover-foreground sm:max-w-lg w-full p-0"
+        className="bg-popover border-border text-popover-foreground sm:max-w-2xl w-full p-0 resize-x overflow-x-hidden min-w-[400px]"
       >
         {loading || !contact ? (
           <div className="flex items-center justify-center h-full">
@@ -410,7 +410,7 @@ export function ContactDetailView({
                   <SheetDescription className="text-muted-foreground text-xs mt-0.5">
                     {t('contactDetailsDesc')}
                   </SheetDescription>
-                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground break-all">
                     <button
                       onClick={copyPhone}
                       className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
@@ -491,7 +491,7 @@ export function ContactDetailView({
               </TabsList>
 
               {/* Details Tab */}
-              <TabsContent value="details" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="details" className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 break-words">
                 <div className="space-y-3">
                   <div className="space-y-1.5">
                     <Label className="text-muted-foreground text-xs">{t('company', { fallback: 'Name' })}</Label>
@@ -544,7 +544,7 @@ export function ContactDetailView({
               </TabsContent>
 
               {/* Tags Tab */}
-              <TabsContent value="tags" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="tags" className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 break-words">
                 <div className="space-y-3">
                   <p className="text-xs text-muted-foreground">
                     {t('tagsTab.clickTagDesc')}
@@ -622,7 +622,7 @@ export function ContactDetailView({
                         className="rounded-lg bg-muted/50 border border-border/50 p-3 group"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap flex-1">
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words flex-1">
                             {note.note_text}
                           </p>
                           <button
@@ -648,7 +648,7 @@ export function ContactDetailView({
               </TabsContent>
 
               {/* Custom Fields Tab */}
-              <TabsContent value="custom" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="custom" className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 break-words">
                 {loadingCustom ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -695,7 +695,7 @@ export function ContactDetailView({
               </TabsContent>
 
               {/* Deals Tab */}
-              <TabsContent value="deals" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="deals" className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 break-words">
                 {loadingDeals ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="size-5 animate-spin text-primary" />
