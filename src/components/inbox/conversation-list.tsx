@@ -394,10 +394,12 @@ export function ConversationList({
                   <p className="text-[10px] text-muted-foreground mb-1">Hasta</p>
                   <input type="date" value={customDateTo} onChange={(e) => { setCustomDateTo(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
                 </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground mb-1">Días</p>
-                  <input type="number" min="1" max="365" value={daysAgo} onChange={(e) => { setDaysAgo(Number(e.target.value)); setDateFilter("days"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
-                </div>
+                {dateFilter === "days" && (
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-1">Días</p>
+                    <input type="number" min="1" max="365" value={daysAgo} onChange={(e) => { setDaysAgo(Number(e.target.value)); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
+                  </div>
+                )}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
