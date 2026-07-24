@@ -41,6 +41,10 @@ export function AiKnowledgeCard({
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [reindexing, setReindexing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [scrapingUrl, setScrapingUrl] = useState("");
+  const [scraping, setScraping] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const loadedAccountIdRef = useRef<string | null>(null);
   const t = useTranslations('Settings.aiKnowledge');
 
@@ -138,6 +142,36 @@ export function AiKnowledgeCard({
     } catch {
       toast.error(t('removeFailed'));
     }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/ai/knowledge/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok) { toast.success('PDF subido correctamente'); void fetchDocs(); }
+      else toast.error(data.error ?? 'Error al subir PDF');
+    } catch { toast.error('Error al subir PDF'); }
+    finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
+  };
+
+  const handleScrapeUrl = async () => {
+    if (!scrapingUrl.trim()) return;
+    setScraping(true);
+    try {
+      const res = await fetch('/api/ai/knowledge/scrape', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: scrapingUrl.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) { toast.success('URL procesada correctamente'); setScrapingUrl(''); void fetchDocs(); }
+      else toast.error(data.error ?? 'Error al procesar URL');
+    } catch { toast.error('Error al procesar URL'); }
+    finally { setScraping(false); }
   };
 
   const reindex = async () => {
@@ -254,10 +288,21 @@ export function AiKnowledgeCard({
               </div>
             ) : (
               canEdit && (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button variant="outline" size="sm" onClick={openNew}>
                     <Plus className="mr-2 h-4 w-4" /> {t('addDoc')}
                   </Button>
+                  <input ref={fileRef} type="file" accept=".pdf" onChange={handlePdfUpload} className="hidden" />
+                  <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                    {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Subir PDF
+                  </Button>
+                  <div className="flex gap-1">
+                    <input value={scrapingUrl} onChange={(e) => setScrapingUrl(e.target.value)} placeholder="URL a scrapear..." className="h-8 w-48 rounded border border-border bg-muted px-2 text-xs text-foreground" />
+                    <Button variant="outline" size="sm" onClick={handleScrapeUrl} disabled={scraping || !scrapingUrl.trim()}>
+                      {scraping ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Scrapear'}
+                    </Button>
+                  </div>
                   {hasEmbeddingsKey && docs.length > 0 && (
                     <Button
                       variant="ghost"
