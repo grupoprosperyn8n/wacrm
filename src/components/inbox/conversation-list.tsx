@@ -37,8 +37,8 @@ interface ConversationListProps {
   resyncToken?: number;
 }
 
-const SORT_OPTIONS = ["newest", "oldest", "unread"] as const;
-const SORT_LABELS: Record<string, string> = { newest: "Más nuevo", oldest: "Más viejo", unread: "No leídos" };
+const SORT_OPTIONS = ["newest", "oldest", "alpha"] as const;
+const SORT_LABELS: Record<string, string> = { newest: "Más nuevo", oldest: "Más viejo", alpha: "Alfabético" };
 
 const DATE_LABELS: Record<string, string> = {
   today: "Hoy",
@@ -283,10 +283,10 @@ export function ConversationList({
       if (sortBy === "oldest") {
         return (a.last_message_at ?? "").localeCompare(b.last_message_at ?? "");
       }
-      if (sortBy === "unread") {
-        const aU = a.unread_count > 0 ? 0 : 1;
-        const bU = b.unread_count > 0 ? 0 : 1;
-        if (aU !== bU) return aU - bU;
+      if (sortBy === "alpha") {
+        const aName = (a.contact?.name ?? a.contact?.phone ?? "").toLowerCase();
+        const bName = (b.contact?.name ?? b.contact?.phone ?? "").toLowerCase();
+        return aName.localeCompare(bName);
       }
       return (b.last_message_at ?? "").localeCompare(a.last_message_at ?? "");
     });
