@@ -533,13 +533,29 @@ function ConversationItem({
                 {conversation.unread_count}
               </span>
             )}
-            <span
-              className={cn(
-                "h-2 w-2 rounded-full",
-                STATUS_COLORS[conversation.status]
-              )}
-              title={conversation.status}
-            />
+            {conversation.status === "closed" ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const supabase = createClient();
+                  supabase.from("conversations").update({ status: "open" }).eq("id", conversation.id).then(() => {
+                    window.location.reload();
+                  });
+                }}
+                className="inline-flex items-center gap-0.5 rounded border border-border px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+                title="Reabrir conversación"
+              >
+                Reabrir
+              </button>
+            ) : (
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full",
+                  STATUS_COLORS[conversation.status]
+                )}
+                title={conversation.status}
+              />
+            )}
           </div>
         </div>
       </div>
