@@ -10,6 +10,8 @@ import { SettingsRail } from '@/components/settings/settings-rail';
 import { SettingsOverview } from '@/components/settings/settings-overview';
 import { ProfileForm } from '@/components/settings/profile-form';
 import { SecurityPanel } from '@/components/settings/security-panel';
+import { WidgetSettings } from '@/components/settings/widget-settings';
+import { IntegrationsPanel } from '@/components/settings/integrations-panel';
 import { AppearancePanel } from '@/components/settings/appearance-panel';
 import { TelegramConfig } from '@/components/settings/telegram-config';
 import { WhatsAppConfig } from '@/components/settings/whatsapp-config';
@@ -59,6 +61,8 @@ export default function SettingsPage() {
     profile: <ProfileForm />,
     security: <SecurityPanel />,
     appearance: <AppearancePanel />,
+    widget: <WidgetSettings />,
+    integrations: <IntegrationsPanel />,
     whatsapp: <WhatsAppConfig />,
     telegram: <TelegramConfig />,
     templates: <TemplateManager />,

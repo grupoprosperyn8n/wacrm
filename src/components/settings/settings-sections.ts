@@ -7,6 +7,8 @@ import {
   Palette,
   PlugZap,
   Shield,
+  ShoppingCart,
+  Smartphone,
   Tags,
   User,
   UsersRound,
@@ -34,6 +36,8 @@ export const SETTINGS_SECTIONS = [
   'fields',
   'deals',
   'members',
+  'widget',
+  'integrations',
   'api',
 ] as const;
 
@@ -61,6 +65,8 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   fields: { id: 'fields', label: 'Fields & tags', icon: Tags, group: 'workspace' },
   deals: { id: 'deals', label: 'Deals & currency', icon: Coins, group: 'workspace' },
   members: { id: 'members', label: 'Team members', icon: UsersRound, group: 'workspace' },
+  widget: { id: 'widget', label: 'Chat Widget', icon: Smartphone, group: 'workspace' },
+  integrations: { id: 'integrations', label: 'Ecommerce', icon: ShoppingCart, group: 'workspace' },
   api: { id: 'api', label: 'API keys', icon: KeyRound, group: 'workspace' },
 };
 
