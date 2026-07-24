@@ -18,7 +18,7 @@
     "createAccount": "Crear cuenta"
   },
   "Sidebar": {
-    "title": "WACRM",
+    "title": "CRM Agentico",
     "dashboard": "Panel",
     "inbox": "Bandeja de entrada",
     "notifications": "Notificaciones",
@@ -1528,7 +1528,7 @@
       "labelTooLong": "La etiqueta debe tener {max} caracteres o menos",
       "copied": "Enlace de invitación copiado",
       "clipboardBlocked": "Portapapeles bloqueado — copia el enlace manualmente",
-      "whatsappMessage": "Únete a {accountName} en wacrm usando este enlace (válido por {expiresInDays} días): {url}"
+      "whatsappMessage": "Únete a {accountName} en CRM Agentico usando este enlace (válido por {expiresInDays} días): {url}"
     },
     "tagsAndFields": {
       "title": "Campos y etiquetas",
@@ -1639,8 +1639,8 @@
       "saveResubmit": "Guardar y reenviar",
       "submitApproval": "Enviar para aprobación",
       "deleteDialogTitle": "¿Eliminar plantilla?",
-      "deleteMetaDesc": "Se eliminará \"{name}\" de Meta y de wacrm. Las transmisiones activas que usen esta plantilla comenzarán a fallar en su próximo envío. Esto no se puede deshacer.",
-      "deleteLocalDesc": "Se eliminará \"{name}\" de wacrm. Nunca fue enviada a Meta, así que no se necesita limpieza remota.",
+      "deleteMetaDesc": "Se eliminará \"{name}\" de Meta y de CRM Agentico. Las transmisiones activas que usen esta plantilla comenzarán a fallar en su próximo envío. Esto no se puede deshacer.",
+      "deleteLocalDesc": "Se eliminará \"{name}\" de CRM Agentico. Nunca fue enviada a Meta, así que no se necesita limpieza remota.",
       "deleting": "Eliminando…",
       "delete": "Eliminar",
       "toastLoadFailed": "Error al cargar plantillas",
