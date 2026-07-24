@@ -8,6 +8,7 @@ import { MODES, THEMES, type Mode, type ThemeId } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { SettingsPanelHead } from "./settings-panel-head";
+import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 
 const BRAND_NAME_KEY = "crmagentico.brandName";
@@ -18,22 +19,27 @@ export function AppearancePanel() {
 
   const [brandName, setBrandName] = useState("CRM Agentico");
   const [saved, setSaved] = useState(false);
+  const { account } = useAuth();
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(BRAND_NAME_KEY);
-      if (saved) setBrandName(saved);
-    } catch {}
-  }, []);
+    if (account?.name) setBrandName(account.name);
+  }, [account?.name]);
 
-  function saveBrandName(name: string) {
+  async function saveBrandName(name: string) {
     setBrandName(name);
     try {
-      localStorage.setItem(BRAND_NAME_KEY, name);
-    } catch {}
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-    window.dispatchEvent(new CustomEvent("brandname-change", { detail: name }));
+      const res = await fetch("/api/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error("Error al guardar");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      window.dispatchEvent(new CustomEvent("brandname-change", { detail: name }));
+    } catch (err) {
+      console.error("Error saving brand name:", err);
+    }
   }
 
   return (
