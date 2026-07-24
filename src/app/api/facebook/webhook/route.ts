@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/flows/admin-client'
 import { processInboundText } from '@/lib/messaging/dispatcher'
-import { requireRole, toErrorResponse } from '@/lib/auth/account'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -22,10 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+  const db = supabaseAdmin()
   const accountId = request.headers.get('x-account-id')
   if (!accountId) return NextResponse.json({ error: 'x-account-id header required' }, { status: 400 })
 
@@ -44,7 +40,7 @@ export async function POST(request: Request) {
       const text = message.text as string
       const externalMessageId = message.mid?.toString() ?? crypto.randomUUID()
       const result = await processInboundText(
-        supabase, accountId, 'facebook', psid, text, externalMessageId,
+        db as any, accountId, 'facebook', psid, text, externalMessageId,
       )
       if (!result.success) {
         console.error(`[facebook-webhook] processInboundText error:`, result.error)

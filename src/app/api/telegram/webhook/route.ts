@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/flows/admin-client'
 import { processInboundText } from '@/lib/messaging/dispatcher'
-import { requireRole, toErrorResponse } from '@/lib/auth/account'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -11,26 +10,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  try {
-    await requireRole('agent')
-  } catch (err) {
-    return toErrorResponse(err)
-  }
-
   let body: Record<string, unknown>
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
-  }
-
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const accountId = request.headers.get('x-account-id')
-  if (!accountId) {
-    return NextResponse.json({ error: 'x-account-id header required' }, { status: 400 })
   }
 
   const msg = body.message as Record<string, unknown> | undefined
@@ -46,8 +30,18 @@ export async function POST(request: Request) {
   const externalMessageId = msg.message_id?.toString() ?? crypto.randomUUID()
   const externalUserId = chatId
 
+  // For test/Dev Webhooks the account_id is resolved from the channel config.
+  // Since Telegram doesn't include account info in the webhook payload,
+  // we use x-account-id header (provided by the app when testing).
+  // In production, each bot has a unique webhook URL.
+  const accountId = request.headers.get('x-account-id')
+  if (!accountId) {
+    return NextResponse.json({ error: 'x-account-id header required. Set this header to the account ID the bot belongs to.' }, { status: 400 })
+  }
+
+  const db = supabaseAdmin()
   const result = await processInboundText(
-    supabase, accountId, 'telegram', externalUserId, text, externalMessageId,
+    db as any, accountId, 'telegram', externalUserId, text, externalMessageId,
   )
 
   if (!result.success) {
