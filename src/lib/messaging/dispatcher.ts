@@ -186,6 +186,7 @@ export async function resolveInboundConversation(
     .insert({
       account_id: accountId,
       user_id: userId ?? null,
+      contact_id: contactId ?? null,
       channel,
       status: 'open',
       last_message_at: new Date().toISOString(),
