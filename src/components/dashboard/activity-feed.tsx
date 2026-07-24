@@ -12,6 +12,14 @@ import {
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 import type { ActivityItem, ActivityKind } from '@/lib/dashboard/types'
+
+const CHANNEL_ABBR: Record<string, string> = {
+  whatsapp: 'WA',
+  telegram: 'TG',
+  facebook: 'FB',
+  instagram: 'IG',
+  web: 'WEB',
+}
 import { cn } from '@/lib/utils'
 import { EmptyState } from './empty-state'
 import { Skeleton } from './skeleton'
@@ -163,7 +171,8 @@ function activityText(
 ): string {
   switch (it.kind) {
     case 'message':
-      return t('message', { name: it.actorName ?? 'Unknown' })
+      const tag = it.channel ? CHANNEL_ABBR[it.channel] ?? it.channel : ''
+      return tag ? `[${tag}] ${t('message', { name: it.actorName ?? 'Unknown' })}` : t('message', { name: it.actorName ?? 'Unknown' })
     case 'contact':
       return t('contact', { name: it.actorName ?? 'Unknown' })
     case 'deal':

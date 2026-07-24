@@ -65,6 +65,8 @@ export interface ActivityItem {
   // ── Structured data for i18n rendering (text is built in TSX) ──
   /** Contact / actor name for message, contact, and automation items. */
   actorName?: string
+  /** Channel/platform this activity belongs to. */
+  channel?: string
   /** Message content_text (short preview). */
   messageContent?: string
   /** Deal title. */
