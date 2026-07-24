@@ -241,15 +241,18 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    title={collapsed ? t(item.labelKey as string) : undefined}
                     className={cn(
-                      // Taller on mobile so fingers can hit the row reliably (≥44px).
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2",
+                      "flex items-center rounded-lg text-sm font-medium transition-colors",
+                      collapsed
+                        ? "justify-center py-3"
+                        : "gap-3 px-3 py-2.5 lg:py-2",
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-5 w-5 shrink-0" />
                     <span className={`flex-1 ${collapsed ? "hidden" : ""}`}>{t(item.labelKey as string)}</span>
                     {!collapsed && item.beta && (
                       <span
@@ -276,6 +279,12 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                         {unreadNotifications > 9 ? "9+" : unreadNotifications}
                       </span>
                     )}
+                    {collapsed && showUnreadDot && (
+                      <span className="absolute right-1 top-1 flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
@@ -291,14 +300,18 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    title={collapsed ? t(item.labelKey as string) : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2",
+                      "flex items-center rounded-lg text-sm font-medium transition-colors",
+                      collapsed
+                        ? "justify-center py-3"
+                        : "gap-3 px-3 py-2.5 lg:py-2",
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-5 w-5 shrink-0" />
                     <span className={collapsed ? "hidden" : ""}>{t(item.labelKey as string)}</span>
                   </Link>
                 </li>
