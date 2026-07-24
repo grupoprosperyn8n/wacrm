@@ -137,28 +137,54 @@ export async function resolveInboundConversation(
   accountId: string,
   channel: ChannelType,
   externalUserId: string,
+  contactId?: string,
 ): Promise<ConversationRef> {
-  // Try to match an existing open conversation
-  const { data: existing } = await db
-    .from('conversations')
-    .select('id')
-    .eq('account_id', accountId)
-    .eq('channel', channel)
-    .eq('phone', externalUserId)
-    .eq('status', 'open')
-    .maybeSingle();
+  // If we have a contactId, match by contact_id + channel
+  if (contactId) {
+    const { data: existing } = await db
+      .from('conversations')
+      .select('id')
+      .eq('account_id', accountId)
+      .eq('channel', channel)
+      .eq('contact_id', contactId)
+      .eq('status', 'open')
+      .maybeSingle();
 
-  if (existing) {
-    return { conversationId: existing.id, wasCreated: false };
+    if (existing) {
+      return { conversationId: existing.id, wasCreated: false };
+    }
+  } else {
+    // Try to find by matching the contact's phone
+    const { data: contacts } = await db
+      .from('contacts')
+      .select('id')
+      .eq('account_id', accountId)
+      .eq('phone', externalUserId)
+      .limit(1);
+
+    if (contacts && contacts.length > 0) {
+      const cId = contacts[0].id;
+      const { data: existing } = await db
+        .from('conversations')
+        .select('id')
+        .eq('account_id', accountId)
+        .eq('channel', channel)
+        .eq('contact_id', cId)
+        .eq('status', 'open')
+        .maybeSingle();
+
+      if (existing) {
+        return { conversationId: existing.id, wasCreated: false };
+      }
+    }
   }
 
-  // Create a new conversation
+  // Create a new conversation (contact will be linked after creation)
   const { data: created, error } = await db
     .from('conversations')
     .insert({
       account_id: accountId,
       channel,
-      phone: externalUserId,
       status: 'open',
       last_message_at: new Date().toISOString(),
     })
@@ -290,15 +316,15 @@ export async function processInboundText(
   contactId?: string,
 ): Promise<InboundResult> {
   try {
-    // 1. Resolve or create conversation
-    const { conversationId, wasCreated: conversationWasCreated } =
-      await resolveInboundConversation(db, accountId, channel, externalUserId);
-
-    // 2. Find or create contact
+    // 0. Find or create contact FIRST (so we have contactId for conversation lookup)
     const botUserId = await resolveAuditUserId(db, accountId);
     const contactOutcome = contactId
       ? { contact: { id: contactId, phone: '', name: '' }, wasCreated: false }
       : await findOrCreateContact(db, accountId, externalUserId, botUserId);
+
+    // 1. Resolve or create conversation (now with contactId)
+    const { conversationId, wasCreated: conversationWasCreated } =
+      await resolveInboundConversation(db, accountId, channel, externalUserId, contactOutcome.contact.id);
 
     // 3. Determine first message from this customer
     const { count: priorMsgCount } = await db
