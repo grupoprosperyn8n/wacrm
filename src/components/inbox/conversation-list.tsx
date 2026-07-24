@@ -301,7 +301,7 @@ export function ConversationList({
           <Input
             value={search}
             onChange={handleSearchChange}
-            placeholder={t("searchPlaceholder")}
+            placeholder={t("searchPlaceholder"</div>
             className="border-border bg-muted pl-9 text-sm text-foreground placeholder-muted-foreground focus:border-primary/50"
           />
         </div>
@@ -309,7 +309,7 @@ export function ConversationList({
         <div className="flex flex-wrap items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
-                {activeFilter?.label ?? t("filterAll")}
+                {activeFilter?.label ?? t("filterAll"</div>
                 <ChevronDown className="h-3 w-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -319,17 +319,17 @@ export function ConversationList({
               {FILTER_OPTIONS.map((opt) => (
                 <DropdownMenuItem
                   key={opt.value}
-                  onClick={() => setFilter(opt.value)}
+                  onClick={() => setFilter(opt.value</div>
                   className={cn(
                     "text-sm",
                     filter === opt.value
                       ? "text-primary"
                       : "text-popover-foreground"
-                  )}
+                  </div>
                 >
                   {opt.label}
                 </DropdownMenuItem>
-              ))}
+              )</div>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -340,20 +340,20 @@ export function ConversationList({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="border-border bg-popover">
               <DropdownMenuItem
-                onClick={() => setChannelFilter(null)}
-                className={cn("text-sm", !channelFilter ? "text-primary" : "text-popover-foreground")}
+                onClick={() => setChannelFilter(null</div>
+                className={cn("text-sm", !channelFilter ? "text-primary" : "text-popover-foreground"</div>
               >
                 Todos los canales
               </DropdownMenuItem>
               {Object.entries(CHANNEL_LABEL).map(([key, label]) => (
                 <DropdownMenuItem
                   key={key}
-                  onClick={() => setChannelFilter(key)}
-                  className={cn("text-sm", channelFilter === key ? "text-primary" : "text-popover-foreground")}
+                  onClick={() => setChannelFilter(key</div>
+                  className={cn("text-sm", channelFilter === key ? "text-primary" : "text-popover-foreground"</div>
                 >
                   {label}
                 </DropdownMenuItem>
-              ))}
+              )</div>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -365,7 +365,7 @@ export function ConversationList({
               archiveMode
                 ? "bg-primary/10 text-primary border border-primary/30"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
-            )}
+            </div>
           >
             <Archive className="h-3.5 w-3.5" />
             Archivo
@@ -377,13 +377,13 @@ export function ConversationList({
               <ChevronDown className="h-3 w-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="border-border bg-popover" style={{ maxHeight: 350, overflowY: "auto" }}>
-              <DropdownMenuItem onClick={() => setDateFilter(null)} className={cn("text-sm", !dateFilter ? "text-primary" : "text-popover-foreground")}>Todas</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDateFilter("today")} className={cn("text-sm", dateFilter === "today" ? "text-primary" : "text-popover-foreground")}>Hoy</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDateFilter("yesterday")} className={cn("text-sm", dateFilter === "yesterday" ? "text-primary" : "text-popover-foreground")}>Ayer</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDateFilter("week")} className={cn("text-sm", dateFilter === "week" ? "text-primary" : "text-popover-foreground")}>Esta semana</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDateFilter("month")} className={cn("text-sm", dateFilter === "month" ? "text-primary" : "text-popover-foreground")}>Este mes</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDateFilter("year")} className={cn("text-sm", dateFilter === "year" ? "text-primary" : "text-popover-foreground")}>Este año</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDateFilter("days")} className={cn("text-sm", dateFilter === "days" ? "text-primary" : "text-popover-foreground")}>Días atrás</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter(null</div> className={cn("text-sm", !dateFilter ? "text-primary" : "text-popover-foreground")}>Todas</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("today"</div> className={cn("text-sm", dateFilter === "today" ? "text-primary" : "text-popover-foreground")}>Hoy</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("yesterday"</div> className={cn("text-sm", dateFilter === "yesterday" ? "text-primary" : "text-popover-foreground")}>Ayer</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("week"</div> className={cn("text-sm", dateFilter === "week" ? "text-primary" : "text-popover-foreground")}>Esta semana</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("month"</div> className={cn("text-sm", dateFilter === "month" ? "text-primary" : "text-popover-foreground")}>Este mes</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("year"</div> className={cn("text-sm", dateFilter === "year" ? "text-primary" : "text-popover-foreground")}>Este año</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("days"</div> className={cn("text-sm", dateFilter === "days" ? "text-primary" : "text-popover-foreground")}>Días atrás</DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border" />
               <div className="px-2 py-2 space-y-2">
                 <div>
@@ -394,12 +394,12 @@ export function ConversationList({
                   <p className="text-[10px] text-muted-foreground mb-1">Hasta</p>
                   <input type="date" value={customDateTo} onChange={(e) => { setCustomDateTo(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
                 </div>
-                {dateFilter === "days" && (
+                <div
                   <div>
                     <p className="text-[10px] text-muted-foreground mb-1">Días</p>
                     <input type="number" min="1" max="365" value={daysAgo} onChange={(e) => { setDaysAgo(Number(e.target.value)); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
                   </div>
-                )}
+                </div>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -412,14 +412,14 @@ export function ConversationList({
                   selectedTagIds.length > 0
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
-                )}
+                </div>
               >
-                {t("tags")}
+                {t("tags"</div>
                 {selectedTagIds.length > 0 && (
                   <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
                     {selectedTagIds.length}
                   </span>
-                )}
+                </div>
                 <ChevronDown className="h-3 w-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -429,8 +429,8 @@ export function ConversationList({
                 {tags.map((t) => (
                   <DropdownMenuCheckboxItem
                     key={t.id}
-                    checked={selectedTagIds.includes(t.id)}
-                    onCheckedChange={() => toggleTag(t.id)}
+                    checked={selectedTagIds.includes(t.id</div>
+                    onCheckedChange={() => toggleTag(t.id</div>
                     className="text-sm text-popover-foreground"
                   >
                     <span className="flex items-center gap-2">
@@ -441,10 +441,10 @@ export function ConversationList({
                       <span className="truncate">{t.name}</span>
                     </span>
                   </DropdownMenuCheckboxItem>
-                ))}
+                )</div>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          </div>
 
           {companies.length > 0 && (
             <DropdownMenu>
@@ -454,9 +454,9 @@ export function ConversationList({
                   selectedCompany
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
-                )}
+                </div>
               >
-                <span className="truncate">{selectedCompany ?? t("company")}</span>
+                <span className="truncate">{selectedCompany ?? t("company"</div></span>
                 <ChevronDown className="h-3 w-3 shrink-0" />
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -464,33 +464,33 @@ export function ConversationList({
                 className="max-h-64 w-56 border-border bg-popover"
               >
                 <DropdownMenuItem
-                  onClick={() => setSelectedCompany(null)}
+                  onClick={() => setSelectedCompany(null</div>
                   className={cn(
                     "text-sm",
                     selectedCompany === null
                       ? "text-primary"
                       : "text-popover-foreground"
-                  )}
+                  </div>
                 >
-                  {t("allCompanies")}
+                  {t("allCompanies"</div>
                 </DropdownMenuItem>
                 {companies.map((co) => (
                   <DropdownMenuItem
                     key={co}
-                    onClick={() => setSelectedCompany(co)}
+                    onClick={() => setSelectedCompany(co</div>
                     className={cn(
                       "text-sm",
                       selectedCompany === co
                         ? "text-primary"
                         : "text-popover-foreground"
-                    )}
+                    </div>
                   >
                     <span className="truncate">{co}</span>
                   </DropdownMenuItem>
-                ))}
+                )</div>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          </div>
         </div>
 
         {hasContactFilters && (
@@ -500,35 +500,35 @@ export function ConversationList({
               return (
                 <button
                   key={id}
-                  onClick={() => toggleTag(id)}
+                  onClick={() => toggleTag(id</div>
                   className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground hover:bg-muted/70"
                 >
                   <span
                     className="h-1.5 w-1.5 shrink-0 rounded-full"
                     style={{ backgroundColor: tag?.color ?? "var(--muted-foreground)" }}
                   />
-                  <span className="max-w-24 truncate">{tag?.name ?? t("tags")}</span>
+                  <span className="max-w-24 truncate">{tag?.name ?? t("tags"</div></span>
                   <X className="h-3 w-3" />
                 </button>
               );
-            })}
+            }</div>
             {selectedCompany && (
               <button
-                onClick={() => setSelectedCompany(null)}
+                onClick={() => setSelectedCompany(null</div>
                 className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground hover:bg-muted/70"
               >
                 <span className="max-w-24 truncate">{selectedCompany}</span>
                 <X className="h-3 w-3" />
               </button>
-            )}
+            </div>
             <button
               onClick={clearContactFilters}
               className="px-1 text-[11px] text-muted-foreground hover:text-foreground"
             >
-              {t("clearAll")}
+              {t("clearAll"</div>
             </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Conversation Items.
@@ -544,7 +544,7 @@ export function ConversationList({
           </div>
         ) : filtered.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <p className="text-sm text-muted-foreground">{t("noConversations")}</p>
+            <p className="text-sm text-muted-foreground">{t("noConversations"</div></p>
           </div>
         ) : (
           <div className="flex flex-col">
@@ -556,9 +556,9 @@ export function ConversationList({
                 onSelect={handleSelect}
                 t={t}
               />
-            ))}
+            )</div>
           </div>
-        )}
+        </div>
       </ScrollArea>
     </div>
   );
@@ -597,7 +597,7 @@ function ConversationItem({
       className={cn(
         "flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50",
         isActive && "border-l-2 border-primary bg-muted/70"
-      )}
+      </div>
     >
       {/* Avatar */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
@@ -609,7 +609,7 @@ function ConversationItem({
           />
         ) : (
           initials
-        )}
+        </div>
       </div>
 
       {/* Content */}
@@ -623,20 +623,20 @@ function ConversationItem({
               <span className="inline-flex items-center rounded border border-border px-1 py-0.5 text-[9px] font-medium uppercase text-muted-foreground">
                 {CHANNEL_LABEL[conversation.channel] ?? conversation.channel}
               </span>
-            )}
+            </div>
             <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo}</span>
           </div>
         </div>
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p className="truncate text-xs text-muted-foreground">
-            {conversation.last_message_text || t("noMessagesYet")}
+            {conversation.last_message_text || t("noMessagesYet"</div>
           </p>
           <div className="flex shrink-0 items-center gap-1.5">
             {conversation.unread_count > 0 && (
               <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
                 {conversation.unread_count}
               </span>
-            )}
+            </div>
             {conversation.status === "closed" ? (
               <button
                 onClick={(e) => {
@@ -656,10 +656,10 @@ function ConversationItem({
                 className={cn(
                   "h-2 w-2 rounded-full",
                   STATUS_COLORS[conversation.status]
-                )}
+                </div>
                 title={conversation.status}
               />
-            )}
+            </div>
           </div>
         </div>
       </div>
