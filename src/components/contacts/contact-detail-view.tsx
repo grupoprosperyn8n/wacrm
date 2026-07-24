@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { formatCurrency } from '@/lib/currency';
@@ -59,6 +59,10 @@ export function ContactDetailView({
   const { accountId, defaultCurrency } = useAuth();
 
   const [contact, setContact] = useState<Contact | null>(null);
+  const [panelWidth, setPanelWidth] = useState<number | null>(null);
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
   const [loading, setLoading] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
 
@@ -372,6 +376,30 @@ export function ContactDetailView({
     }
   }
 
+  function handleResizeStart(e: React.MouseEvent) {
+    e.preventDefault();
+    startXRef.current = e.clientX;
+    const sheet = (e.target as HTMLElement).closest('[data-side="right"]') as HTMLElement;
+    if (sheet) startWidthRef.current = sheet.offsetWidth;
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  function handleResizeMove(e: MouseEvent) {
+    const diff = startXRef.current - e.clientX;
+    const newWidth = Math.max(400, Math.min(window.innerWidth - 100, startWidthRef.current + diff));
+    setPanelWidth(newWidth);
+  }
+
+  function handleResizeEnd() {
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', handleResizeEnd);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
   function getInitials(name?: string | null) {
     if (!name) return '?';
     return name
@@ -387,8 +415,15 @@ export function ContactDetailView({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-popover border-border text-popover-foreground w-full sm:max-w-xl lg:max-w-2xl p-0 overflow-x-hidden"
+        style={panelWidth ? { width: panelWidth, maxWidth: panelWidth } : undefined}
+        className="bg-popover border-border text-popover-foreground w-full sm:max-w-xl lg:max-w-2xl p-0 overflow-x-hidden relative"
       >
+        {/* Resize handle */}
+        <div
+          ref={resizeRef}
+          onMouseDown={handleResizeStart}
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary/50 active:bg-primary/70 z-50 transition-colors"
+        />
         {loading || !contact ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="size-6 animate-spin text-primary" />
