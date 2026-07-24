@@ -78,3 +78,99 @@ export async function syncShopify(
 
   return { products: shopifyProducts?.length ?? 0, orders: 0 }
 }
+
+export async function syncMercadoLibre(
+  db: SupabaseClient,
+  accountId: string,
+  integrationId: string,
+  config: Record<string, unknown>,
+): Promise<SyncResult> {
+  const token = config.access_token as string
+  const userId = config.user_id as string
+  if (!token) throw new Error('MercadoLibre: falta access_token')
+
+  // Get user's items
+  const searchUrl = userId
+    ? `https://api.mercadolibre.com/users/${userId}/items/search?limit=100`
+    : 'https://api.mercadolibre.com/users/me/items/search?limit=100'
+
+  const searchRes = await fetch(searchUrl, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!searchRes.ok) throw new Error(`MercadoLibre API error: ${searchRes.status}`)
+  const searchData = await searchRes.json()
+  const itemIds: string[] = searchData.results ?? []
+
+  // Fetch details for each item
+  let productsSynced = 0
+  for (let i = 0; i < itemIds.length; i += 20) {
+    const batch = itemIds.slice(i, i + 20)
+    const detailRes = await fetch(`https://api.mercadolibre.com/items?ids=${batch.join(',')}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!detailRes.ok) continue
+    const details = await detailRes.json()
+    for (const item of details) {
+      const body = item.body ?? item
+      if (!body.id) continue
+      await db.from('ecommerce_products').upsert({
+        account_id: accountId,
+        integration_id: integrationId,
+        platform_product_id: body.id,
+        title: body.title ?? '',
+        description: body.description?.plain_text ?? body.title ?? '',
+        price: body.price ?? 0,
+        currency: body.currency_id ?? 'ARS',
+        image_url: body.pictures?.[0]?.url ?? body.thumbnail ?? null,
+        product_url: body.permalink ?? null,
+        stock: body.available_quantity ?? 0,
+        category: body.category_id ?? null,
+        synced_at: new Date().toISOString(),
+      }, { onConflict: 'platform_product_id', ignoreDuplicates: false })
+      productsSynced++
+    }
+  }
+  return { products: productsSynced, orders: 0 }
+}
+
+export async function syncWooCommerce(
+  db: SupabaseClient,
+  accountId: string,
+  integrationId: string,
+  config: Record<string, unknown>,
+): Promise<SyncResult> {
+  const url = config.url as string
+  const consumerKey = config.consumer_key as string
+  const consumerSecret = config.consumer_secret as string
+  if (!url || !consumerKey || !consumerSecret) throw new Error('WooCommerce: faltan credenciales')
+
+  const base = url.replace(/\/+$/, '')
+  const auth = btoa(`${consumerKey}:${consumerSecret}`)
+
+  // Fetch products
+  const prodRes = await fetch(`${base}/wp-json/wc/v3/products?per_page=100`, {
+    headers: { Authorization: `Basic ${auth}` },
+  })
+  if (!prodRes.ok) throw new Error(`WooCommerce API error: ${prodRes.status}`)
+  const products = await prodRes.json()
+
+  for (const p of products) {
+    await db.from('ecommerce_products').upsert({
+      account_id: accountId,
+      integration_id: integrationId,
+      platform_product_id: String(p.id),
+      title: p.name ?? '',
+      description: p.description?.replace(/<[^>]+>/g, '')?.slice(0, 2000) ?? '',
+      price: parseFloat(p.price ?? '0'),
+      currency: p.currency ?? 'USD',
+      image_url: p.images?.[0]?.src ?? null,
+      product_url: p.permalink ?? null,
+      stock: p.stock_quantity ?? 0,
+      category: p.categories?.[0]?.name ?? null,
+      tags: p.tags?.map((t: any) => t.name) ?? [],
+      synced_at: new Date().toISOString(),
+    }, { onConflict: 'platform_product_id', ignoreDuplicates: false })
+  }
+
+  return { products: products.length ?? 0, orders: 0 }
+}

@@ -29,6 +29,9 @@ const TYPE_FIELDS: Record<ChannelType, Array<{ key: string; labelKey: string; pl
     { key: 'business_account_id', labelKey: 'instagram.businessAccountId', placeholderKey: 'instagram.businessAccountIdPlaceholder' },
     { key: 'access_token', labelKey: 'instagram.accessToken', placeholderKey: 'instagram.accessTokenPlaceholder', secret: true },
   ],
+  tiktok: [
+    { key: 'access_token', labelKey: 'tiktok.accessToken', placeholderKey: 'tiktok.accessTokenPlaceholder', secret: true },
+  ],
   web: [
     { key: 'title', labelKey: 'web.title', placeholderKey: 'web.titlePlaceholder' },
     { key: 'welcome_message', labelKey: 'web.welcomeMessage', placeholderKey: 'web.welcomeMessagePlaceholder' },

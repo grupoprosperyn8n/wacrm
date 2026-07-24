@@ -811,7 +811,8 @@
       "telegram": "Telegram",
       "whatsapp": "WhatsApp",
       "facebook": "Facebook",
-      "instagram": "Instagram",
+      "instagram": "Instagram"
+    "tiktok": "TikTok",
       "web": "Web Chat"
     },
     "status": "Estado",
@@ -861,6 +862,10 @@
       "appSecretPlaceholder": "Pega el App Secret de tu aplicación de Facebook",
       "verifyToken": "Token de Verificación",
       "verifyTokenPlaceholder": "Un token personalizado para verificar el webhook"
+    },
+    "tiktok": {
+      "accessToken": "Access Token",
+      "accessTokenPlaceholder": "Access Token de TikTok"
     },
     "instagram": {
       "businessAccountId": "ID de Cuenta de Negocio de Instagram",

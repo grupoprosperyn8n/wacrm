@@ -43,7 +43,7 @@ const TYPE_ICONS: Record<string, string> = {
   web: '🌐',
 };
 
-const CHANNEL_TYPES: ChannelType[] = ['whatsapp', 'telegram', 'facebook', 'instagram', 'web'];
+const CHANNEL_TYPES: ChannelType[] = ['whatsapp', 'telegram', 'facebook', 'instagram', 'tiktok', 'web'];
 
 export default function ChannelDetailPage() {
   const t = useTranslations('Channels');
@@ -229,7 +229,7 @@ export default function ChannelDetailPage() {
             <Select
               value={chanType}
               onValueChange={(val: string | null) => {
-                if (val === 'whatsapp' || val === 'telegram' || val === 'facebook' || val === 'instagram' || val === 'web') {
+                if (val === 'whatsapp' || val === 'telegram' || val === 'facebook' || val === 'instagram' || val === 'tiktok' || val === 'web') {
                   setChanType(val);
                   setFieldValues({});
                 }
