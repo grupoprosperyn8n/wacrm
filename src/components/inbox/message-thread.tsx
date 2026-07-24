@@ -1054,6 +1054,34 @@ export function MessageThread({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Archive / Delete */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="border-border bg-popover">
+              <DropdownMenuItem onClick={() => onStatusChange(conversation.id, "closed")}>
+                <Archive className="h-4 w-4" />
+                Archivar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border" />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={async () => {
+                  if (!window.confirm("¿Eliminar esta conversación?")) return;
+                  try {
+                    const supabase = createClient();
+                    await supabase.from("conversations").delete().eq("id", conversation.id);
+                    window.location.reload();
+                  } catch { alert("Error al eliminar"); }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
