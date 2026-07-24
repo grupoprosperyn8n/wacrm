@@ -37,6 +37,9 @@ interface ConversationListProps {
   resyncToken?: number;
 }
 
+const SORT_OPTIONS = ["newest", "oldest", "unread"] as const;
+const SORT_LABELS: Record<string, string> = { newest: "Más nuevo", oldest: "Más viejo", unread: "No leídos" };
+
 const DATE_LABELS: Record<string, string> = {
   today: "Hoy",
   yesterday: "Ayer",
@@ -85,6 +88,7 @@ export function ConversationList({
   const [filter, setFilter] = useState<InboxFilter>("all");
   const [channelFilter, setChannelFilter] = useState<string | null>(null);
   const [archiveMode, setArchiveMode] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("newest");
   const [dateFilter, setDateFilter] = useState<string | null>("today");
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
@@ -257,8 +261,20 @@ export function ConversationList({
       });
     }
 
-    return result;
-  }, [conversations, filter, search, selectedTagIds, selectedCompany, archiveMode, dateFilter, customDateFrom, customDateTo, daysAgo]);
+    // Sort
+    const sorted = [...result].sort((a, b) => {
+      if (sortBy === "oldest") {
+        return (a.last_message_at ?? "").localeCompare(b.last_message_at ?? "");
+      }
+      if (sortBy === "unread") {
+        const aUnread = a.unread_count > 0 ? 0 : 1;
+        const bUnread = b.unread_count > 0 ? 0 : 1;
+        if (aUnread !== bUnread) return aUnread - bUnread;
+      }
+      return (b.last_message_at ?? "").localeCompare(a.last_message_at ?? "");
+    });
+    return sorted;
+  }, [conversations, filter, search, selectedTagIds, selectedCompany, archiveMode, dateFilter, customDateFrom, customDateTo, daysAgo, sortBy]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>
@@ -406,6 +422,24 @@ export function ConversationList({
                   Limpiar filtros
                 </button>
               </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+              {SORT_LABELS[sortBy] ?? "Orden"}
+              <ChevronDown className="h-3 w-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="border-border bg-popover">
+              {SORT_OPTIONS.map((opt) => (
+                <DropdownMenuItem
+                  key={opt}
+                  onClick={() => setSortBy(opt)}
+                  className={cn("text-sm", sortBy === opt ? "text-primary" : "text-popover-foreground")}
+                >
+                  {SORT_LABELS[opt]}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
