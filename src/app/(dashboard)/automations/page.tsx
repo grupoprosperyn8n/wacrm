@@ -31,11 +31,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { GatedButton } from "@/components/ui/gated-button"
 import { Switch } from "@/components/ui/switch"
 import {
+  Dialog,
+  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -212,13 +215,8 @@ export default function AutomationsPage() {
                     <p className="mt-1 text-xs text-muted-foreground">{t(`templates.${slug}.description`)}</p>
                   </button>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        aria-label="Opciones"
-                        className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100 focus:opacity-100"
-                      >
+                    <DropdownMenuTrigger className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100 focus:opacity-100">
                         <MoreVertical className="h-4 w-4" />
-                      </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-popover text-popover-foreground">
                       <DropdownMenuItem onClick={() => startFromTemplate(slug)}>
