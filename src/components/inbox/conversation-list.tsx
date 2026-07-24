@@ -39,9 +39,11 @@ interface ConversationListProps {
 
 const DATE_LABELS: Record<string, string> = {
   today: "Hoy",
+  yesterday: "Ayer",
   week: "Esta semana",
   month: "Este mes",
   year: "Este año",
+  days: "Días atrás",
   range: "Personalizado",
 };
 
@@ -86,6 +88,7 @@ export function ConversationList({
   const [dateFilter, setDateFilter] = useState<string | null>(null);
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
+  const [daysAgo, setDaysAgo] = useState(7);
   const [loading, setLoading] = useState(true);
   // Contact-based filters (issue #272). Tags use OR logic (a conversation
   // matches if its contact carries any selected tag), consistent with
@@ -202,12 +205,20 @@ export function ConversationList({
         const d = new Date(c.last_message_at);
         switch (dateFilter) {
           case "today": return d.toDateString() === now.toDateString();
+          case "yesterday": {
+            const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+            return d.toDateString() === yesterday.toDateString();
+          }
           case "week": {
             const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
             return d >= weekStart;
           }
           case "month": return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
           case "year": return d.getFullYear() === now.getFullYear();
+          case "days": {
+            const limit = new Date(now); limit.setDate(now.getDate() - daysAgo);
+            return d >= limit;
+          }
           case "range": {
             if (customDateFrom && d < new Date(customDateFrom)) return false;
             if (customDateTo) {
@@ -247,7 +258,7 @@ export function ConversationList({
     }
 
     return result;
-  }, [conversations, filter, search, selectedTagIds, selectedCompany, archiveMode, dateFilter, customDateFrom, customDateTo]);
+  }, [conversations, filter, search, selectedTagIds, selectedCompany, archiveMode, dateFilter, customDateFrom, customDateTo, daysAgo]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>
@@ -368,15 +379,25 @@ export function ConversationList({
             <DropdownMenuContent align="start" className="border-border bg-popover" style={{ maxHeight: 350, overflowY: "auto" }}>
               <DropdownMenuItem onClick={() => setDateFilter(null)} className={cn("text-sm", !dateFilter ? "text-primary" : "text-popover-foreground")}>Todas</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDateFilter("today")} className={cn("text-sm", dateFilter === "today" ? "text-primary" : "text-popover-foreground")}>Hoy</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("yesterday")} className={cn("text-sm", dateFilter === "yesterday" ? "text-primary" : "text-popover-foreground")}>Ayer</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDateFilter("week")} className={cn("text-sm", dateFilter === "week" ? "text-primary" : "text-popover-foreground")}>Esta semana</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDateFilter("month")} className={cn("text-sm", dateFilter === "month" ? "text-primary" : "text-popover-foreground")}>Este mes</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDateFilter("year")} className={cn("text-sm", dateFilter === "year" ? "text-primary" : "text-popover-foreground")}>Este año</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("days")} className={cn("text-sm", dateFilter === "days" ? "text-primary" : "text-popover-foreground")}>Días atrás</DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border" />
-              <div className="px-2 py-2 space-y-1.5">
-                <p className="text-[10px] text-muted-foreground">Desde</p>
-                <input type="date" value={customDateFrom} onChange={(e) => { setCustomDateFrom(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
-                <p className="text-[10px] text-muted-foreground">Hasta</p>
-                <input type="date" value={customDateTo} onChange={(e) => { setCustomDateTo(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
+              <div className="px-2 py-2 space-y-2">
+                <div>
+                  <p className="text-[10px] text-muted-foreground mb-1">Desde</p>
+                  <input type="date" value={customDateFrom} onChange={(e) => { setCustomDateFrom(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground mb-1">Hasta</p>
+                  <input type="date" value={customDateTo} onChange={(e) => { setCustomDateTo(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground mb-1">Días</p>
+                  <input type="number" min="1" max="365" value={daysAgo} onChange={(e) => { setDaysAgo(Number(e.target.value)); setDateFilter("days"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
+                </div>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
