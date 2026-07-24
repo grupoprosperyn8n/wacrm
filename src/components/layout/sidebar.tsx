@@ -66,7 +66,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 flex h-full flex-col border-r border-border bg-card transition-all duration-200",
         open ? "w-64 translate-x-0" : "w-64 -translate-x-full",
-        collapsed ? "lg:w-16 lg:translate-x-0" : "lg:w-60 lg:translate-x-0",
+        "lg:static lg:z-0" + (collapsed ? " lg:w-16 lg:translate-x-0" : " lg:w-60 lg:translate-x-0"),
       )} aria-label="Primary">
         <div className="flex h-14 shrink-0 items-center border-b border-border px-2">
           <Link href="/dashboard" className="flex items-center justify-center gap-2 flex-1">
