@@ -247,7 +247,7 @@ export function ConversationList({
     }
 
     return result;
-  }, [conversations, filter, search, selectedTagIds, selectedCompany]);
+  }, [conversations, filter, search, selectedTagIds, selectedCompany, archiveMode, dateFilter, customDateFrom, customDateTo]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>
