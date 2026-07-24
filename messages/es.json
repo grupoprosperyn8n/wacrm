@@ -377,7 +377,8 @@
         "deals": "Negocios",
         "noTags": "Sin etiquetas",
         "noDeals": "Sin negocios",
-        "addNotePlaceholder": "Añadir una nota..."
+        "addNotePlaceholder": "Añadir una nota...",
+        "tags": "Etiquetas"
       },
       "actions": {
         "edit": "Editar",
@@ -491,22 +492,22 @@
     }
   },
   "Notifications": {
-      "title": "Notificaciones",
-      "subtitle": "Mantente al día con las notificaciones de tu equipo.",
-      "empty": "Aún sin notificaciones",
-      "emptyHint": "Las conversaciones que otros miembros del equipo te asignen aparecerán aquí.",
-      "markAllAsRead": "Marcar todo como leído",
-      "retry": "Reintentar",
-      "markReadError": "Error al marcar como leída",
-      "markAllError": "Error al marcar todo como leído",
-      "unreadAria": "No leída",
-      "filterAll": "Todas",
-      "filterUnread": "No leídas",
-      "markAsRead": "Marcar como leída",
-      "conversationAssigned": "{user} te asignó una conversación",
-      "conversationNote": "{user} añadió una nota",
-      "broadcastComplete": "Transmisión completada",
-      "broadcastFailed": "Transmisión fallida"
+    "title": "Notificaciones",
+    "subtitle": "Mantente al día con las notificaciones de tu equipo.",
+    "empty": "Aún sin notificaciones",
+    "emptyHint": "Las conversaciones que otros miembros del equipo te asignen aparecerán aquí.",
+    "markAllAsRead": "Marcar todo como leído",
+    "retry": "Reintentar",
+    "markReadError": "Error al marcar como leída",
+    "markAllError": "Error al marcar todo como leído",
+    "unreadAria": "No leída",
+    "filterAll": "Todas",
+    "filterUnread": "No leídas",
+    "markAsRead": "Marcar como leída",
+    "conversationAssigned": "{user} te asignó una conversación",
+    "conversationNote": "{user} añadió una nota",
+    "broadcastComplete": "Transmisión completada",
+    "broadcastFailed": "Transmisión fallida"
   },
   "Pipelines": {
     "page": {
@@ -806,14 +807,6 @@
     "description": "Configura y gestiona tus canales de mensajería (WhatsApp, Telegram, Facebook, Instagram, Web Chat).",
     "addChannel": "Agregar Canal",
     "name": "Nombre",
-    "type": "Tipo",
-    "status": "Estado",
-    "created": "Creado",
-    "active": "Activo",
-    "inactive": "Inactivo",
-    "empty": "Aún no hay canales configurados.",
-    "loading": "Cargando...",
-    "copyWebhookUrl": "Copiar URL del webhook",
     "type": {
       "telegram": "Telegram",
       "whatsapp": "WhatsApp",
@@ -821,6 +814,13 @@
       "instagram": "Instagram",
       "web": "Web Chat"
     },
+    "status": "Estado",
+    "created": "Creado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "empty": "Aún no hay canales configurados.",
+    "loading": "Cargando...",
+    "copyWebhookUrl": "Copiar URL del webhook",
     "scope": {
       "label": "Canales de activación",
       "help": "Elegí dónde puede ejecutarse esta automatización o flujo.",
@@ -1075,8 +1075,8 @@
       "toasts": {
         "saved": "Automatización guardada",
         "created": "Automatización creada",
-      "saveFailed": "Error al guardar",
-      "issueAt": "Ubicación: {path}"
+        "saveFailed": "Error al guardar",
+        "issueAt": "Ubicación: {path}"
       },
       "tags": {
         "select": "Seleccionar una etiqueta…",

@@ -387,7 +387,7 @@ export function ContactDetailView({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-popover border-border text-popover-foreground w-full sm:max-w-xl lg:max-w-2xl xl:max-w-4xl p-0 overflow-x-hidden"
+        className="bg-popover border-border text-popover-foreground w-full sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl p-0 overflow-x-hidden"
       >
         {loading || !contact ? (
           <div className="flex items-center justify-center h-full">

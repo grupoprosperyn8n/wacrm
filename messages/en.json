@@ -377,7 +377,8 @@
         "deals": "Deals",
         "noTags": "No tags",
         "noDeals": "No deals",
-        "addNotePlaceholder": "Add a note..."
+        "addNotePlaceholder": "Add a note...",
+        "tags": "Tags"
       },
       "actions": {
         "edit": "Edit",
@@ -491,22 +492,22 @@
     }
   },
   "Notifications": {
-      "title": "Notifications",
-      "subtitle": "Stay up to date with notifications from your team.",
-      "empty": "No notifications yet",
-      "emptyHint": "Conversations that other team members assign to you will appear here.",
-      "markAllAsRead": "Mark all as read",
-      "retry": "Retry",
-      "markReadError": "Failed to mark notification as read",
-      "markAllError": "Failed to mark all as read",
-      "unreadAria": "Unread",
-      "filterAll": "All",
-      "filterUnread": "Unread",
-      "markAsRead": "Mark as read",
-      "conversationAssigned": "{user} assigned you a conversation",
-      "conversationNote": "{user} added a note",
-      "broadcastComplete": "Broadcast completed",
-      "broadcastFailed": "Broadcast failed"
+    "title": "Notifications",
+    "subtitle": "Stay up to date with notifications from your team.",
+    "empty": "No notifications yet",
+    "emptyHint": "Conversations that other team members assign to you will appear here.",
+    "markAllAsRead": "Mark all as read",
+    "retry": "Retry",
+    "markReadError": "Failed to mark notification as read",
+    "markAllError": "Failed to mark all as read",
+    "unreadAria": "Unread",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "markAsRead": "Mark as read",
+    "conversationAssigned": "{user} assigned you a conversation",
+    "conversationNote": "{user} added a note",
+    "broadcastComplete": "Broadcast completed",
+    "broadcastFailed": "Broadcast failed"
   },
   "Pipelines": {
     "page": {
@@ -806,14 +807,6 @@
     "description": "Configure and manage your messaging channels (WhatsApp, Telegram, Facebook, Instagram, Web Chat).",
     "addChannel": "Add Channel",
     "name": "Name",
-    "type": "Type",
-    "status": "Status",
-    "created": "Created",
-    "active": "Active",
-    "inactive": "Inactive",
-    "empty": "No channels configured yet.",
-    "loading": "Loading...",
-    "copyWebhookUrl": "Copy webhook URL",
     "type": {
       "telegram": "Telegram",
       "whatsapp": "WhatsApp",
@@ -821,6 +814,13 @@
       "instagram": "Instagram",
       "web": "Web Chat"
     },
+    "status": "Status",
+    "created": "Created",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": "No channels configured yet.",
+    "loading": "Loading...",
+    "copyWebhookUrl": "Copy webhook URL",
     "scope": {
       "label": "Activation channels",
       "help": "Choose where this flow or automation can run.",
@@ -1075,8 +1075,8 @@
       "toasts": {
         "saved": "Automation saved",
         "created": "Automation created",
-      "saveFailed": "Save failed",
-      "issueAt": "Location: {path}"
+        "saveFailed": "Save failed",
+        "issueAt": "Location: {path}"
       },
       "tags": {
         "select": "Select a tag…",
