@@ -36,6 +36,13 @@ interface ConversationListProps {
   resyncToken?: number;
 }
 
+const CHANNEL_LABEL: Record<string, string> = {
+  whatsapp: 'WA',
+  telegram: 'TG',
+  facebook: 'FB',
+  instagram: 'IG',
+  web: 'WEB',
+};
 const STATUS_COLORS: Record<ConversationStatus, string> = {
   open: "bg-primary",
   pending: "bg-amber-500",
@@ -477,7 +484,14 @@ function ConversationItem({
           <span className="truncate text-sm font-medium text-foreground">
             {displayName}
           </span>
-          <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo}</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {conversation.channel && (
+              <span className="inline-flex items-center rounded border border-border px-1 py-0.5 text-[9px] font-medium uppercase text-muted-foreground">
+                {CHANNEL_LABEL[conversation.channel] ?? conversation.channel}
+              </span>
+            )}
+            <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo}</span>
+          </div>
         </div>
         <div className="mt-0.5 flex items-center justify-between gap-2">
           <p className="truncate text-xs text-muted-foreground">

@@ -168,6 +168,7 @@ export interface Conversation {
   unread_count: number;
   created_at: string;
   updated_at: string;
+  channel: import("@/types").ChannelType;
   contact?: Contact;
   /**
    * AI auto-reply state for this thread (migration 029 + 033):
@@ -373,6 +374,7 @@ export interface Deal {
   status?: DealStatus;
   created_at: string;
   updated_at?: string;
+  channel: import("@/types").ChannelType;
   contact?: Contact;
   stage?: PipelineStage;
   assignee?: Profile;
@@ -422,6 +424,7 @@ export interface BroadcastRecipient {
    */
   whatsapp_message_id?: string;
   created_at: string;
+  channel: import("@/types").ChannelType;
   contact?: Contact;
 }
 
@@ -646,6 +649,7 @@ export interface AutomationLog {
   status: AutomationLogStatus;
   error_message?: string | null;
   created_at: string;
+  channel: import("@/types").ChannelType;
   contact?: Contact;
 }
 
