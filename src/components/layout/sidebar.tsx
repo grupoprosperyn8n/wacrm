@@ -186,34 +186,34 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
           open ? "translate-x-0" : "-translate-x-full",
           // Desktop: static, always visible — reset all the mobile framing.
           "lg:static lg:z-0 lg:transition-all lg:duration-200 lg:ease-out",
-        collapsed ? "lg:w-16" : "lg:w-60 lg:translate-x-0",
+        collapsed ? "lg:w-[68px]" : "lg:w-60 lg:translate-x-0",
         )}
         aria-label="Primary"
       >
         {/* Logo row. On mobile we put a close button here; on desktop the
             close button is hidden since the sidebar is always-visible. */}
-        <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 lg:px-3">
+          <Link href="/dashboard" className={`flex items-center gap-2 ${collapsed ? "justify-center flex-1" : "flex-1"}`}>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <MessageSquare className="h-4 w-4" />
             </div>
-            <span className="text-sm font-semibold text-foreground">
-              {t("title")}
+            <span className={`text-sm font-semibold text-foreground ${collapsed ? "hidden lg:hidden" : ""}`}>
+              WACRM
             </span>
           </Link>
           <button
             type="button"
             onClick={onClose}
             aria-label={t("closeMenu")}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
           >
             <X className="h-5 w-5" />
           </button>
           <button
             type="button"
             onClick={onToggleCollapse}
-            aria-label={collapsed ? "Expandir sidebar" : "Contraer sidebar"}
-            className="ml-auto hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground lg:flex"
+            aria-label={collapsed ? "Expandir" : "Contraer"}
+            className={`hidden shrink-0 h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground lg:flex ${collapsed ? "mx-auto" : ""}`}
           >
             <ChevronRight className={`h-4 w-4 transition-transform ${collapsed ? "rotate-180" : ""}`} />
           </button>
@@ -245,7 +245,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                     className={cn(
                       "flex items-center rounded-lg text-sm font-medium transition-colors",
                       collapsed
-                        ? "justify-center py-3"
+                        ? "justify-center py-3 px-0 mx-auto w-10"
                         : "gap-3 px-3 py-2.5 lg:py-2",
                       isActive
                         ? "bg-primary/10 text-primary"
@@ -253,7 +253,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                     )}
                   >
                     <item.icon className="h-5 w-5 shrink-0" />
-                    <span className={`flex-1 ${collapsed ? "hidden" : ""}`}>{t(item.labelKey as string)}</span>
+                    <span className={`flex-1 ${collapsed ? "hidden lg:hidden" : ""}`}>{t(item.labelKey as string)}</span>
                     {!collapsed && item.beta && (
                       <span
                         aria-label={t("beta")}
@@ -304,7 +304,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                     className={cn(
                       "flex items-center rounded-lg text-sm font-medium transition-colors",
                       collapsed
-                        ? "justify-center py-3"
+                        ? "justify-center py-3 px-0 mx-auto w-10"
                         : "gap-3 px-3 py-2.5 lg:py-2",
                       isActive
                         ? "bg-primary/10 text-primary"
@@ -312,7 +312,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                     )}
                   >
                     <item.icon className="h-5 w-5 shrink-0" />
-                    <span className={collapsed ? "hidden" : ""}>{t(item.labelKey as string)}</span>
+                    <span className={`${collapsed ? "hidden lg:hidden" : ""}`}>{t(item.labelKey as string)}</span>
                   </Link>
                 </li>
               );
@@ -372,7 +372,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                     "U"}
                 </AvatarFallback>
               </Avatar>
-              <div className={`min-w-0 flex-1 ${collapsed ? "hidden" : ""}`}>
+              <div className={`min-w-0 flex-1 ${collapsed ? "hidden lg:hidden" : ""}`}>
                 <p className="truncate text-sm font-medium text-foreground">
                   {profile?.full_name ?? t("defaultUser")}
                 </p>
