@@ -25,8 +25,8 @@ export async function POST(
 
   for (const item of items) {
     const mapped: Record<string, any> = {}
-    for (const [ourField, theirField] of Object.entries(fieldMap))
-      mapped[ourField] = theirField.split('.').reduce((acc: any, p: string) => acc?.[p], item)
+    for (const [ourField, theirField] of Object.entries(fieldMap as Record<string, unknown>))
+      mapped[ourField] = String(theirField).split(".").reduce((acc: any, p: string) => acc?.[p], item)
 
     if (entityType === 'product') {
       await db.from('ecommerce_products').upsert({
