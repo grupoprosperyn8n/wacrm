@@ -27,13 +27,14 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { ChannelFormFields } from '@/components/channels/channel-form-fields';
 import type { ChannelType } from '@/types';
 
-const CHANNEL_TYPES: ChannelType[] = ['whatsapp', 'telegram', 'facebook', 'instagram', 'web'];
+const CHANNEL_TYPES: ChannelType[] = ['whatsapp', 'telegram', 'facebook', 'instagram', 'tiktok', 'web'];
 const ICONS: Record<string, string> = {
   whatsapp: '💬',
   telegram: '✈️',
   facebook: '👍',
   instagram: '📸',
   web: '🌐',
+  tiktok: '🎵',
 };
 
 export default function NewChannelPage() {

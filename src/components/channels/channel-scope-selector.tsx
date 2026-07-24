@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 
 import { ALL_CHANNEL_TYPES, normalizeChannelTypes } from "@/lib/channels/channel-scope"
 import type { ChannelType } from "@/types"
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 
 interface ChannelScopeSelectorProps {
@@ -13,6 +14,20 @@ interface ChannelScopeSelectorProps {
 }
 
 export function ChannelScopeSelector({ value, onChange, compact }: ChannelScopeSelectorProps) {
+  const [activeChannels, setActiveChannels] = useState<ChannelType[]>(ALL_CHANNEL_TYPES as unknown as ChannelType[]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/channels/active');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.channels?.length) setActiveChannels(data.channels);
+        }
+      } catch {}
+    }
+    load();
+  }, []);
   const t = useTranslations("Channels")
   const selected = normalizeChannelTypes(value)
   const isAll = selected.length === ALL_CHANNEL_TYPES.length
@@ -31,7 +46,7 @@ export function ChannelScopeSelector({ value, onChange, compact }: ChannelScopeS
     return (
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-muted-foreground mr-1">{t("scope.label")}:</span>
-        {ALL_CHANNEL_TYPES.map((channel) => {
+        {ALL_CHANNEL_TYPES.filter(ch => activeChannels.includes(ch as any)).map((channel) => {
           const active = selected.includes(channel)
           return (
             <button

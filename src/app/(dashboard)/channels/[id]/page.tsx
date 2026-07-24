@@ -34,13 +34,14 @@ import { ChannelFormFields } from '@/components/channels/channel-form-fields';
 import type { Channel, ChannelType } from '@/types';
 import { toast } from 'sonner';
 import { ArrowLeft, Copy, Loader2, Trash2 } from 'lucide-react';
-
 const TYPE_ICONS: Record<string, string> = {
+
   whatsapp: '💬',
   telegram: '✈️',
   facebook: '👍',
   instagram: '📸',
   web: '🌐',
+  tiktok: '🎵',
 };
 
 const CHANNEL_TYPES: ChannelType[] = ['whatsapp', 'telegram', 'facebook', 'instagram', 'tiktok', 'web'];
