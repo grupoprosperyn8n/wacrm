@@ -363,7 +363,7 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
   // the foreign key is 1:1. We normalise by taking [0] on each level.
   for (const m of (msgs.data ?? []) as unknown as Array<{
     id: string
-    content_text: string | null
+    content_text: string | null, channel: string | null
     created_at: string
     conversation_id: string
     conversations:
