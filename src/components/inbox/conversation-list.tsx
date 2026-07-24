@@ -383,7 +383,7 @@ export function ConversationList({
               <DropdownMenuItem onClick={() => setDateFilter("week")} className={cn("text-sm", dateFilter === "week" ? "text-primary" : "text-popover-foreground")}>Esta semana</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDateFilter("month")} className={cn("text-sm", dateFilter === "month" ? "text-primary" : "text-popover-foreground")}>Este mes</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setDateFilter("year")} className={cn("text-sm", dateFilter === "year" ? "text-primary" : "text-popover-foreground")}>Este año</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDateFilter("days")} className={cn("text-sm", dateFilter === "days" ? "text-primary" : "text-popover-foreground")}>Días atrás</DropdownMenuItem>
+              
               <DropdownMenuSeparator className="bg-border" />
               <div className="px-2 py-2 space-y-2">
                 <div>
@@ -395,9 +395,16 @@ export function ConversationList({
                   <input type="date" value={customDateTo} onChange={(e) => { setCustomDateTo(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground mb-1">Días</p>
+                  <p className="text-[10px] text-muted-foreground mb-1">Días atrás</p>
                   <input type="number" min="1" max="365" value={daysAgo} onChange={(e) => { setDaysAgo(Number(e.target.value)); setDateFilter("days"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => { setDateFilter(null); setCustomDateFrom(""); setCustomDateTo(""); setDaysAgo(0); }}
+                  className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                >
+                  Limpiar filtros
+                </button>
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
