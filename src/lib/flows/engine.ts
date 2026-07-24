@@ -55,6 +55,7 @@ import { loadAiConfig } from "@/lib/ai/config";
 import { generateReply } from "@/lib/ai/generate";
 import type { ChatMessage } from "@/lib/ai/types";
 import { channelScopeMatches } from "@/lib/channels/channel-scope";
+import { dispatcherSend } from "@/lib/messaging/dispatcher";
 import type { ChannelType } from "@/types";
 import {
   type CollectInputNodeConfig,
@@ -791,33 +792,48 @@ async function sendButtonsAndSuspend(
   node: FlowNodeRow,
 ): Promise<{ outcome: "advanced"; node_key: string }> {
   const cfg = node.config as unknown as SendButtonsNodeConfig;
-  const { whatsapp_message_id } = await engineSendInteractiveButtons({
-    accountId: run.account_id,
-    userId: run.user_id,
-    conversationId: run.conversation_id!,
-    contactId: run.contact_id!,
-    bodyText: cfg.text,
-    headerText: cfg.header_text,
-    footerText: cfg.footer_text,
-    buttons: cfg.buttons.map((b) => ({ id: b.reply_id, title: b.title })),
-  });
-  await logEvent(db, run.id, "message_sent", node.node_key, {
-    node_type: "send_buttons",
-    whatsapp_message_id,
-  });
-  // Look up our internal message id so we can stash it on the run.
-  // Cheap — indexed on `messages.message_id`.
-  const { data: msg } = await db
-    .from("messages")
-    .select("id")
-    .eq("message_id", whatsapp_message_id)
-    .maybeSingle();
-  await db
-    .from("flow_runs")
-    .update({
-      last_prompt_message_id: (msg as { id: string } | null)?.id ?? null,
-    })
-    .eq("id", run.id);
+  const channel = await getRunChannel(db, run);
+  
+  if (channel === 'whatsapp') {
+    const { whatsapp_message_id } = await engineSendInteractiveButtons({
+      accountId: run.account_id,
+      userId: run.user_id,
+      conversationId: run.conversation_id!,
+      contactId: run.contact_id!,
+      bodyText: cfg.text,
+      headerText: cfg.header_text,
+      footerText: cfg.footer_text,
+      buttons: cfg.buttons.map((b) => ({ id: b.reply_id, title: b.title })),
+    });
+    await logEvent(db, run.id, "message_sent", node.node_key, {
+      node_type: "send_buttons",
+      whatsapp_message_id,
+    });
+    const { data: msg } = await db
+      .from("messages")
+      .select("id")
+      .eq("message_id", whatsapp_message_id)
+      .maybeSingle();
+    await db
+      .from("flow_runs")
+      .update({
+        last_prompt_message_id: (msg as { id: string } | null)?.id ?? null,
+      })
+      .eq("id", run.id);
+  } else {
+    // Non-WhatsApp: send the body as plain text with button descriptions
+    const lines = [cfg.text];
+    if (cfg.header_text) lines.unshift(cfg.header_text);
+    if (cfg.footer_text) lines.push(cfg.footer_text);
+    lines.push('');
+    cfg.buttons.forEach((b, i) => lines.push(`${i + 1}. ${b.title}`));
+    await sendTextViaChannel(db, run, lines.join('\n'));
+    await logEvent(db, run.id, "message_sent", node.node_key, {
+      node_type: "send_buttons",
+      channel,
+      fallback_text: true,
+    });
+  }
   return { outcome: "advanced", node_key: node.node_key };
 }
 
@@ -827,39 +843,59 @@ async function sendListAndSuspend(
   node: FlowNodeRow,
 ): Promise<{ outcome: "advanced"; node_key: string }> {
   const cfg = node.config as unknown as SendListNodeConfig;
-  const { whatsapp_message_id } = await engineSendInteractiveList({
-    accountId: run.account_id,
-    userId: run.user_id,
-    conversationId: run.conversation_id!,
-    contactId: run.contact_id!,
-    bodyText: cfg.text,
-    buttonLabel: cfg.button_label,
-    headerText: cfg.header_text,
-    footerText: cfg.footer_text,
-    sections: cfg.sections.map((s) => ({
-      title: s.title,
-      rows: s.rows.map((r) => ({
-        id: r.reply_id,
-        title: r.title,
-        description: r.description,
+  const channel = await getRunChannel(db, run);
+  
+  if (channel === 'whatsapp') {
+    const { whatsapp_message_id } = await engineSendInteractiveList({
+      accountId: run.account_id,
+      userId: run.user_id,
+      conversationId: run.conversation_id!,
+      contactId: run.contact_id!,
+      bodyText: cfg.text,
+      buttonLabel: cfg.button_label,
+      headerText: cfg.header_text,
+      footerText: cfg.footer_text,
+      sections: cfg.sections.map((s) => ({
+        title: s.title,
+        rows: s.rows.map((r) => ({
+          id: r.reply_id,
+          title: r.title,
+          description: r.description,
+        })),
       })),
-    })),
-  });
-  await logEvent(db, run.id, "message_sent", node.node_key, {
-    node_type: "send_list",
-    whatsapp_message_id,
-  });
-  const { data: msg } = await db
-    .from("messages")
-    .select("id")
-    .eq("message_id", whatsapp_message_id)
-    .maybeSingle();
-  await db
-    .from("flow_runs")
-    .update({
-      last_prompt_message_id: (msg as { id: string } | null)?.id ?? null,
-    })
-    .eq("id", run.id);
+    });
+    await logEvent(db, run.id, "message_sent", node.node_key, {
+      node_type: "send_list",
+      whatsapp_message_id,
+    });
+    const { data: msg } = await db
+      .from("messages")
+      .select("id")
+      .eq("message_id", whatsapp_message_id)
+      .maybeSingle();
+    await db
+      .from("flow_runs")
+      .update({
+        last_prompt_message_id: (msg as { id: string } | null)?.id ?? null,
+      })
+      .eq("id", run.id);
+  } else {
+    // Non-WhatsApp: send the body as plain text with list options
+    const lines = [cfg.text];
+    if (cfg.header_text) lines.unshift(cfg.header_text);
+    if (cfg.footer_text) lines.push(cfg.footer_text);
+    lines.push('');
+    for (const section of cfg.sections) {
+      if (section.title) lines.push('── ' + section.title + ' ──');
+      section.rows.forEach((r, i) => lines.push(`${i + 1}. ${r.title}`));
+    }
+    await sendTextViaChannel(db, run, lines.join('\n'));
+    await logEvent(db, run.id, "message_sent", node.node_key, {
+      node_type: "send_list",
+      channel,
+      fallback_text: true,
+    });
+  }
   return { outcome: "advanced", node_key: node.node_key };
 }
 
@@ -972,6 +1008,66 @@ async function endRun(
     .eq("id", runId);
 }
 
+// ── Channel helper ─────────────────────────────────────────────────
+/**
+ * Look up the channel for a flow run by reading its conversation.
+ * Falls back to 'whatsapp' if the conversation is not found (backward compat).
+ */
+async function getRunChannel(
+  db: AdminClient,
+  run: FlowRunRow,
+): Promise<ChannelType> {
+  if (!run.conversation_id) return 'whatsapp' as ChannelType;
+  const { data } = await db
+    .from('conversations')
+    .select('channel')
+    .eq('id', run.conversation_id)
+    .maybeSingle();
+  return (data?.channel ?? 'whatsapp') as ChannelType;
+}
+
+// ── Send helper ─────────────────────────────────────────────────
+/**
+ * Send a text message through the correct channel provider.
+ * For WhatsApp, uses the existing Meta-optimized send function.
+ * For other channels, routes through the dispatcher.
+ */
+async function sendTextViaChannel(
+  db: AdminClient,
+  run: FlowRunRow,
+  text: string,
+): Promise<{ messageId: string; externalMessageId: string }> {
+  const channel = await getRunChannel(db, run);
+  
+  if (channel === 'whatsapp') {
+    const { whatsapp_message_id } = await engineSendText({
+      accountId: run.account_id,
+      userId: run.user_id,
+      conversationId: run.conversation_id!,
+      contactId: run.contact_id!,
+      text,
+    });
+    return { messageId: whatsapp_message_id ?? '', externalMessageId: whatsapp_message_id ?? '' };
+  }
+  
+  // Other channels: route through dispatcher
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await dispatcherSend(db as any, {
+    accountId: run.account_id,
+    channel,
+    conversationId: run.conversation_id!,
+    text,
+    contactId: run.contact_id ?? undefined,
+  });
+  
+  return {
+    messageId: result.messageId,
+    externalMessageId: result.externalMessageId || result.messageId,
+  };
+}
+
+// === Self-contained functions modified below ===
+
 // ============================================================
 // The synchronous advance loop. Walks through auto-advance nodes
 // until it hits one that suspends (send_buttons/send_list) or
@@ -1048,16 +1144,11 @@ async function advanceFromNodeKey(
     if (node.node_type === "send_message") {
       const cfg = node.config as unknown as SendMessageNodeConfig;
       try {
-        const { whatsapp_message_id } = await engineSendText({
-          accountId: run.account_id,
-    userId: run.user_id,
-          conversationId: run.conversation_id!,
-          contactId: run.contact_id!,
-          text: interpolateVars(cfg.text, run.vars),
-        });
+        const result = await sendTextViaChannel(db, run, interpolateVars(cfg.text, run.vars));
         await logEvent(db, run.id, "message_sent", node.node_key, {
           node_type: "send_message",
-          whatsapp_message_id,
+          message_id: result.messageId,
+          external_message_id: result.externalMessageId,
         });
       } catch (err) {
         await logEvent(db, run.id, "error", node.node_key, {
@@ -1073,23 +1164,32 @@ async function advanceFromNodeKey(
     if (node.node_type === "send_media") {
       const cfg = node.config as unknown as SendMediaNodeConfig;
       try {
-        const { whatsapp_message_id } = await engineSendMedia({
-          accountId: run.account_id,
-    userId: run.user_id,
-          conversationId: run.conversation_id!,
-          contactId: run.contact_id!,
-          kind: cfg.media_type,
-          link: cfg.media_url,
-          caption: cfg.caption
-            ? interpolateVars(cfg.caption, run.vars)
-            : undefined,
-          filename: cfg.filename,
-        });
-        await logEvent(db, run.id, "message_sent", node.node_key, {
-          node_type: "send_media",
-          media_type: cfg.media_type,
-          whatsapp_message_id,
-        });
+        const channel = await getRunChannel(db, run);
+        if (channel === 'whatsapp') {
+          const { whatsapp_message_id } = await engineSendMedia({
+            accountId: run.account_id,
+            userId: run.user_id,
+            conversationId: run.conversation_id!,
+            contactId: run.contact_id!,
+            kind: cfg.media_type,
+            link: cfg.media_url,
+            caption: cfg.caption
+              ? interpolateVars(cfg.caption, run.vars)
+              : undefined,
+            filename: cfg.filename,
+          });
+          await logEvent(db, run.id, "message_sent", node.node_key, {
+            node_type: "send_media",
+            media_type: cfg.media_type,
+            whatsapp_message_id,
+          });
+        } else {
+          // Non-WhatsApp channels don't support media sends yet
+          await logEvent(db, run.id, "error", node.node_key, {
+            reason: "send_media_unsupported_channel",
+            channel,
+          });
+        }
       } catch (err) {
         await logEvent(db, run.id, "error", node.node_key, {
           reason: "send_media_failed",
@@ -1106,28 +1206,20 @@ async function advanceFromNodeKey(
       // wake us up via handleReplyForActiveRun's collect_input branch.
       const cfg = node.config as unknown as CollectInputNodeConfig;
       try {
-        const { whatsapp_message_id } = await engineSendText({
-          accountId: run.account_id,
-    userId: run.user_id,
-          conversationId: run.conversation_id!,
-          contactId: run.contact_id!,
-          text: interpolateVars(cfg.prompt_text, run.vars),
-        });
+        const result = await sendTextViaChannel(db, run, interpolateVars(cfg.prompt_text, run.vars));
         await logEvent(db, run.id, "message_sent", node.node_key, {
           node_type: "collect_input",
-          whatsapp_message_id,
+          message_id: result.messageId,
+          external_message_id: result.externalMessageId,
         });
-        const { data: msg } = await db
-          .from("messages")
-          .select("id")
-          .eq("message_id", whatsapp_message_id)
-          .maybeSingle();
-        await db
-          .from("flow_runs")
-          .update({
-            last_prompt_message_id: (msg as { id: string } | null)?.id ?? null,
-          })
-          .eq("id", run.id);
+        if (result.messageId) {
+          await db
+            .from("flow_runs")
+            .update({
+              last_prompt_message_id: result.messageId,
+            })
+            .eq("id", run.id);
+        }
       } catch (err) {
         await logEvent(db, run.id, "error", node.node_key, {
           reason: "collect_input_prompt_failed",
