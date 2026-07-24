@@ -17,7 +17,22 @@ export function WidgetSettings() {
   const [color, setColor] = useState('#7c3aed')
   const [position, setPosition] = useState('right')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [uploading, setUploading] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { uploadAccountMedia } = await import('@/lib/storage/upload-media');
+      const result = await uploadAccountMedia('chat-media', file);
+      setAvatarUrl(result.publicUrl);
+    } catch (err: any) {
+      alert('Error al subir: ' + (err.message || 'desconocido'));
+    }
+    setUploading(false);
+  };
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://wacrm.sistemasagenticos.cloud'
   const embedCode = `<script src="${origin}/widget.js"
@@ -72,7 +87,18 @@ export function WidgetSettings() {
           </div>
           <div className="space-y-1.5">
             <Label>URL del Avatar (opcional)</Label>
-            <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://tudominio.com/avatar.png" />
+            <div className="flex gap-2 items-start">
+              <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="URL del avatar" className="flex-1" />
+              <label className="shrink-0 cursor-pointer inline-flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/80">
+                {uploading ? 'Subiendo...' : 'Subir'}
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+              </label>
+            </div>
+            {avatarUrl && (
+              <div className="mt-1">
+                <img src={avatarUrl} className="h-10 w-10 rounded-full object-cover border border-border" />
+              </div>
+            )}
           </div>
         </div>
 
