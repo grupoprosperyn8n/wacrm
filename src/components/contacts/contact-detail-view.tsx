@@ -388,7 +388,8 @@ export function ContactDetailView({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className={"bg-popover border-border text-popover-foreground w-full p-0 overflow-x-hidden " + (panelWide ? "sm:max-w-4xl lg:max-w-5xl" : "sm:max-w-xl lg:max-w-2xl")}
+        className="bg-popover border-border text-popover-foreground p-0"
+        style={{ width: '75vw', maxWidth: 1200, minWidth: 420, resize: 'horizontal', overflow: 'auto' }}
       >
         {loading || !contact ? (
           <div className="flex items-center justify-center h-full">
@@ -440,15 +441,7 @@ export function ContactDetailView({
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPanelWide(!panelWide)}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                  title={panelWide ? "Panel normal" : "Panel ancho"}
-                >
-                  {panelWide ? "← Normal" : "↔ Ancho"}
-                </button>
-                <Button
+<Button
                   size="sm"
                   onClick={() => setTemplatePickerOpen(true)}
                   disabled={sendingTemplate}
