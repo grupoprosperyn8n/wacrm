@@ -81,7 +81,6 @@ export function ConversationList({
     { label: t("filterUnread"), value: "unread" },
     { label: t("filterOpen"), value: "open" },
     { label: t("filterPending"), value: "pending" },
-    { label: t("filterClosed"), value: "closed" },
   ], [t]);
 
   const [search, setSearch] = useState("");
