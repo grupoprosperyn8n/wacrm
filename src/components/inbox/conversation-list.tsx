@@ -85,7 +85,7 @@ export function ConversationList({
   const [filter, setFilter] = useState<InboxFilter>("all");
   const [channelFilter, setChannelFilter] = useState<string | null>(null);
   const [archiveMode, setArchiveMode] = useState(false);
-  const [dateFilter, setDateFilter] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState<string | null>("today");
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
   const [daysAgo, setDaysAgo] = useState(0);
