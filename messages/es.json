@@ -144,7 +144,7 @@
   },
   "Inbox": {
     "page": {
-      "whatsappNotConnected": "WhatsApp® no está conectado. Ve a Configuración para conectar tu cuenta."
+      "whatsappNotConnected": "No hay canales conectados. Ve a Configuración para conectar un canal (WhatsApp, Telegram, etc.)."
     },
     "conversationList": {
       "searchPlaceholder": "Buscar conversaciones...",

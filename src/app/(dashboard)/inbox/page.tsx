@@ -189,13 +189,14 @@ export default function InboxPage() {
         return;
       }
 
-      const { data } = await supabase
-        .from("whatsapp_config")
-        .select("status")
+      const { data: channels } = await supabase
+        .from("channels")
+        .select("type, status")
         .eq("account_id", accountId)
-        .maybeSingle();
+        .eq("is_active", true);
 
-      setWhatsappConnected(data?.status === "connected");
+      const anyConnected = channels?.some((ch) => ch.status === "connected");
+      setWhatsappConnected(!!anyConnected);
     };
 
     checkConnection();
