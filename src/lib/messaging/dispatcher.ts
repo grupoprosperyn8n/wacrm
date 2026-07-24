@@ -138,6 +138,7 @@ export async function resolveInboundConversation(
   channel: ChannelType,
   externalUserId: string,
   contactId?: string,
+  userId?: string,
 ): Promise<ConversationRef> {
   // If we have a contactId, match by contact_id + channel
   if (contactId) {
@@ -184,6 +185,7 @@ export async function resolveInboundConversation(
     .from('conversations')
     .insert({
       account_id: accountId,
+      user_id: userId ?? null,
       channel,
       status: 'open',
       last_message_at: new Date().toISOString(),
@@ -324,7 +326,7 @@ export async function processInboundText(
 
     // 1. Resolve or create conversation (now with contactId)
     const { conversationId, wasCreated: conversationWasCreated } =
-      await resolveInboundConversation(db, accountId, channel, externalUserId, contactOutcome.contact.id);
+      await resolveInboundConversation(db, accountId, channel, externalUserId, contactOutcome.contact.id, botUserId);
 
     // 3. Determine first message from this customer
     const { count: priorMsgCount } = await db
