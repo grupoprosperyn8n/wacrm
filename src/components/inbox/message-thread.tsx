@@ -1064,7 +1064,7 @@ export function MessageThread({
               <MoreHorizontal className="h-4 w-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="border-border bg-popover">
-              <DropdownMenuItem onClick={() => onStatusChange(conversation.id, "closed")}>
+              <DropdownMenuItem onClick={async () => { const supabase = createClient(); await supabase.from("conversations").update({ archived_at: new Date().toISOString() }).eq("id", conversation.id); window.location.reload(); }}>
                 <Archive className="h-4 w-4" />
                 Archivar
               </DropdownMenuItem>

@@ -205,12 +205,12 @@ export function ConversationList({
 
     if (archiveMode) {
       // Archive mode: only closed conversations
-      result = result.filter((c) => c.status === "closed");
+      result = result.filter((c) => c.archived_at != null);
     } else if (filter === "unread") {
-      result = result.filter((c) => c.unread_count > 0 && c.status !== "closed");
+      result = result.filter((c) => c.unread_count > 0 && c.archived_at == null);
     } else if (filter === "all") {
       // Default view: exclude archived (closed) conversations
-      result = result.filter((c) => c.status !== "closed");
+      result = result.filter((c) => c.archived_at == null);
     } else {
       result = result.filter((c) => c.status === filter);
     }
@@ -469,7 +469,7 @@ export function ConversationList({
             <>
               <button type="button" onClick={async () => {
                 for (const id of selectedIds) {
-                  await createClient().from("conversations").update({ status: "closed" }).eq("id", id);
+                  await createClient().from("conversations").update({ archived_at: new Date().toISOString() }).eq("id", id);
                 } setSelectedIds(new Set()); setBulkMode(false);
               }} className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md text-red-400 hover:bg-red-500/10 border border-red-500/30">
                 Archivar {selectedIds.size}
@@ -757,7 +757,7 @@ function ConversationItem({
                 {conversation.unread_count}
               </span>
             )}
-            {conversation.status === "closed" ? (
+            {conversation.archived_at ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

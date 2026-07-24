@@ -168,6 +168,7 @@ export interface Conversation {
   unread_count: number;
   created_at: string;
   updated_at: string;
+  archived_at?: string | null;
   channel?: import("@/types").ChannelType;
   contact?: Contact;
   /**
