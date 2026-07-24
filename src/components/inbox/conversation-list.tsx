@@ -182,15 +182,16 @@ export function ConversationList({
   const filtered = useMemo(() => {
     let result = conversations;
 
-    if (filter === "unread") {
-      result = result.filter((c) => c.unread_count > 0);
-    } else if (filter !== "all") {
-      result = result.filter((c) => c.status === filter);
-    }
-
-    // Archive mode: only show closed
     if (archiveMode) {
+      // Archive mode: only closed conversations
       result = result.filter((c) => c.status === "closed");
+    } else if (filter === "unread") {
+      result = result.filter((c) => c.unread_count > 0 && c.status !== "closed");
+    } else if (filter === "all") {
+      // Default view: exclude archived (closed) conversations
+      result = result.filter((c) => c.status !== "closed");
+    } else {
+      result = result.filter((c) => c.status === filter);
     }
 
     // Date filter
