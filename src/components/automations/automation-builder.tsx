@@ -772,6 +772,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
             <ChannelScopeSelector
               value={state.channel_types}
               onChange={(channel_types) => patchTop("channel_types", channel_types)}
+              compact
             />
             <TriggerCard
               type={state.trigger_type}

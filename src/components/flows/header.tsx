@@ -176,6 +176,7 @@ export function EditorHeader() {
         onChange={(channel_types) =>
           setState((current) => ({ ...current, channel_types }))
         }
+        compact
       />
     </div>
   );

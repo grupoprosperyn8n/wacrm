@@ -4,13 +4,15 @@ import { useTranslations } from "next-intl"
 
 import { ALL_CHANNEL_TYPES, normalizeChannelTypes } from "@/lib/channels/channel-scope"
 import type { ChannelType } from "@/types"
+import { cn } from "@/lib/utils"
 
 interface ChannelScopeSelectorProps {
   value: ChannelType[] | null | undefined
   onChange: (value: ChannelType[]) => void
+  compact?: boolean
 }
 
-export function ChannelScopeSelector({ value, onChange }: ChannelScopeSelectorProps) {
+export function ChannelScopeSelector({ value, onChange, compact }: ChannelScopeSelectorProps) {
   const t = useTranslations("Channels")
   const selected = normalizeChannelTypes(value)
   const isAll = selected.length === ALL_CHANNEL_TYPES.length
@@ -24,6 +26,37 @@ export function ChannelScopeSelector({ value, onChange }: ChannelScopeSelectorPr
     onChange(normalizeChannelTypes([...selected, channel]))
   }
 
+  // Compact mode: inline pills
+  if (compact) {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-muted-foreground mr-1">{t("scope.label")}:</span>
+        {ALL_CHANNEL_TYPES.map((channel) => {
+          const active = selected.includes(channel)
+          return (
+            <button
+              key={channel}
+              type="button"
+              onClick={() => toggle(channel)}
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors border",
+                active
+                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                  : "bg-muted text-muted-foreground border-border hover:bg-muted/80 hover:text-foreground",
+              )}
+              aria-label={t(`type.${channel}`)}
+              title={t(`type.${channel}`)}
+            >
+              <span className={cn("mr-1 h-1.5 w-1.5 rounded-full", active ? "bg-primary" : "bg-muted-foreground/40")} />
+              {t(`type.${channel}`)}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // Full mode: section with title
   return (
     <section className="w-full rounded-lg border border-border bg-card p-4">
       <div className="mb-3">
