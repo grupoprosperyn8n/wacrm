@@ -88,7 +88,7 @@ export function ConversationList({
   const [dateFilter, setDateFilter] = useState<string | null>(null);
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
-  const [daysAgo, setDaysAgo] = useState(7);
+  const [daysAgo, setDaysAgo] = useState(0);
   const [loading, setLoading] = useState(true);
   // Contact-based filters (issue #272). Tags use OR logic (a conversation
   // matches if its contact carries any selected tag), consistent with
