@@ -72,6 +72,7 @@ export function ConversationList({
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<InboxFilter>("all");
+  const [channelFilter, setChannelFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // Contact-based filters (issue #272). Tags use OR logic (a conversation
   // matches if its contact carries any selected tag), consistent with
@@ -174,6 +175,11 @@ export function ConversationList({
       result = result.filter((c) => c.status === filter);
     }
 
+    // Channel filter
+    if (channelFilter) {
+      result = result.filter((c) => c.channel === channelFilter);
+    }
+
     // Contact-based filters (tags via OR logic, exact company match).
     if (selectedTagIds.length > 0 || selectedCompany !== null) {
       result = result.filter((c) =>
@@ -265,6 +271,30 @@ export function ConversationList({
                   )}
                 >
                   {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+              {channelFilter ? CHANNEL_LABEL[channelFilter] ?? channelFilter : "Canal"}
+              <ChevronDown className="h-3 w-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="border-border bg-popover">
+              <DropdownMenuItem
+                onClick={() => setChannelFilter(null)}
+                className={cn("text-sm", !channelFilter ? "text-primary" : "text-popover-foreground")}
+              >
+                Todos los canales
+              </DropdownMenuItem>
+              {Object.entries(CHANNEL_LABEL).map(([key, label]) => (
+                <DropdownMenuItem
+                  key={key}
+                  onClick={() => setChannelFilter(key)}
+                  className={cn("text-sm", channelFilter === key ? "text-primary" : "text-popover-foreground")}
+                >
+                  {label}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
