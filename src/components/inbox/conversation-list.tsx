@@ -195,7 +195,7 @@ export function ConversationList({
     }
 
     // Date filter
-    if (dateFilter && archiveMode) {
+    if (dateFilter) {
       const now = new Date();
       result = result.filter((c) => {
         if (!c.last_message_at) return false;
@@ -343,6 +343,41 @@ export function ConversationList({
                   {label}
                 </DropdownMenuItem>
               ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <button
+            type="button"
+            onClick={() => { setArchiveMode(!archiveMode); setDateFilter(null); }}
+            className={cn(
+              "inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md transition-colors",
+              archiveMode
+                ? "bg-primary/10 text-primary border border-primary/30"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
+            )}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archivo
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+              {dateFilter ? DATE_LABELS[dateFilter] ?? dateFilter : "Fechas"}
+              <ChevronDown className="h-3 w-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="border-border bg-popover" style={{ maxHeight: 350, overflowY: "auto" }}>
+              <DropdownMenuItem onClick={() => setDateFilter(null)} className={cn("text-sm", !dateFilter ? "text-primary" : "text-popover-foreground")}>Todas</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("today")} className={cn("text-sm", dateFilter === "today" ? "text-primary" : "text-popover-foreground")}>Hoy</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("week")} className={cn("text-sm", dateFilter === "week" ? "text-primary" : "text-popover-foreground")}>Esta semana</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("month")} className={cn("text-sm", dateFilter === "month" ? "text-primary" : "text-popover-foreground")}>Este mes</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateFilter("year")} className={cn("text-sm", dateFilter === "year" ? "text-primary" : "text-popover-foreground")}>Este año</DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border" />
+              <div className="px-2 py-2 space-y-1.5">
+                <p className="text-[10px] text-muted-foreground">Desde</p>
+                <input type="date" value={customDateFrom} onChange={(e) => { setCustomDateFrom(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
+                <p className="text-[10px] text-muted-foreground">Hasta</p>
+                <input type="date" value={customDateTo} onChange={(e) => { setCustomDateTo(e.target.value); setDateFilter("range"); }} className="w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground" />
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
