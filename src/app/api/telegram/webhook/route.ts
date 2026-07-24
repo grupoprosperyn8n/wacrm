@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const challenge = searchParams.get('hub.challenge')
   if (challenge) return new NextResponse(challenge, { status: 200 })
-  return NextResponse.json({ error: 'Missing challenge' }, { status: 400 })
+  return NextResponse.json({ error: 'Falta el challenge de verificación' }, { status: 400 })
 }
 
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
   }
 
   const msg = body.message as Record<string, unknown> | undefined
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
   const chat = msg.chat as Record<string, unknown> | undefined
   const chatId = chat?.id?.toString()
-  if (!chatId) return NextResponse.json({ error: 'Missing chat_id' }, { status: 400 })
+  if (!chatId) return NextResponse.json({ error: 'Falta el chat_id de Telegram' }, { status: 400 })
 
   const text = msg.text as string
   const externalMessageId = msg.message_id?.toString() ?? crypto.randomUUID()
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   // In production, each bot has a unique webhook URL.
   const accountId = request.headers.get('x-account-id')
   if (!accountId) {
-    return NextResponse.json({ error: 'x-account-id header required. Set this header to the account ID the bot belongs to.' }, { status: 400 })
+    return NextResponse.json({ error: 'Se requiere el header x-account-id con el ID de la cuenta del bot.' }, { status: 400 })
   }
 
   const db = supabaseAdmin()

@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (mode === 'subscribe' && challenge && token) {
     return new NextResponse(challenge, { status: 200 })
   }
-  return NextResponse.json({ error: 'Verification failed' }, { status: 400 })
+  return NextResponse.json({ error: 'Verificación fallida' }, { status: 400 })
 }
 
 export async function POST(request: Request) {
@@ -18,12 +18,12 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
   }
 
   const db = supabaseAdmin()
   const accountId = request.headers.get('x-account-id')
-  if (!accountId) return NextResponse.json({ error: 'x-account-id header required' }, { status: 400 })
+  if (!accountId) return NextResponse.json({ error: 'Se requiere el header x-account-id' }, { status: 400 })
 
   const entries = body.entry as Array<Record<string, unknown>> | undefined
   if (!entries) return NextResponse.json({ ok: true })

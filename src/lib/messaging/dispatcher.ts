@@ -80,7 +80,7 @@ export async function dispatcherSend(
 
     case 'telegram': {
       const config = await getTelegramConfig(db, accountId);
-      if (!config) throw new Error('No active Telegram channel config found');
+      if (!config) throw new Error('No se encontró configuración activa del canal Telegram');
       // Look up the conversation's external chat ID from the DB
       const chatId = await getConversationExternalId(db, params.conversationId);
       const result = await sendTelegramText(config, chatId, text, replyToExternalId);
@@ -89,7 +89,7 @@ export async function dispatcherSend(
 
     case 'facebook': {
       const config = await getFacebookConfig(db, accountId);
-      if (!config) throw new Error('No active Facebook channel config found');
+      if (!config) throw new Error('No se encontró configuración activa del canal Facebook');
       const psid = await getConversationExternalId(db, params.conversationId);
       const result = await sendFacebookText(config, psid, text);
       return result;
@@ -97,7 +97,7 @@ export async function dispatcherSend(
 
     case 'instagram': {
       const config = await getInstagramConfig(db, accountId);
-      if (!config) throw new Error('No active Instagram channel config found');
+      if (!config) throw new Error('No se encontró configuración activa del canal Instagram');
       const igId = await getConversationExternalId(db, params.conversationId);
       const result = await sendInstagramText(config, igId, text);
       return result;
@@ -114,7 +114,7 @@ export async function dispatcherSend(
     }
 
     default:
-      throw new Error(`Unknown channel type: ${channel}`);
+      throw new Error(`Tipo de canal desconocido: ${channel}`);
   }
 }
 

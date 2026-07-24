@@ -7,11 +7,11 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
   }
 
   if (!body.account_id || !body.session_id || !body.text) {
-    return NextResponse.json({ error: 'account_id, session_id, and text are required' }, { status: 400 })
+    return NextResponse.json({ error: 'se requieren account_id, session_id y text' }, { status: 400 })
   }
 
   const db = supabaseAdmin()
