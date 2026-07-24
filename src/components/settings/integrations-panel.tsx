@@ -32,6 +32,14 @@ const PLATFORM_INFO: Record<string, { label: string; fields: { key: string; labe
       { key: 'user_id', label: 'User ID' },
     ]
   },
+  webhook: {
+    label: 'Webhook Genérico', icon: '🔗',
+    fields: [
+      { key: 'entity_type', label: 'Tipo (product / contact)' },
+      { key: 'field_map', label: 'Mapa JSON (ej: {"title":"name"})' },
+      { key: 'webhook_secret', label: 'Secret (opcional)', secret: true },
+    ]
+  },
   woocommerce: {
     label: 'WooCommerce', icon: '🌐',
     fields: [
