@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useTotalUnread } from "@/hooks/use-total-unread";
@@ -124,6 +124,17 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
   const { profile, profileLoading, account, accountRole, signOut } = useAuth();
   const totalUnread = useTotalUnread();
   const unreadNotifications = useUnreadNotifications();
+  const [brandName, setBrandName] = useState("CRM Agentico");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("crmagentico.brandName");
+      if (saved) setBrandName(saved);
+    } catch {}
+    const handler = (e: CustomEvent) => { if (e.detail) setBrandName(e.detail); };
+    window.addEventListener("brandname-change", handler as EventListener);
+    return () => window.removeEventListener("brandname-change", handler as EventListener);
+  }, []);
   // Only surface the account-name strip when it actually carries
   // information. A solo user's personal account is named after them
   // (the 017 signup trigger seeds it from `full_name`), so showing it
