@@ -25,7 +25,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { GitFork, List } from "lucide-react";
+import { GitFork, List, Maximize2, Minimize2 } from "lucide-react";
 
 import { FlowBuilder } from "./flow-builder";
 import { FlowCanvas } from "./flow-canvas";
@@ -67,6 +67,7 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
   // mounts us AFTER a client-side fetch resolves — there's no SSR
   // pass for this subtree, so no hydration mismatch to worry about.
   // Default to `canvas` (the new default) when nothing is saved.
+  const [fullscreen, setFullscreen] = useState(false);
   const [view, setView] = useState<View>(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -95,7 +96,7 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
 
   return (
     <FlowEditorProvider initialFlow={initialFlow} initialNodes={initialNodes}>
-      <div className="flex h-full min-h-0 flex-col">
+      <div className={'flex h-full min-h-0 flex-col' + (fullscreen ? ' fixed inset-0 z-50 bg-background' : '')}>
         <EditorHeader />
 
         {/* ---- mode row: view toggle + node-type legend ----
@@ -122,7 +123,16 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
                 label={t("listView")}
               />
             </div>
-            <div className="ml-auto hidden flex-wrap items-center gap-x-3.5 gap-y-1.5 lg:flex">
+            <button
+              type="button"
+              onClick={() => setFullscreen(!fullscreen)}
+              title={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+              aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-auto"
+            >
+              {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+            <div className="hidden flex-wrap items-center gap-x-3.5 gap-y-1.5 lg:flex">
               {LEGEND_TYPES.map((t_type) => (
                 <span
                   key={t_type}
