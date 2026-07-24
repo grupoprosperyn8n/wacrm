@@ -209,7 +209,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
               <MessageSquare className="h-4 w-4" />
             </div>
             <span className={`text-sm font-semibold text-foreground ${collapsed ? "hidden lg:hidden" : ""}`}>
-              WACRM
+              {brandName}
             </span>
           </Link>
           <button
@@ -231,7 +231,7 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
         </div>
 
         {/* Main navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav className={`flex-1 overflow-y-auto py-4 ${collapsed ? "px-0" : "px-3"}`}>
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
               const isActive =
@@ -256,14 +256,14 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                     className={cn(
                       "flex items-center rounded-lg text-sm font-medium transition-colors",
                       collapsed
-                        ? "justify-center py-3 px-0 mx-auto w-10"
+                        ? "justify-center py-3 w-full"
                         : "gap-3 px-3 py-2.5 lg:py-2",
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <item.icon className="h-5 w-5 shrink-0" />
+                    <item.icon className={`${collapsed ? "h-6 w-6" : "h-5 w-5"} shrink-0`} />
                     <span className={`flex-1 ${collapsed ? "hidden lg:hidden" : ""}`}>{t(item.labelKey as string)}</span>
                     {!collapsed && item.beta && (
                       <span
@@ -315,14 +315,14 @@ export function Sidebar({ open = false, onClose, collapsed = false, onToggleColl
                     className={cn(
                       "flex items-center rounded-lg text-sm font-medium transition-colors",
                       collapsed
-                        ? "justify-center py-3 px-0 mx-auto w-10"
+                        ? "justify-center py-3 w-full"
                         : "gap-3 px-3 py-2.5 lg:py-2",
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <item.icon className="h-5 w-5 shrink-0" />
+                    <item.icon className={`${collapsed ? "h-6 w-6" : "h-5 w-5"} shrink-0`} />
                     <span className={`${collapsed ? "hidden lg:hidden" : ""}`}>{t(item.labelKey as string)}</span>
                   </Link>
                 </li>
