@@ -89,6 +89,9 @@ export function ConversationList({
   const [channelFilter, setChannelFilter] = useState<string | null>(null);
   const [archiveMode, setArchiveMode] = useState(false);
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkMode, setBulkMode] = useState(false);
   const [dateFilter, setDateFilter] = useState<string | null>("today");
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
@@ -114,6 +117,18 @@ export function ConversationList({
   // older value — the very next render updates the ref for any
   // subsequent async completion.
   const onConversationsLoadedRef = useRef(onConversationsLoaded);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("pinned_convs") ?? "[]");
+      setPinnedIds(new Set(stored));
+    } catch {}
+    const h = () => {
+      try { const stored = JSON.parse(localStorage.getItem("pinned_convs") ?? "[]"); setPinnedIds(new Set(stored)); } catch {}
+    };
+    window.addEventListener("pinned-change", h);
+    return () => window.removeEventListener("pinned-change", h);
+  }, []);
   useEffect(() => {
     onConversationsLoadedRef.current = onConversationsLoaded;
   });
@@ -261,20 +276,22 @@ export function ConversationList({
       });
     }
 
-    // Sort
-    const sorted = [...result].sort((a, b) => {
+    // Pinned: always on top
+    const pinned = result.filter((c) => pinnedIds.has(c.id));
+    const rest = result.filter((c) => !pinnedIds.has(c.id));
+    const sorted = [...pinned, ...rest].sort((a, b) => {
       if (sortBy === "oldest") {
         return (a.last_message_at ?? "").localeCompare(b.last_message_at ?? "");
       }
       if (sortBy === "unread") {
-        const aUnread = a.unread_count > 0 ? 0 : 1;
-        const bUnread = b.unread_count > 0 ? 0 : 1;
-        if (aUnread !== bUnread) return aUnread - bUnread;
+        const aU = a.unread_count > 0 ? 0 : 1;
+        const bU = b.unread_count > 0 ? 0 : 1;
+        if (aU !== bU) return aU - bU;
       }
       return (b.last_message_at ?? "").localeCompare(a.last_message_at ?? "");
     });
     return sorted;
-  }, [conversations, filter, search, selectedTagIds, selectedCompany, archiveMode, dateFilter, customDateFrom, customDateTo, daysAgo, sortBy]);
+  }, [conversations, filter, search, selectedTagIds, selectedCompany, archiveMode, dateFilter, customDateFrom, customDateTo, daysAgo, sortBy, pinnedIds]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>
@@ -443,6 +460,31 @@ export function ConversationList({
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <button type="button" onClick={() => { setBulkMode(!bulkMode); if (bulkMode) setSelectedIds(new Set()); }}
+            className={cn("inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md transition-colors",
+              bulkMode ? "bg-primary/10 text-primary border border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent")}>
+            {bulkMode ? "Salir" : "Seleccionar"}
+          </button>
+
+          {bulkMode && selectedIds.size > 0 && (
+            <>
+              <button type="button" onClick={async () => {
+                for (const id of selectedIds) {
+                  await createClient().from("conversations").update({ status: "closed" }).eq("id", id);
+                } setSelectedIds(new Set()); setBulkMode(false);
+              }} className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md text-red-400 hover:bg-red-500/10 border border-red-500/30">
+                Archivar {selectedIds.size}
+              </button>
+              <button type="button" onClick={async () => {
+                for (const id of selectedIds) {
+                  await createClient().from("conversations").delete().eq("id", id);
+                } setSelectedIds(new Set()); setBulkMode(false);
+              }} className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md text-red-400 hover:bg-red-500/10 border border-red-500/30">
+                Eliminar {selectedIds.size}
+              </button>
+            </>
+          )}
+
           {tags.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -594,6 +636,9 @@ export function ConversationList({
                 isActive={conv.id === activeConversationId}
                 onSelect={handleSelect}
                 t={t}
+                bulkMode={bulkMode}
+                selectedIds={selectedIds}
+                setSelectedIds={setSelectedIds}
               />
             ))}
           </div>
@@ -608,6 +653,9 @@ interface ConversationItemProps {
   isActive: boolean;
   onSelect: (conversation: Conversation) => void;
   t: ReturnType<typeof useTranslations>;
+  bulkMode?: boolean;
+  selectedIds?: Set<string>;
+  setSelectedIds?: (fn: (prev: Set<string>) => Set<string>) => void;
 }
 
 function ConversationItem({
@@ -615,14 +663,35 @@ function ConversationItem({
   isActive,
   onSelect,
   t,
+  bulkMode = false, selectedIds, setSelectedIds,
 }: ConversationItemProps) {
   const contact = conversation.contact;
+
+  const [isPinned, setIsPinned] = useState(false);
+  useEffect(() => {
+    try { const stored = JSON.parse(localStorage.getItem("pinned_convs") ?? "[]"); setIsPinned(stored.includes(conversation.id)); } catch {}
+  }, [conversation.id]);
+  function togglePin(e: React.MouseEvent) {
+    e.stopPropagation();
+    const next = !isPinned; setIsPinned(next);
+    try {
+      const stored = JSON.parse(localStorage.getItem("pinned_convs") ?? "[]");
+      if (next) stored.push(conversation.id);
+      else { const idx = stored.indexOf(conversation.id); if (idx >= 0) stored.splice(idx, 1); }
+      localStorage.setItem("pinned_convs", JSON.stringify(stored));
+      window.dispatchEvent(new CustomEvent("pinned-change"));
+    } catch {}
+  }
   const displayName = contact?.name || contact?.phone || t("unknown");
   const initials = displayName.charAt(0).toUpperCase();
 
   const handleClick = useCallback(() => {
+    if (bulkMode) {
+      setSelectedIds?.((prev) => { const n = new Set(prev); if (n.has(conversation.id)) n.delete(conversation.id); else n.add(conversation.id); return n; });
+      return;
+    }
     onSelect(conversation);
-  }, [onSelect, conversation]);
+  }, [onSelect, conversation, bulkMode]);
 
   const timeAgo = conversation.last_message_at
     ? formatDistanceToNow(new Date(conversation.last_message_at), {
@@ -631,13 +700,20 @@ function ConversationItem({
     : "";
 
   return (
-    <button
-      onClick={handleClick}
-      className={cn(
-        "flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50",
-        isActive && "border-l-2 border-primary bg-muted/70"
+    <div className="flex items-start gap-1">
+      {bulkMode && (
+        <input type="checkbox" checked={selectedIds?.has(conversation.id) ?? false} onChange={() => {}}
+          onClick={(e) => { e.stopPropagation(); handleClick(); }}
+          className="mt-3 h-4 w-4 accent-primary shrink-0" />
       )}
-    >
+      <button
+        onClick={handleClick}
+        className={cn(
+          "flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50",
+          isActive && "border-l-2 border-primary bg-muted/70",
+          isPinned && "border-l-2 border-amber-500/40"
+        )}
+      >
       {/* Avatar */}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
         {contact?.avatar_url ? (
@@ -663,6 +739,12 @@ function ConversationItem({
                 {CHANNEL_LABEL[conversation.channel] ?? conversation.channel}
               </span>
             )}
+            <button onClick={togglePin}
+              className={cn("h-4 w-4 flex items-center justify-center rounded text-[11px] transition-colors",
+                isPinned ? "text-amber-400" : "text-muted-foreground/30 hover:text-muted-foreground")}
+              title={isPinned ? "Desfijar" : "Fijar"}>
+              {isPinned ? "📌" : "📍"}
+            </button>
             <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo}</span>
           </div>
         </div>
@@ -703,5 +785,6 @@ function ConversationItem({
         </div>
       </div>
     </button>
+    </div>
   );
 }
