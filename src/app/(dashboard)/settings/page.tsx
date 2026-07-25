@@ -15,6 +15,8 @@ const ProfileForm = dynamic(() => import('@/components/settings/profile-form').t
 const SecurityPanel = dynamic(() => import('@/components/settings/security-panel').then(m => m.SecurityPanel), { ssr: false })
 const WidgetSettings = dynamic(() => import('@/components/settings/widget-settings').then(m => m.WidgetSettings), { ssr: false })
 const IntegrationsPanel = dynamic(() => import('@/components/settings/integrations-panel').then(m => m.IntegrationsPanel), { ssr: false })
+const AuditLog = dynamic(() => import('@/components/settings/audit-settings').then(m => m.AuditLog), { ssr: false })
+const TimezoneSettings = dynamic(() => import('@/components/settings/timezone-settings').then(m => m.TimezoneSettings), { ssr: false })
 const AppearancePanel = dynamic(() => import('@/components/settings/appearance-panel').then(m => m.AppearancePanel), { ssr: false })
 const TelegramConfig = dynamic(() => import('@/components/settings/telegram-config').then(m => m.TelegramConfig), { ssr: false })
 const WhatsAppConfig = dynamic(() => import('@/components/settings/whatsapp-config').then(m => m.WhatsAppConfig), { ssr: false })
@@ -75,6 +77,7 @@ export default function SettingsPage() {
     () => ({
       overview: <SettingsOverview onSelect={go} />,
       profile: <ProfileForm />,
+    timezone: <TimezoneSettings />,
       security: <SecurityPanel />,
       appearance: <AppearancePanel />,
       widget: <WidgetSettings />,
