@@ -76,6 +76,10 @@ export async function syncShopify(
     }
   }
 
+  // Auto-create ecommerce pipeline
+  const { ensureEcommercePipeline } = await import('./pipeline')
+  await ensureEcommercePipeline(db, accountId)
+
   return { products: shopifyProducts?.length ?? 0, orders: 0 }
 }
 
@@ -130,6 +134,8 @@ export async function syncMercadoLibre(
       productsSynced++
     }
   }
+  const { ensureEcommercePipeline } = await import('./pipeline')
+  await ensureEcommercePipeline(db, accountId)
   return { products: productsSynced, orders: 0 }
 }
 
@@ -172,5 +178,7 @@ export async function syncWooCommerce(
     }, { onConflict: 'platform_product_id', ignoreDuplicates: false })
   }
 
+  const { ensureEcommercePipeline } = await import('./pipeline')
+  await ensureEcommercePipeline(db, accountId)
   return { products: products.length ?? 0, orders: 0 }
 }
