@@ -13,6 +13,7 @@ import { canEditSettings } from '@/lib/auth/roles';
 type Tab = 'playground' | 'setup' | 'usage';
 
 export default function AgentsPage() {
+  const [multiView, setMultiView] = useState<'single' | 'multi'>('single')
   const { accountRole } = useAuth();
   const canViewUsage = accountRole ? canEditSettings(accountRole) : false;
   const [tab, setTab] = useState<Tab>('playground');
