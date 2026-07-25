@@ -2,6 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -27,6 +28,18 @@ import {
   resolveSection,
   type SettingsSection,
 } from '@/components/settings/settings-sections';
+
+function FacebookRedirect() {
+  const r = useRouter();
+  useEffect(() => { r.push('/channels') }, []);
+  return <p className="text-sm text-muted-foreground">Redirigiendo a Canales...</p>;
+}
+
+function InstagramRedirect() {
+  const r = useRouter();
+  useEffect(() => { r.push('/channels') }, []);
+  return <p className="text-sm text-muted-foreground">Redirigiendo a Canales...</p>;
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -68,6 +81,8 @@ export default function SettingsPage() {
       integrations: <IntegrationsPanel />,
       whatsapp: <WhatsAppConfig />,
       telegram: <TelegramConfig />,
+    facebook: <FacebookRedirect />,
+    instagram: <InstagramRedirect />,
       templates: <TemplateManager />,
       'quick-replies': <QuickRepliesManager />,
       fields: <FieldsAndTagsPanel />,
