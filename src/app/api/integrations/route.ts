@@ -47,9 +47,9 @@ export async function POST(request: Request) {
 
   const { platform, name, config, enabled } = body
 
-  if (!platform || !['shopify', 'mercadolibre', 'woocommerce'].includes(platform)) {
+  if (!platform || !['shopify', 'mercadolibre', 'woocommerce', 'webhook'].includes(platform)) {
     return NextResponse.json(
-      { error: 'platform must be one of: shopify, mercadolibre, woocommerce' },
+      { error: 'platform must be one of: shopify, mercadolibre, woocommerce, webhook' },
       { status: 400 },
     )
   }
