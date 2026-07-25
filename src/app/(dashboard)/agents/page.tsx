@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AiPlayground } from '@/components/agents/ai-playground';
 import { AiUsageCard } from '@/components/agents/ai-usage';
 import { AiConfig } from '@/components/settings/ai-config';
+import { AiPautas } from '@/components/agents/ai-pautas';
 import { useAuth } from '@/hooks/use-auth';
 import { canEditSettings } from '@/lib/auth/roles';
 
@@ -74,7 +75,7 @@ export default function AgentsPage() {
           </TabsContent>
 
           <TabsContent value="setup" className="mt-4">
-            <AiConfig />
+            <AiConfig /><div className="mt-6"><AiPautas /></div>
           </TabsContent>
 
           {canViewUsage && (
