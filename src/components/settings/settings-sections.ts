@@ -10,6 +10,7 @@ import {
   PlugZap,
   Shield,
   ShoppingCart,
+  ClipboardList,
   Smartphone,
   Tags,
   User,
@@ -41,6 +42,7 @@ export const SETTINGS_SECTIONS = [
   'deals',
   'members',
   'widget',
+  'audit',
   'integrations',
   'api',
 ] as const;
@@ -72,7 +74,8 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   deals: { id: 'deals', label: 'Deals & currency', icon: Coins, group: 'workspace' },
   members: { id: 'members', label: 'Team members', icon: UsersRound, group: 'workspace' },
   widget: { id: 'widget', label: 'Chat Widget', icon: Smartphone, group: 'workspace' },
-  integrations: { id: 'integrations', label: 'Ecommerce', icon: ShoppingCart, group: 'workspace' },
+  integrations: { id: 'audit',
+  'integrations', label: 'Ecommerce', icon: ShoppingCart, group: 'workspace' },
   api: { id: 'api', label: 'API keys', icon: KeyRound, group: 'workspace' },
 };
 
