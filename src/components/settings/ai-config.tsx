@@ -41,11 +41,19 @@ const HANDOFF_QUEUE = '__queue__';
 const PROVIDER_LABEL: Record<AiProvider, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic (Claude)',
+  gemini: 'Gemini',
+  deepseek: 'DeepSeek',
+  openrouter: 'OpenRouter',
+  local: 'Local (LM Studio / Ollama)',
 };
 
 const KEY_PLACEHOLDER: Record<AiProvider, string> = {
   openai: 'sk-...',
   anthropic: 'sk-ant-...',
+  gemini: 'AIza...',
+  deepseek: 'sk-...',
+  openrouter: 'sk-or-...',
+  local: 'dejalo vacio',
 };
 
 export function AiConfig() {

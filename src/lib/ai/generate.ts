@@ -8,6 +8,10 @@ import {
 import { HANDOFF_SENTINEL, aiRequestTimeoutMs } from './defaults'
 import { generateOpenAi } from './providers/openai'
 import { generateAnthropic } from './providers/anthropic'
+import { generateGemini } from './providers/gemini'
+import { generateDeepSeek } from './providers/deepseek'
+import { generateOpenRouter } from './providers/openrouter'
+import { generateLocal } from './providers/local'
 
 export interface GenerateArgs {
   config: AiConfig
