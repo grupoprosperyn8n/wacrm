@@ -56,22 +56,25 @@ export default function SettingsPage() {
     [mode, defaultCurrency],
   );
 
-  const panel: Record<SettingsSection, ReactNode> = {
-    overview: <SettingsOverview onSelect={go} />,
-    profile: <ProfileForm />,
-    security: <SecurityPanel />,
-    appearance: <AppearancePanel />,
-    widget: <WidgetSettings />,
-    integrations: <IntegrationsPanel />,
-    whatsapp: <WhatsAppConfig />,
-    telegram: <TelegramConfig />,
-    templates: <TemplateManager />,
-    'quick-replies': <QuickRepliesManager />,
-    fields: <FieldsAndTagsPanel />,
-    deals: <DealsSettings />,
-    members: <MembersTab />,
-    api: <ApiKeysSettings />,
-  };
+  const panel: Record<SettingsSection, ReactNode> = useMemo(
+    () => ({
+      overview: <SettingsOverview onSelect={go} />,
+      profile: <ProfileForm />,
+      security: <SecurityPanel />,
+      appearance: <AppearancePanel />,
+      widget: <WidgetSettings />,
+      integrations: <IntegrationsPanel />,
+      whatsapp: <WhatsAppConfig />,
+      telegram: <TelegramConfig />,
+      templates: <TemplateManager />,
+      'quick-replies': <QuickRepliesManager />,
+      fields: <FieldsAndTagsPanel />,
+      deals: <DealsSettings />,
+      members: <MembersTab />,
+      api: <ApiKeysSettings />,
+    }),
+    [go],
+  );
 
   return (
     <div>

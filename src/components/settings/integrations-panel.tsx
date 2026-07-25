@@ -65,8 +65,15 @@ export function IntegrationsPanel() {
     setLoading(true)
     try {
       const res = await fetch('/api/integrations')
-      if (res.ok) setIntegrations((await res.json()).integrations ?? [])
-    } catch {}
+      if (res.ok) {
+        const data = await res.json()
+        setIntegrations(data.integrations ?? [])
+      } else {
+        setIntegrations([])
+      }
+    } catch {
+      setIntegrations([])
+    }
     setLoading(false)
   }
 
