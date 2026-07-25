@@ -16,7 +16,14 @@ export function useBookingReminders() {
       const now = new Date()
       const in1h = new Date(now.getTime() + 60 * 60 * 1000)
 
-      const { data } = await supabase
+      const { data: tasks } = await supabase.from('tasks').select('id,title,due_date').eq('account_id',accountId).eq('status','pending').not('due_date','is',null).lte('due_date',in1h.toISOString()).gte('due_date',now.toISOString())
+    for (const t of tasks ?? []) {
+      if (notified.has('t-'+t.id)) continue; notified.add('t-'+t.id)
+      if (!('Notification' in window) || Notification.permission !== 'granted') continue
+      const mins = Math.round((new Date(t.due_date).getTime()-Date.now())/60000)
+      try { new Notification('Recordatorio de tarea', { body: t.title + ' vence en '+mins+' minutos', icon: '/favicon.ico' }) } catch {}
+    }
+    const { data } = await supabase
         .from('bookings')
         .select('id, title, start_time, contact_name')
         .eq('account_id', accountId)
