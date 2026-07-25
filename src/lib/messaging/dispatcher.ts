@@ -17,6 +17,7 @@ import { sendTelegramText, getTelegramConfig } from './providers/telegram';
 import { sendFacebookText, getFacebookConfig } from './providers/facebook';
 import { sendInstagramText, getInstagramConfig } from './providers/instagram';
 import { getWebChatConfig } from './providers/webchat';
+import { sendTikTokText, getTikTokConfig } from './providers/tiktok';
 import { dispatchInboundToFlows } from '@/lib/flows/engine';
 import { runAutomationsForTrigger } from '@/lib/automations/engine';
 import { dispatchInboundToAiReply } from '@/lib/ai/auto-reply';
@@ -100,6 +101,14 @@ export async function dispatcherSend(
       if (!config) throw new Error('No se encontró configuración activa del canal Instagram');
       const igId = await getConversationExternalId(db, params.conversationId);
       const result = await sendInstagramText(config, igId, text);
+      return result;
+    }
+
+    case 'tiktok': {
+      const config = await getTikTokConfig(db, accountId);
+      if (!config) throw new Error('No active TikTok channel config found');
+      const ttId = await getConversationExternalId(db, params.conversationId);
+      const result = await sendTikTokText(config, ttId, text);
       return result;
     }
 

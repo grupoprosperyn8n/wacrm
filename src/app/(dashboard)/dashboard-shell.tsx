@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { useBookingReminders } from '@/hooks/use-booking-reminders'
+import { usePushNotifications } from '@/hooks/use-push-notifications'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 import { PresenceHeartbeat } from "@/components/presence/presence-heartbeat";
 
@@ -14,6 +16,8 @@ import { PresenceHeartbeat } from "@/components/presence/presence-heartbeat";
 
 function DashboardShellInner({ children }: { children: React.ReactNode }) {
   useKeyboardShortcuts()
+  usePushNotifications()
+  useBookingReminders()
   const { user, loading } = useAuth();
   const router = useRouter();
 
