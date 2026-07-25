@@ -38,6 +38,37 @@ export async function POST(
         status: 'pending',
       })
       imported++
+    } else if (entityType === 'member') {
+      const { data: existingProfile } = await db.from('profiles').select('id').eq('account_id', integration.account_id).eq('email', mapped.email || item.email || '').maybeSingle()
+      if (!existingProfile && (mapped.email || item.email)) {
+        await db.from('profiles').insert({
+          account_id: integration.account_id,
+          email: mapped.email || item.email || '',
+          full_name: mapped.name || item.name || item.full_name || '',
+          role: 'agent',
+        })
+        imported++
+      }
+    } else if (entityType === 'booking') {
+      await db.from('bookings').insert({
+        account_id: integration.account_id,
+        title: mapped.title || item.title || 'Turno externo',
+        start_time: mapped.start_time || item.start_time || new Date().toISOString(),
+        end_time: mapped.end_time || item.end_time || null,
+        contact_name: mapped.contact_name || item.contact_name || '',
+        contact_email: mapped.contact_email || item.contact_email || '',
+        contact_phone: mapped.contact_phone || item.contact_phone || '',
+        status: 'pending',
+      })
+      imported++
+    } else if (entityType === 'deal') {
+      await db.from('deals').insert({
+        account_id: integration.account_id,
+        title: mapped.title || item.title || 'Negocio externo',
+        value: parseFloat(mapped.value ?? item.value ?? '0'),
+        currency: mapped.currency || 'USD',
+      }).select().maybeSingle()
+      imported++
     } else if (entityType === 'product') {
       await db.from('ecommerce_products').upsert({
         account_id: integration.account_id, integration_id: id,
