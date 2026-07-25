@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentAccount, requireRole, toErrorResponse } from '@/lib/auth/account'
 import { supabaseAdmin } from '@/lib/automations/admin-client'
+import { dispatchEntityEvent } from '@/lib/webhooks/dispatch'
 
 export async function GET() {
   try {
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
       status: b.status || 'pending', source: b.source || 'internal',
     }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    dispatchEntityEvent(ctx.accountId, 'booking', 'created', data).catch(()=>{})
     return NextResponse.json({ booking: data }, { status: 201 })
   } catch (err) { return toErrorResponse(err) }
 }
