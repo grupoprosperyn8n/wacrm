@@ -42,7 +42,7 @@ export default function SettingsPage() {
   const go = (next: SettingsSection) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', next);
-    router.replace(`/settings?${params.toString()}`, { scroll: false });
+    router.push(`/settings?${params.toString()}`, { scroll: false });
   };
 
   // Cheap, fetch-free rail hints. The Overview landing carries the
