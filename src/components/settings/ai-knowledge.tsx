@@ -39,8 +39,10 @@ export function AiKnowledgeCard({
   const [editing, setEditing] = useState<EditTarget>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [category, setCategory] = useState('general');
   const [saving, setSaving] = useState(false);
   const [reindexing, setReindexing] = useState(false);
+  const CATEGORIES = ['general', 'productos', 'politicas', 'faq', 'manual']
   const [uploading, setUploading] = useState(false);
   const [scrapingUrl, setScrapingUrl] = useState("");
   const [scraping, setScraping] = useState(false);
@@ -109,7 +111,7 @@ export function AiKnowledgeCard({
         {
           method: isNew ? 'POST' : 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: title.trim(), content: content.trim() }),
+          body: JSON.stringify({ title: title.trim(), content: content.trim(), category }),
         },
       );
       const data = await res.json();
@@ -257,7 +259,18 @@ export function AiKnowledgeCard({
               <div className="space-y-3 rounded-md border border-border p-3">
                 <div className="space-y-2">
                   <Label htmlFor="kb-title">{t('editDocTitle')}</Label>
-                  <Input
+                  <div className="space-y-2">
+                  <Label htmlFor="kb-cat">Categoria</Label>
+                  <select id="kb-cat" value={category} onChange={e => setCategory(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                    <option value="general">General</option>
+                    <option value="productos">Productos</option>
+                    <option value="politicas">Politicas</option>
+                    <option value="faq">FAQ</option>
+                    <option value="manual">Manual</option>
+                  </select>
+                </div>
+                <Input
                     id="kb-title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
