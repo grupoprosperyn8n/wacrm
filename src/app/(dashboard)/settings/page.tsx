@@ -7,20 +7,22 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/use-auth';
 import { useTheme } from '@/hooks/use-theme';
 import { SettingsRail } from '@/components/settings/settings-rail';
-import { SettingsOverview } from '@/components/settings/settings-overview';
-import { ProfileForm } from '@/components/settings/profile-form';
-import { SecurityPanel } from '@/components/settings/security-panel';
-import { WidgetSettings } from '@/components/settings/widget-settings';
-import { IntegrationsPanel } from '@/components/settings/integrations-panel';
-import { AppearancePanel } from '@/components/settings/appearance-panel';
-import { TelegramConfig } from '@/components/settings/telegram-config';
-import { WhatsAppConfig } from '@/components/settings/whatsapp-config';
-import { TemplateManager } from '@/components/settings/template-manager';
-import { QuickRepliesManager } from '@/components/settings/quick-replies-manager';
-import { FieldsAndTagsPanel } from '@/components/settings/fields-and-tags-panel';
-import { DealsSettings } from '@/components/settings/deals-settings';
-import { MembersTab } from '@/components/settings/members-tab';
-import { ApiKeysSettings } from '@/components/settings/api-keys-settings';
+import dynamic from 'next/dynamic'
+
+const SettingsOverview = dynamic(() => import('@/components/settings/settings-overview').then(m => m.SettingsOverview), { ssr: false })
+const ProfileForm = dynamic(() => import('@/components/settings/profile-form').then(m => m.ProfileForm), { ssr: false })
+const SecurityPanel = dynamic(() => import('@/components/settings/security-panel').then(m => m.SecurityPanel), { ssr: false })
+const WidgetSettings = dynamic(() => import('@/components/settings/widget-settings').then(m => m.WidgetSettings), { ssr: false })
+const IntegrationsPanel = dynamic(() => import('@/components/settings/integrations-panel').then(m => m.IntegrationsPanel), { ssr: false })
+const AppearancePanel = dynamic(() => import('@/components/settings/appearance-panel').then(m => m.AppearancePanel), { ssr: false })
+const TelegramConfig = dynamic(() => import('@/components/settings/telegram-config').then(m => m.TelegramConfig), { ssr: false })
+const WhatsAppConfig = dynamic(() => import('@/components/settings/whatsapp-config').then(m => m.WhatsAppConfig), { ssr: false })
+const TemplateManager = dynamic(() => import('@/components/settings/template-manager').then(m => m.TemplateManager), { ssr: false })
+const QuickRepliesManager = dynamic(() => import('@/components/settings/quick-replies-manager').then(m => m.QuickRepliesManager), { ssr: false })
+const FieldsAndTagsPanel = dynamic(() => import('@/components/settings/fields-and-tags-panel').then(m => m.FieldsAndTagsPanel), { ssr: false })
+const DealsSettings = dynamic(() => import('@/components/settings/deals-settings').then(m => m.DealsSettings), { ssr: false })
+const MembersTab = dynamic(() => import('@/components/settings/members-tab').then(m => m.MembersTab), { ssr: false })
+const ApiKeysSettings = dynamic(() => import('@/components/settings/api-keys-settings').then(m => m.ApiKeysSettings), { ssr: false })
 import {
   resolveSection,
   type SettingsSection,
