@@ -1169,6 +1169,21 @@ async function advanceFromNodeKey(
       currentKey = (node.config as unknown as StartNodeConfig).next_node_key;
       continue;
     }
+    if (node.node_type === "n8n_webhook") {
+      const cfg = node.config as unknown as Record<string, any>
+      try {
+        const payload = { flow_id: run.flow_id, contact_id: run.contact_id, vars: run.vars }
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (cfg.token) headers['Authorization'] = 'Bearer ' + cfg.token
+        const res = await fetch(cfg.url || '', { method: cfg.method || 'POST', headers, body: JSON.stringify(payload) })
+        await logEvent(db, run.id, 'n8n_webhook_sent', node.node_key, { status: res.status })
+      } catch (err) {
+        await logEvent(db, run.id, 'error', node.node_key, { reason: 'n8n_webhook_failed', detail: String(err) })
+      }
+      currentKey = (cfg as any).next_node_key
+      continue
+    }
+
     if (node.node_type === "send_message") {
       const cfg = node.config as unknown as SendMessageNodeConfig;
       try {

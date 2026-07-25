@@ -29,6 +29,7 @@ import {
   Sparkles,
   Tag,
   UserPlus,
+  Webhook,
   Workflow,
 } from 'lucide-react';
 
@@ -52,6 +53,7 @@ export type NodeType =
   | "condition"
   | "set_tag"
   | "http_request"
+  | "n8n_webhook"
   | "ai_reply"
   | "handoff"
   | "end";
@@ -170,6 +172,13 @@ export const NODE_META: Record<
     blurb: 'Ends the flow',
     category: 'flow',
   },
+  n8n_webhook: {
+    label: "n8n Webhook",
+    icon: Webhook,
+    color: "text-orange-400",
+    blurb: "Trigger an n8n workflow",
+    category: "flow",
+  },
   http_request: {
     label: 'HTTP Request',
     icon: Globe,
@@ -223,7 +232,8 @@ const NODE_HUE: Record<NodeType, { l: number; c: number; h: number }> = {
   collect_input: { l: 0.65, c: 0.1, h: 185 }, // teal — capture
   condition: { l: 0.72, c: 0.15, h: 65 }, // amber — a fork in the road
   set_tag: { l: 0.65, c: 0.15, h: 350 }, // pink
-  handoff: { l: 0.65, c: 0.17, h: 16 }, // rose — hands off
+  handoff: { l: 0.65, c: 0.17, h: 16 },
+  n8n_webhook: { l: 0.65, c: 0.2, h: 30 }, // rose — hands off
   end: { l: 0.55, c: 0.01, h: 260 }, // neutral grey — terminal
   http_request: { l: 0.65, c: 0.16, h: 40 }, // amber — http fetch
   ai_reply: { l: 0.62, c: 0.15, h: 290 }, // violet — AI generation
