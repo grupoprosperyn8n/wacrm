@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTotalUnread } from "@/hooks/use-total-unread";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
-  Bell, Bot, ChevronRight, Crown, GitBranch, LayoutDashboard,
+  Bell, Bot, CalendarDays, ChevronRight, Crown, GitBranch, LayoutDashboard,
   LogOut, MessageSquare, Radio, RadioTower, Settings, Shield,
   User, UserCog, Users, UsersRound, Workflow, X, Zap,
 } from "lucide-react";
@@ -34,6 +34,7 @@ const navItems = [
   { href: "/contacts", labelKey: "contacts", icon: Users },
   { href: "/pipelines", labelKey: "pipelines", icon: GitBranch },
   { href: "/broadcasts", labelKey: "broadcasts", icon: Radio },
+  { href: "/bookings", labelKey: "bookings", icon: CalendarDays, beta: true },
   { href: "/channels", labelKey: "channels", icon: RadioTower },
   { href: "/automations", labelKey: "automations", icon: Zap },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
