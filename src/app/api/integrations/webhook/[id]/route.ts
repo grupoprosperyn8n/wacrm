@@ -28,7 +28,17 @@ export async function POST(
     for (const [ourField, theirField] of Object.entries(fieldMap as Record<string, unknown>))
       mapped[ourField] = String(theirField).split(".").reduce((acc: any, p: string) => acc?.[p], item)
 
-    if (entityType === 'product') {
+    if (entityType === 'task') {
+      await db.from('tasks').insert({
+        account_id: integration.account_id,
+        title: mapped.title || item.title || 'Tarea externa',
+        description: mapped.description || '',
+        priority: mapped.priority || 'medium',
+        due_date: mapped.due_date || null,
+        status: 'pending',
+      })
+      imported++
+    } else if (entityType === 'product') {
       await db.from('ecommerce_products').upsert({
         account_id: integration.account_id, integration_id: id,
         platform_product_id: mapped.platform_product_id || String(item.id || Date.now()),
