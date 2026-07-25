@@ -1789,6 +1789,8 @@
       "apiDocs": "Documentación de la API de Telegram Bots"
     },
     "sections": {
+      "widget": "Chat Widget",
+      "integrations": "Ecommerce",
       "overview": "Resumen",
       "profile": "Tu perfil",
       "telegram": "Telegram",
