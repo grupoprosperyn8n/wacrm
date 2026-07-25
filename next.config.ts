@@ -38,7 +38,7 @@ const SECURITY_HEADERS = [
   {
     key: "Content-Security-Policy-Report-Only",
     value: [
-      "default-src 'self'",
+      "default-src 'self' https://*.supabase.co https://crmssag-supabase.sistemasagenticos.cloud",
       // Next.js needs 'unsafe-inline' for its inline hydration script
       // and 'unsafe-eval' in dev + some production optimisations.
       // Nonce-based CSP is a later project.
@@ -55,7 +55,7 @@ const SECURITY_HEADERS = [
       "font-src 'self' data:",
       // Supabase REST + realtime (WSS). All Meta API calls happen
       // server-side, so graph.facebook.com does not belong here.
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://crmssag-supabase.sistemasagenticos.cloud https://wacrm.sistemasagenticos.cloud",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
