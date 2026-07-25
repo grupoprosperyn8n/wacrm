@@ -75,7 +75,7 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   members: { id: 'members', label: 'Team members', icon: UsersRound, group: 'workspace' },
   widget: { id: 'widget', label: 'Chat Widget', icon: Smartphone, group: 'workspace' },
   integrations: { id: 'audit',
-    integrations: { id: 'integrations', label: 'Ecommerce', icon: ShoppingCart, group: 'workspace' },
+  'integrations', label: 'Ecommerce', icon: ShoppingCart, group: 'workspace' },
   api: { id: 'api', label: 'API keys', icon: KeyRound, group: 'workspace' },
 };
 
