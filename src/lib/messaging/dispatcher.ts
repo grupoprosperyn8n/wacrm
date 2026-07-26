@@ -18,6 +18,7 @@ import { sendFacebookText, getFacebookConfig } from './providers/facebook';
 import { sendInstagramText, getInstagramConfig } from './providers/instagram';
 import { getWebChatConfig } from './providers/webchat';
 import { sendTikTokText, getTikTokConfig } from './providers/tiktok';
+import { sendYouTubeText, getYouTubeConfig } from './providers/youtube';
 import { dispatchInboundToFlows } from '@/lib/flows/engine';
 import { runAutomationsForTrigger } from '@/lib/automations/engine';
 import { dispatchInboundToAiReply } from '@/lib/ai/auto-reply';
@@ -109,6 +110,14 @@ export async function dispatcherSend(
       if (!config) throw new Error('No active TikTok channel config found');
       const ttId = await getConversationExternalId(db, params.conversationId);
       const result = await sendTikTokText(config, ttId, text);
+      return result;
+    }
+
+    case 'youtube': {
+      const config = await getYouTubeConfig(db, accountId);
+      if (!config) throw new Error('No active YouTube channel config found');
+      const commentId = await getConversationExternalId(db, params.conversationId);
+      const result = await sendYouTubeText(config, commentId, text);
       return result;
     }
 
@@ -516,6 +525,8 @@ async function getConfigForChannel(
       return getInstagramConfig(db, accountId);
     case 'web':
       return getWebChatConfig(db, accountId);
+    case 'youtube':
+      return getYouTubeConfig(db, accountId);
     default:
       return null;
   }
