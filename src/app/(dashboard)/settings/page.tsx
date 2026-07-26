@@ -9,6 +9,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { useTheme } from '@/hooks/use-theme';
 import { SettingsRail } from '@/components/settings/settings-rail';
 import dynamic from 'next/dynamic'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { ExternalLink, Image as LucideImage, MessageSquare } from 'lucide-react'
 
 const SettingsOverview = dynamic(() => import('@/components/settings/settings-overview').then(m => m.SettingsOverview), { ssr: false })
 const ProfileForm = dynamic(() => import('@/components/settings/profile-form').then(m => m.ProfileForm), { ssr: false })
@@ -34,15 +37,39 @@ import {
 } from '@/components/settings/settings-sections';
 
 function FacebookRedirect() {
-  const r = useRouter();
-  useEffect(() => { r.push('/channels') }, []);
-  return <p className="text-sm text-muted-foreground">Redirigiendo a Canales...</p>;
+  const t = useTranslations('Settings');
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base"><MessageSquare className="h-4 w-4 text-primary" /> Facebook Messenger</CardTitle>
+        <CardDescription>Conecta tu pagina de Facebook para recibir y enviar mensajes</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">Usa la API de canales para configurar Facebook. Necesitas un Page Access Token y Page ID de Facebook Developers.</p>
+        <Button variant="outline" disabled>
+          <ExternalLink className="h-4 w-4 mr-1" /> Configurar en Facebook Developers
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 function InstagramRedirect() {
-  const r = useRouter();
-  useEffect(() => { r.push('/channels') }, []);
-  return <p className="text-sm text-muted-foreground">Redirigiendo a Canales...</p>;
+  const t = useTranslations('Settings');
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base"><LucideImage className="h-4 w-4 text-primary" /> Instagram</CardTitle>
+        <CardDescription>Conecta tu cuenta de Instagram para recibir y enviar mensajes</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">Usa la API de canales para configurar Instagram. Necesitas una cuenta profesional de Instagram vinculada a Facebook.</p>
+        <Button variant="outline" disabled>
+          <ExternalLink className="h-4 w-4 mr-1" /> Configurar en Meta Business
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function SettingsPage() {

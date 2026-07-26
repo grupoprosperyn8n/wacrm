@@ -45,6 +45,18 @@ export async function generateReply(args: GenerateArgs): Promise<GenerateResult>
     case 'anthropic':
       result = await generateAnthropic(providerArgs)
       break
+    case 'gemini':
+      result = await generateGemini(providerArgs)
+      break
+    case 'deepseek':
+      result = await generateDeepSeek(providerArgs)
+      break
+    case 'openrouter':
+      result = await generateOpenRouter(providerArgs)
+      break
+    case 'local':
+      result = await generateLocal(providerArgs)
+      break
     default:
       throw new AiError(`Unsupported AI provider: ${config.provider}`, {
         code: 'unsupported_provider',
