@@ -190,6 +190,13 @@ export interface AiReplyNodeConfig {
 }
 
 // Terminal nodes carry no config — they just stop the run.
+export interface N8nWebhookNodeConfig {
+  url: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  token?: string;
+  next_node_key: string;
+}
+
 export type EndNodeConfig = Record<string, never>;
 
 /**
@@ -212,6 +219,7 @@ export type FlowNodeConfig =
   | { node_type: "http_request"; config: HttpRequestNodeConfig }
   | { node_type: "ai_reply"; config: AiReplyNodeConfig }
   | { node_type: "handoff"; config: HandoffNodeConfig }
+  | { node_type: "n8n_webhook"; config: N8nWebhookNodeConfig }
   | { node_type: "end"; config: EndNodeConfig };
 
 export type FlowNodeType = FlowNodeConfig["node_type"];

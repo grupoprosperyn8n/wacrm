@@ -43,6 +43,7 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: "NIO", label: "Córdoba Nicaragüense", symbol: "C$" },
   { code: "PAB", label: "Balboa Panameño", symbol: "B/." },
   { code: "PEN", label: "Sol Peruano", symbol: "S/" },
+  { code: "INR", label: "Indian Rupee", symbol: "₹" },
   { code: "PYG", label: "Guaraní Paraguayo", symbol: "₲" },
   { code: "UYU", label: "Peso Uruguayo", symbol: "₴$" },
   { code: "VES", label: "Bolívar Venezolano", symbol: "Bs.S" },

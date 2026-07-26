@@ -464,6 +464,11 @@ export function summarizeNode(
         : `${method} ${truncate(url, 60)}`;
       return methodStr;
     }
+    case 'n8n_webhook': {
+      const url = typeof cfg.url === 'string' ? cfg.url : '';
+      if (!url) return t ? t('n8nWebhookConfigure') : 'Configure n8n webhook';
+      return `n8n: ${truncate(url, 50)}`;
+    }
     case 'ai_reply': {
       const prompt =
         typeof cfg.system_prompt === 'string' && cfg.system_prompt.length > 0

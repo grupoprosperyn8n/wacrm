@@ -66,6 +66,7 @@ import {
   type FlowRow,
   type FlowRunRow,
   type HttpRequestNodeConfig,
+  type N8nWebhookNodeConfig,
   type AiReplyNodeConfig,
   type ParsedInbound,
   type SendButtonsNodeConfig,
@@ -137,6 +138,7 @@ export function isAutoAdvancing(node_type: string): boolean {
     node_type === "condition" ||
     node_type === "set_tag" ||
     node_type === "http_request" ||
+    node_type === "n8n_webhook" ||
     node_type === "ai_reply"
   );
 }
@@ -688,6 +690,7 @@ async function logEvent(
     | "handoff"
     | "timeout"
     | "error"
+    | "n8n_webhook_sent"
     | "completed",
   node_key: string | null,
   payload: Record<string, unknown> = {},
@@ -1170,7 +1173,7 @@ async function advanceFromNodeKey(
       continue;
     }
     if (node.node_type === "n8n_webhook") {
-      const cfg = node.config as unknown as Record<string, any>
+      const cfg = node.config as unknown as N8nWebhookNodeConfig
       try {
         const payload = { flow_id: run.flow_id, contact_id: run.contact_id, vars: run.vars }
         const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -1180,7 +1183,7 @@ async function advanceFromNodeKey(
       } catch (err) {
         await logEvent(db, run.id, 'error', node.node_key, { reason: 'n8n_webhook_failed', detail: String(err) })
       }
-      currentKey = (cfg as any).next_node_key
+      currentKey = cfg.next_node_key
       continue
     }
 

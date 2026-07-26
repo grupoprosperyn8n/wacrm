@@ -26,6 +26,8 @@ const FieldsAndTagsPanel = dynamic(() => import('@/components/settings/fields-an
 const DealsSettings = dynamic(() => import('@/components/settings/deals-settings').then(m => m.DealsSettings), { ssr: false })
 const MembersTab = dynamic(() => import('@/components/settings/members-tab').then(m => m.MembersTab), { ssr: false })
 const ApiKeysSettings = dynamic(() => import('@/components/settings/api-keys-settings').then(m => m.ApiKeysSettings), { ssr: false })
+const PaymentSettings = dynamic(() => import('@/components/settings/payment-settings').then(m => m.PaymentSettings), { ssr: false })
+const AiKnowledgeCard = dynamic(() => import('@/components/settings/ai-knowledge').then(m => m.AiKnowledgeCard), { ssr: false })
 import {
   resolveSection,
   type SettingsSection,
@@ -46,7 +48,7 @@ function InstagramRedirect() {
 export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { defaultCurrency } = useAuth();
+  const { defaultCurrency, accountId, canEditSettings } = useAuth();
   const { mode } = useTheme();
   const t = useTranslations('Settings');
 
@@ -93,6 +95,8 @@ export default function SettingsPage() {
       deals: <DealsSettings />,
       members: <MembersTab />,
       api: <ApiKeysSettings />,
+      payments: <PaymentSettings />,
+      'ai-knowledge': <AiKnowledgeCard accountId={accountId} canEdit={canEditSettings} hasEmbeddingsKey={false} />,
     }),
     [go],
   );

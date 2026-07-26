@@ -15,6 +15,7 @@ describe("channel scope normalization", () => {
       "telegram",
       "instagram",
       "facebook",
+      "tiktok",
     ])
   })
 

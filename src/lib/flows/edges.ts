@@ -230,6 +230,7 @@ export function outgoingSlots(node: BuilderNode): OutgoingSlot[] {
       return slots;
     }
 
+    case "n8n_webhook":
     case "handoff":
     case "end":
       return [];
@@ -316,6 +317,7 @@ export function applyEdgeConnection(
       return matched ? { sections: next } : null;
     }
 
+    case "n8n_webhook":
     case "handoff":
     case "end":
       return null;
@@ -354,6 +356,7 @@ function patchedConfigWithoutKey(
     case "collect_input":
     case "set_tag":
     case "http_request":
+    case "n8n_webhook":
     case "ai_reply": {
       const next = (cfg as { next_node_key?: string }).next_node_key;
       if (next !== deletedKey) return null;

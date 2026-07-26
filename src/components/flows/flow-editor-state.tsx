@@ -192,6 +192,8 @@ export function defaultConfigFor(type: NodeType): Record<string, unknown> {
       return { url: "", method: "GET", headers: [], body_template: "", response_var: "", next_node_key: "" };
     case "ai_reply":
       return { system_prompt: "", user_prompt_template: "", response_var: "", next_node_key: "" };
+    case "n8n_webhook":
+      return { url: "", method: "POST", token: "", next_node_key: "" };
     case "end":
       return {};
   }

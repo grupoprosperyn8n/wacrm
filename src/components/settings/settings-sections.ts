@@ -1,16 +1,18 @@
 import {
+  BrainCircuit,
+  ClipboardList,
   Coins,
-  Image,
-  MessageSquare,
+  CreditCard,
   FileText,
+  Image,
   KeyRound,
   LayoutGrid,
   MessageCircle,
+  MessageSquare,
   Palette,
   PlugZap,
   Shield,
   ShoppingCart,
-  ClipboardList,
   Smartphone,
   Tags,
   User,
@@ -45,6 +47,8 @@ export const SETTINGS_SECTIONS = [
   'audit',
   'integrations',
   'api',
+  'payments',
+  'ai-knowledge',
 ] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
@@ -77,6 +81,8 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   audit: { id: 'audit', label: 'Auditoria', icon: ClipboardList, group: 'workspace' },
   integrations: { id: 'integrations', label: 'Ecommerce', icon: ShoppingCart, group: 'workspace' },
   api: { id: 'api', label: 'API keys', icon: KeyRound, group: 'workspace' },
+  payments: { id: 'payments', label: 'Pasarelas de pago', icon: CreditCard, group: 'workspace' },
+  'ai-knowledge': { id: 'ai-knowledge', label: 'Base de conocimiento', icon: BrainCircuit, group: 'workspace' },
 };
 
 export const RAIL_GROUPS: { label: string | null; group: SectionMeta['group'] }[] = [

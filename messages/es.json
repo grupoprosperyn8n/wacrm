@@ -1806,7 +1806,9 @@
       "deals": "Negocios y moneda",
       "members": "Miembros del equipo",
       "api": "Claves API",
-      "quick-replies": "Respuestas rápidas"
+      "quick-replies": "Respuestas rápidas",
+      "payments": "Pasarelas de pago",
+      "ai-knowledge": "Base de conocimiento"
     },
     "groups": {
       "account": "Cuenta",
