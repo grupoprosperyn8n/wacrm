@@ -289,6 +289,18 @@ export function AiConfig() {
                     <SelectItem value="anthropic">
                       {PROVIDER_LABEL.anthropic}
                     </SelectItem>
+                    <SelectItem value="gemini">
+                      {PROVIDER_LABEL.gemini}
+                    </SelectItem>
+                    <SelectItem value="deepseek">
+                      {PROVIDER_LABEL.deepseek}
+                    </SelectItem>
+                    <SelectItem value="openrouter">
+                      {PROVIDER_LABEL.openrouter}
+                    </SelectItem>
+                    <SelectItem value="local">
+                      {PROVIDER_LABEL.local}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

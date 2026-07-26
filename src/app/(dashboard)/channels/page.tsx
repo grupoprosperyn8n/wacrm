@@ -30,6 +30,8 @@ const TYPE_ICONS: Record<string, string> = {
   telegram: '✈️',
   facebook: '👍',
   instagram: '📸',
+  tiktok: '🎵',
+  youtube: '▶️',
   web: '🌐',
 };
 
