@@ -8,7 +8,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const ctx = await requireRole('agent')
     const { id } = await params
     const body = await request.json()
-    return NextResponse.json({ success: true })
+    const { data } = await supabaseAdmin().from('bookings').update(body).eq('id', id).eq('account_id', ctx.accountId).select().single()
+    dispatchEntityEvent(ctx.accountId, 'booking', 'updated', data).catch(() => {})
+    return NextResponse.json(data)
   } catch (err) { return toErrorResponse(err) }
 }
 

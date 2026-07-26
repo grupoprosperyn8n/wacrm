@@ -6,7 +6,7 @@ import { dispatchEntityEvent } from '@/lib/webhooks/dispatch'
 export async function GET() {
   try {
     const { supabase, accountId } = await getCurrentAccount()
-    const { data } = await supabase.from('tasks').select('*, assigned_to_user:auth.users!assigned_to(email)').eq('account_id', accountId).order('created_at', { ascending: false })
+    const { data } = await supabase.from('tasks').select('*').eq('account_id', accountId).order('created_at', { ascending: false })
     return NextResponse.json({ tasks: data ?? [] })
   } catch (err) { return toErrorResponse(err) }
 }
