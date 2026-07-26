@@ -85,9 +85,9 @@ export function AiPlayground({ onGoToSetup }: { onGoToSetup?: () => void }) {
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Bot className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-foreground">Playground</span>
+          <span className="text-sm font-medium text-foreground">Laboratorio</span>
           <span className="text-xs text-muted-foreground">
-            — test replies as if you were a customer
+            — probá respuestas como si fueras un cliente
           </span>
         </div>
         <Button
@@ -97,7 +97,7 @@ export function AiPlayground({ onGoToSetup }: { onGoToSetup?: () => void }) {
           disabled={turns.length === 0 || sending}
           className="text-muted-foreground"
         >
-          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset
+          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reiniciar
         </Button>
       </div>
 
@@ -106,10 +106,10 @@ export function AiPlayground({ onGoToSetup }: { onGoToSetup?: () => void }) {
         {turns.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center text-center text-sm text-muted-foreground">
             <Bot className="mb-2 h-8 w-8 text-muted-foreground/60" />
-            <p>Send a message to see how your agent would reply.</p>
+            <p>Envía un mensaje para ver cómo respondería tu agente.</p>
             <p className="mt-1 text-xs">
-              It uses your knowledge base and behaves exactly like the
-              auto-reply bot — including handoff.
+              Usa tu base de conocimiento y se comporta exactamente como el
+              bot de auto-respuesta — incluyendo handoff.
             </p>
             {onGoToSetup && (
               <Button
@@ -118,7 +118,7 @@ export function AiPlayground({ onGoToSetup }: { onGoToSetup?: () => void }) {
                 onClick={onGoToSetup}
                 className="mt-1 h-auto p-0 text-xs"
               >
-                Not set up yet? Go to Setup <ArrowRight className="ml-1 h-3 w-3" />
+                ¿No configurado? Andá a Configuración <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             )}
           </div>
