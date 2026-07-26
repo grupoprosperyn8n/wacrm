@@ -39,6 +39,7 @@ export default function BookingsPage() {
   const [form, setForm] = useState({ title: '', description: '', start_time: '', end_time: '', contact_name: '', contact_email: '', contact_phone: '', status: 'pending' })
   const [saving, setSaving] = useState(false); const [tab, setTab] = useState('calendar')
   const [search, setSearch] = useState(''); const [filterStatus, setFilterStatus] = useState('all')
+  const [dateFrom, setDateFrom] = useState(''); const [dateTo, setDateTo] = useState(''); const [quickDate, setQuickDate] = useState('all')
 
   async function load() { setLoading(true); try { const r = await fetch('/api/bookings'); if (r.ok) setBookings((await r.json()).bookings ?? []) } catch {}; setLoading(false) }
   useEffect(() => { load() }, [])
@@ -63,8 +64,10 @@ export default function BookingsPage() {
     let filtered = [...bookings]
     if (search) { const q = search.toLowerCase(); filtered = filtered.filter(b => b.title?.toLowerCase().includes(q) || b.contact_name?.toLowerCase().includes(q) || b.contact_phone?.includes(q)) }
     if (filterStatus !== 'all') filtered = filtered.filter(b => b.status === filterStatus)
+    if (dateFrom) { const f = new Date(dateFrom); filtered = filtered.filter(b => !b.start_time || new Date(b.start_time) >= f) }
+    if (dateTo) { const t2 = new Date(dateTo); t2.setHours(23,59,59,999); filtered = filtered.filter(b => !b.start_time || new Date(b.start_time) <= t2) }
     return filtered.sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-  }, [bookings, search, filterStatus])
+  }, [bookings, search, filterStatus, dateFrom, dateTo])
 
   const year = date.getFullYear(), month = date.getMonth()
   const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month+1, 0).getDate()
@@ -95,6 +98,19 @@ export default function BookingsPage() {
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="text-sm rounded-lg border border-border bg-background px-2 py-2">
           <option value="all">Todos</option><option value="pending">Pendientes</option><option value="confirmed">Confirmados</option><option value="completed">Completados</option><option value="cancelled">Anulados</option>
         </select>
+        <select value={quickDate} onChange={e => { setQuickDate(e.target.value);
+          if(e.target.value==='today'){const d=new Date().toISOString().slice(0,10);setDateFrom(d);setDateTo(d)}
+          else if(e.target.value==='week'){const d=new Date();const w=d.getDate()-d.getDay();const from=new Date(d.getFullYear(),d.getMonth(),w);const to=new Date(d.getFullYear(),d.getMonth(),w+6);setDateFrom(from.toISOString().slice(0,10));setDateTo(to.toISOString().slice(0,10))}
+          else if(e.target.value==='month'){const d=new Date();setDateFrom(new Date(d.getFullYear(),d.getMonth(),1).toISOString().slice(0,10));setDateTo(new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().slice(0,10))}
+          else if(e.target.value==='year'){const d=new Date();setDateFrom(new Date(d.getFullYear(),0,1).toISOString().slice(0,10));setDateTo(new Date(d.getFullYear(),11,31).toISOString().slice(0,10))}
+          else if(e.target.value==='7days'){const d=new Date();d.setDate(d.getDate()-7);setDateFrom(d.toISOString().slice(0,10));setDateTo(new Date().toISOString().slice(0,10))}
+          else if(e.target.value==='30days'){const d=new Date();d.setDate(d.getDate()-30);setDateFrom(d.toISOString().slice(0,10));setDateTo(new Date().toISOString().slice(0,10))}
+          else if(e.target.value==='clear'){setDateFrom('');setDateTo('');setQuickDate('all')}
+        }} className="text-sm rounded-lg border border-border bg-background px-2 py-2">
+          <option value="all">Sin filtro fecha</option><option value="today">Hoy</option><option value="week">Esta semana</option><option value="month">Este mes</option><option value="year">Este año</option><option value="7days">Ultimos 7 dias</option><option value="30days">Ultimos 30 dias</option><option value="clear">Limpiar fechas</option>
+        </select>
+        {quickDate === 'all' && (<> <Input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setQuickDate('custom')}} className="w-36 text-sm" placeholder="Desde" />
+        <Input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setQuickDate('custom')}} className="w-36 text-sm" placeholder="Hasta" /></>)}
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
