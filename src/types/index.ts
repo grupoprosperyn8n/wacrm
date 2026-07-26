@@ -681,7 +681,7 @@ export interface QuickReply {
 // Multi-channel support (migration 038)
 // ============================================================
 
-export type ChannelType = 'whatsapp' | 'telegram' | 'facebook' | 'instagram' | 'tiktok' | 'web';
+export type ChannelType = 'whatsapp' | 'telegram' | 'facebook' | 'instagram' | 'tiktok' | 'web' | 'youtube';
 
 export interface Channel {
   id: string;

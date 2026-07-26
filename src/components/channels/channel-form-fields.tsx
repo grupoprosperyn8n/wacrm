@@ -37,6 +37,10 @@ const TYPE_FIELDS: Record<ChannelType, Array<{ key: string; labelKey: string; pl
     { key: 'welcome_message', labelKey: 'web.welcomeMessage', placeholderKey: 'web.welcomeMessagePlaceholder' },
     { key: 'brand_color', labelKey: 'web.brandColor', placeholderKey: 'web.brandColorPlaceholder' },
   ],
+  youtube: [
+    { key: 'api_key', labelKey: 'youtube.apiKey', placeholderKey: 'youtube.apiKeyPlaceholder', secret: true },
+    { key: 'channel_id', labelKey: 'youtube.channelId', placeholderKey: 'youtube.channelIdPlaceholder' },
+  ],
 };
 
 export function ChannelFormFields({ channelType, config, onChange }: ChannelFormFieldsProps) {

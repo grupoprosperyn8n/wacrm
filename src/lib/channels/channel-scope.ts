@@ -8,6 +8,7 @@ export const ALL_CHANNEL_TYPES = [
   'instagram',
   'facebook',
   'tiktok',
+  'youtube',
 ] as const satisfies readonly ChannelType[]
 
 const CHANNEL_TYPE_SET = new Set<ChannelType>(ALL_CHANNEL_TYPES)

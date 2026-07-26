@@ -23,6 +23,9 @@ const TimezoneSettings = dynamic(() => import('@/components/settings/timezone-se
 const AppearancePanel = dynamic(() => import('@/components/settings/appearance-panel').then(m => m.AppearancePanel), { ssr: false })
 const TelegramConfig = dynamic(() => import('@/components/settings/telegram-config').then(m => m.TelegramConfig), { ssr: false })
 const WhatsAppConfig = dynamic(() => import('@/components/settings/whatsapp-config').then(m => m.WhatsAppConfig), { ssr: false })
+const FacebookConfig = dynamic(() => import('@/components/settings/facebook-config').then(m => m.FacebookConfig), { ssr: false })
+const InstagramConfig = dynamic(() => import('@/components/settings/instagram-config').then(m => m.InstagramConfig), { ssr: false })
+const YouTubeConfig = dynamic(() => import('@/components/settings/youtube-config').then(m => m.YouTubeConfig), { ssr: false })
 const TemplateManager = dynamic(() => import('@/components/settings/template-manager').then(m => m.TemplateManager), { ssr: false })
 const QuickRepliesManager = dynamic(() => import('@/components/settings/quick-replies-manager').then(m => m.QuickRepliesManager), { ssr: false })
 const FieldsAndTagsPanel = dynamic(() => import('@/components/settings/fields-and-tags-panel').then(m => m.FieldsAndTagsPanel), { ssr: false })
@@ -114,8 +117,8 @@ export default function SettingsPage() {
     integrations: <IntegrationsPanel />,
       whatsapp: <WhatsAppConfig />,
       telegram: <TelegramConfig />,
-    facebook: <FacebookRedirect />,
-    instagram: <InstagramRedirect />,
+    facebook: <FacebookConfig />,
+    instagram: <InstagramConfig />,
       templates: <TemplateManager />,
       'quick-replies': <QuickRepliesManager />,
       fields: <FieldsAndTagsPanel />,
@@ -124,6 +127,7 @@ export default function SettingsPage() {
       api: <ApiKeysSettings />,
       payments: <PaymentSettings />,
       'ai-knowledge': <AiKnowledgeCard accountId={accountId} canEdit={canEditSettings} hasEmbeddingsKey={false} />,
+      youtube: <YouTubeConfig />,
     }),
     [go],
   );

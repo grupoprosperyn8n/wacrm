@@ -68,7 +68,7 @@ describe('buildAutomationInsert', () => {
       trigger_type: 'new_message_received',
       trigger_config: {},
       is_active: false,
-      channel_types: ['whatsapp', 'web', 'telegram', 'instagram', 'facebook', 'tiktok'],
+      channel_types: ['whatsapp', 'web', 'telegram', 'instagram', 'facebook', 'tiktok', 'youtube'],
     });
     expect(insert).not.toHaveProperty('source_template_slug');
     expect(insert).not.toHaveProperty('source_template_version');
