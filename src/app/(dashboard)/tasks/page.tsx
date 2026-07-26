@@ -41,7 +41,7 @@ export default function TasksPage() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [sortBy, setSortBy] = useState('created')
-  const [dateFrom, setDateFrom] = useState(''); const [dateTo, setDateTo] = useState(''); const [quickDate, setQuickDate] = useState('all')
+  const [dateFrom, setDateFrom] = useState(''); const [dateTo, setDateTo] = useState(''); const [daysAgo, setDaysAgo] = useState(''); const [quickDate, setQuickDate] = useState('all')
 
   async function load() { setLoading(true); try { const r = await fetch('/api/tasks'); if (r.ok) setTasks((await r.json()).tasks ?? []) } catch {}; setLoading(false) }
   useEffect(() => { load() }, [])
@@ -109,6 +109,15 @@ export default function TasksPage() {
         <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-sm rounded-lg border border-border bg-background px-2 py-2">
           <option value="created">Recientes</option><option value="due">Vencimiento</option><option value="overdue">Vencidas primero</option>
         </select>
+        <div className="flex items-center gap-1 border border-border rounded-lg px-2 py-1 bg-background">
+          <span className="text-xs text-muted-foreground">Desde:</span>
+          <Input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} className="h-7 w-28 text-xs border-0 p-0 shadow-none" />
+          <span className="text-xs text-muted-foreground">Hasta:</span>
+          <Input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} className="h-7 w-28 text-xs border-0 p-0 shadow-none" />
+          <span className="text-xs text-muted-foreground ml-1">o</span>
+          <Input type="number" value={daysAgo} onChange={e=>{const v=parseInt(e.target.value)||0;setDaysAgo(e.target.value);if(v>0){const d=new Date();d.setDate(d.getDate()-v);setDateFrom(d.toISOString().slice(0,10));setDateTo(new Date().toISOString().slice(0,10))}}} className="h-7 w-14 text-xs border-0 p-0 shadow-none" placeholder="dias" min="1" />
+          <span className="text-xs text-muted-foreground">atras</span>
+        </div>
         <select value={quickDate} onChange={e => { setQuickDate(e.target.value);
           if(e.target.value==='today'){const d=new Date().toISOString().slice(0,10);setDateFrom(d);setDateTo(d)}
           else if(e.target.value==='week'){const d=new Date();const w=d.getDate()-d.getDay();const from=new Date(d.getFullYear(),d.getMonth(),w);const to=new Date(d.getFullYear(),d.getMonth(),w+6);setDateFrom(from.toISOString().slice(0,10));setDateTo(to.toISOString().slice(0,10))}
@@ -120,8 +129,7 @@ export default function TasksPage() {
         }} className="text-sm rounded-lg border border-border bg-background px-2 py-2">
           <option value="all">Sin filtro fecha</option><option value="today">Hoy</option><option value="week">Esta semana</option><option value="month">Este mes</option><option value="year">Este año</option><option value="7days">Ultimos 7 dias</option><option value="30days">Ultimos 30 dias</option><option value="clear">Limpiar</option>
         </select>
-        {quickDate === 'all' && (<> <Input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setQuickDate('custom')}} className="w-36 text-sm" placeholder="Desde" />
-        <Input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setQuickDate('custom')}} className="w-36 text-sm" placeholder="Hasta" /></>)}
+
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
