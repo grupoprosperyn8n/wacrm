@@ -44,8 +44,9 @@ export function ChannelScopeSelector({ value, onChange, compact }: ChannelScopeS
   // Compact mode: inline pills
   if (compact) {
     return (
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-muted-foreground mr-1">{t("scope.label")}:</span>
+      <div className="space-y-1">
+        <span className="text-xs text-muted-foreground">{t("scope.label")}:</span>
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-7">
         {ALL_CHANNEL_TYPES.filter(ch => activeChannels.includes(ch as any)).map((channel) => {
           const active = selected.includes(channel)
           return (
@@ -67,6 +68,7 @@ export function ChannelScopeSelector({ value, onChange, compact }: ChannelScopeS
             </button>
           )
         })}
+        </div>
       </div>
     )
   }
