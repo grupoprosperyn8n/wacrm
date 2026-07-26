@@ -8,9 +8,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTotalUnread } from "@/hooks/use-total-unread";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
-  Bell, Bot, CalendarDays, CheckSquare, ChevronRight, Crown, GitBranch, LayoutDashboard,
-  LogOut, MessageSquare, Radio, RadioTower, Settings, Shield,
-  User, UserCog, Users, UsersRound, Workflow, X, Zap,
+  Bell, Bot, CalendarDays, CheckSquare, ChevronRight, CreditCard, Crown, GitBranch, LayoutDashboard,
+  LogOut, MessageSquare, Radio, RadioTower, RefreshCw, Settings, Shield,
+  ShoppingCart, User, UserCog, Users, UsersRound, Workflow, X, Zap,
 } from "lucide-react";
 import type { AccountRole } from "@/lib/auth/roles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +39,9 @@ const navItems = [
   { href: "/channels", labelKey: "channels", icon: RadioTower },
   { href: "/automations", labelKey: "automations", icon: Zap },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
+  { href: "/ecommerce", labelKey: "ecommerce", icon: ShoppingCart },
+  { href: "/payments", labelKey: "payments", icon: CreditCard },
+  { href: "/sync", labelKey: "sync", icon: RefreshCw },
   { href: "/agents", labelKey: "aiAgents", icon: Bot },
 ];
 const bottomNavItems = [{ href: "/settings", labelKey: "settings", icon: Settings }];
