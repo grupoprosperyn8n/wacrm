@@ -107,10 +107,12 @@ const CHANNEL_LABELS: Record<string, string> = {
   telegram: 'Telegram',
   facebook: 'Facebook Messenger',
   instagram: 'Instagram',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
   web: 'Chat Web',
 }
 
-const CHANNELS = ['whatsapp', 'telegram', 'facebook', 'instagram', 'web'] as const
+const CHANNELS = ['whatsapp', 'telegram', 'facebook', 'instagram', 'tiktok', 'youtube', 'web'] as const
 
 export async function loadChannelMetrics(db: DB): Promise<ChannelMetricPoint[]> {
   const todayStart = startOfLocalDay().toISOString()
@@ -454,4 +456,100 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
   return items
     .sort((a, b) => (a.at > b.at ? -1 : a.at < b.at ? 1 : 0))
     .slice(0, limit)
+}
+
+// --- 6. Ecommerce metrics -------------------------------------------------
+
+export interface EcommerceMetrics {
+  totalProducts: number
+  totalStock: number
+  totalOrders: number
+  activeIntegrations: number
+}
+
+export async function loadEcommerceMetrics(db: DB): Promise<EcommerceMetrics> {
+  const [productsCount, integrationsCount] = await Promise.all([
+    db.from('ecommerce_products').select('id, stock', { count: 'exact', head: true }).limit(1000),
+    db.from('ecommerce_integrations').select('id', { count: 'exact', head: true }).eq('enabled', true),
+  ])
+  const products = productsCount.data as { stock: number }[] | null
+  const totalStock = products ? products.reduce((s, p) => s + (p.stock || 0), 0) : 0
+  return {
+    totalProducts: productsCount.count ?? 0,
+    totalStock,
+    totalOrders: 0,
+    activeIntegrations: integrationsCount.count ?? 0,
+  }
+}
+
+// --- 7. Payment metrics ---------------------------------------------------
+
+export interface PaymentMetrics {
+  totalGateways: number
+  activeGateways: number
+}
+
+export async function loadPaymentMetrics(db: DB): Promise<PaymentMetrics> {
+  const { data } = await db.from('payment_gateways').select('enabled')
+  const gateways = (data ?? []) as { enabled: boolean }[]
+  return {
+    totalGateways: gateways.length,
+    activeGateways: gateways.filter((g) => g.enabled).length,
+  }
+}
+
+// --- 8. AI Usage metrics --------------------------------------------------
+
+export interface AiUsageMetrics {
+  totalConfigs: number
+  activeConfigs: number
+  totalTokensUsed: number
+}
+
+export async function loadAiUsageMetrics(db: DB): Promise<AiUsageMetrics> {
+  const [configsRes, usageRes] = await Promise.all([
+    db.from('ai_config').select('enabled'),
+    db.from('ai_usage_log').select('total_tokens').limit(1000),
+  ])
+  const configs = (configsRes.data ?? []) as { enabled: boolean }[]
+  const usage = (usageRes.data ?? []) as { total_tokens: number }[]
+  return {
+    totalConfigs: configs.length,
+    activeConfigs: configs.filter((c) => c.enabled).length,
+    totalTokensUsed: usage.reduce((s, u) => s + (u.total_tokens || 0), 0),
+  }
+}
+
+// --- 9. Task/Booking metrics ----------------------------------------------
+
+export interface TaskBookingMetrics {
+  pendingTasks: number
+  upcomingBookings: number
+}
+
+export async function loadTaskBookingMetrics(db: DB): Promise<TaskBookingMetrics> {
+  const [tasksRes, bookingsRes] = await Promise.all([
+    db.from('tasks').select('id', { count: 'exact', head: true }).in('status', ['pending', 'in_progress']),
+    db.from('bookings').select('id', { count: 'exact', head: true }).gte('start_time', new Date().toISOString()).in('status', ['pending', 'confirmed']),
+  ])
+  return {
+    pendingTasks: tasksRes.count ?? 0,
+    upcomingBookings: bookingsRes.count ?? 0,
+  }
+}
+
+// --- 10. Sync metrics -----------------------------------------------------
+
+export interface SyncMetrics {
+  totalConnections: number
+  lastSyncAt: string | null
+}
+
+export async function loadSyncMetrics(db: DB): Promise<SyncMetrics> {
+  const { data } = await db.from('sync_integrations').select('last_synced_at').eq('enabled', true).order('last_synced_at', { ascending: false }).limit(1)
+  const rows = (data ?? []) as { last_synced_at: string | null }[]
+  return {
+    totalConnections: data?.length ?? 0,
+    lastSyncAt: rows[0]?.last_synced_at ?? null,
+  }
 }

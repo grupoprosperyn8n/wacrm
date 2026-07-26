@@ -5,7 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { formatCurrency } from '@/lib/currency'
 import {
+  CalendarDays,
+  CheckSquare,
   MessageSquare,
+  RefreshCw,
   UserPlus,
   DollarSign,
   Send,
@@ -18,6 +21,16 @@ import {
   loadMetrics,
   loadPipelineDonut,
   loadResponseTime,
+  loadEcommerceMetrics,
+  loadPaymentMetrics,
+  loadAiUsageMetrics,
+  loadTaskBookingMetrics,
+  loadSyncMetrics,
+  type EcommerceMetrics,
+  type PaymentMetrics,
+  type AiUsageMetrics,
+  type TaskBookingMetrics,
+  type SyncMetrics,
 } from '@/lib/dashboard/queries'
 import type {
   ActivityItem,
@@ -28,6 +41,7 @@ import type {
   ResponseTimeSummary,
 } from '@/lib/dashboard/types'
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { SkeletonCard } from '@/components/dashboard/skeleton'
 import { QuickActions } from '@/components/dashboard/quick-actions'
@@ -38,6 +52,9 @@ import { PipelineDonut } from '@/components/dashboard/pipeline-donut'
 import { ResponseTimeChart } from '@/components/dashboard/response-time-chart'
 import { ActivityFeed } from '@/components/dashboard/activity-feed'
 import { ChannelMetricsCards } from '@/components/dashboard/channel-metrics-cards'
+import { EcommerceMiniCard } from '@/components/dashboard/ecommerce-mini-card'
+import { PaymentsMiniCard } from '@/components/dashboard/payments-mini-card'
+import { AiUsageMiniCard } from '@/components/dashboard/ai-usage-mini-card'
 
 import { useTranslations } from 'next-intl'
 
@@ -71,6 +88,17 @@ export default function DashboardPage() {
 
   const [channelMetrics, setChannelMetrics] = useState<ChannelMetricPoint[] | null>(null)
   const [channelMetricsLoading, setChannelMetricsLoading] = useState(true)
+
+const [ecommerceMetrics, setEcommerceMetrics] = useState<EcommerceMetrics | null>(null)
+const [ecommerceMetricsLoading, setEcommerceMetricsLoading] = useState(true)
+const [paymentMetrics, setPaymentMetrics] = useState<PaymentMetrics | null>(null)
+const [paymentMetricsLoading, setPaymentMetricsLoading] = useState(true)
+const [aiUsageMetrics, setAiUsageMetrics] = useState<AiUsageMetrics | null>(null)
+const [aiUsageMetricsLoading, setAiUsageMetricsLoading] = useState(true)
+const [taskBookingMetrics, setTaskBookingMetrics] = useState<TaskBookingMetrics | null>(null)
+const [taskBookingMetricsLoading, setTaskBookingMetricsLoading] = useState(true)
+const [syncMetrics, setSyncMetrics] = useState<SyncMetrics | null>(null)
+const [syncMetricsLoading, setSyncMetricsLoading] = useState(true)
 
   const loadAll = useCallback(() => {
     const db = createClient()
@@ -110,6 +138,31 @@ export default function DashboardPage() {
       .then((a) => setActivity(a))
       .catch((err) => console.error('[dashboard] activity failed:', err))
       .finally(() => setActivityLoading(false))
+
+    void loadEcommerceMetrics(db)
+      .then((m) => setEcommerceMetrics(m))
+      .catch(() => {})
+      .finally(() => setEcommerceMetricsLoading(false))
+
+    void loadPaymentMetrics(db)
+      .then((m) => setPaymentMetrics(m))
+      .catch(() => {})
+      .finally(() => setPaymentMetricsLoading(false))
+
+    void loadAiUsageMetrics(db)
+      .then((m) => setAiUsageMetrics(m))
+      .catch(() => {})
+      .finally(() => setAiUsageMetricsLoading(false))
+
+    void loadTaskBookingMetrics(db)
+      .then((m) => setTaskBookingMetrics(m))
+      .catch(() => {})
+      .finally(() => setTaskBookingMetricsLoading(false))
+
+    void loadSyncMetrics(db)
+      .then((m) => setSyncMetrics(m))
+      .catch(() => {})
+      .finally(() => setSyncMetricsLoading(false))
   }, [])
 
   useEffect(() => {
@@ -206,6 +259,25 @@ export default function DashboardPage() {
         metrics={channelMetrics ?? []}
         loading={channelMetricsLoading}
       />
+
+      {/* Mini cards row */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <EcommerceMiniCard metrics={ecommerceMetrics} loading={ecommerceMetricsLoading} />
+        <PaymentsMiniCard metrics={paymentMetrics} loading={paymentMetricsLoading} />
+        <AiUsageMiniCard metrics={aiUsageMetrics} loading={aiUsageMetricsLoading} />
+        <Card><CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-sm"><CheckSquare className="h-4 w-4 text-primary" /> Tareas</CardTitle></CardHeader><CardContent>
+          {taskBookingMetricsLoading ? <div className="h-8 animate-pulse bg-muted rounded" /> : <div className="grid grid-cols-2 gap-2 text-center">
+            <div><p className="text-lg font-bold">{taskBookingMetrics?.pendingTasks ?? 0}</p><p className="text-[10px] text-muted-foreground">Pendientes</p></div>
+            <div><CalendarDays className="h-4 w-4 mx-auto text-muted-foreground" /><p className="text-lg font-bold mt-1">{taskBookingMetrics?.upcomingBookings ?? 0}</p><p className="text-[10px] text-muted-foreground">Turnos</p></div>
+          </div>}
+        </CardContent></Card>
+        <Card><CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-sm"><RefreshCw className="h-4 w-4 text-primary" /> Sync</CardTitle></CardHeader><CardContent>
+          {syncMetricsLoading ? <div className="h-8 animate-pulse bg-muted rounded" /> : <div className="text-center">
+            <p className="text-lg font-bold">{syncMetrics?.totalConnections ?? 0}</p><p className="text-[10px] text-muted-foreground">conexiones</p>
+            {syncMetrics?.lastSyncAt && <p className="text-[10px] text-muted-foreground mt-1">Ultimo sync: {new Date(syncMetrics.lastSyncAt).toLocaleDateString()}</p>}
+          </div>}
+        </CardContent></Card>
+      </div>
 
       {/* Quick actions */}
       <QuickActions />
