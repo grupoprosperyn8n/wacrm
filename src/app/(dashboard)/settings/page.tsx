@@ -27,6 +27,7 @@ const FacebookConfig = dynamic(() => import('@/components/settings/facebook-conf
 const InstagramConfig = dynamic(() => import('@/components/settings/instagram-config').then(m => m.InstagramConfig), { ssr: false })
 const YouTubeConfig = dynamic(() => import('@/components/settings/youtube-config').then(m => m.YouTubeConfig), { ssr: false })
 const TikTokConfig = dynamic(() => import('@/components/settings/tiktok-config').then(m => m.TikTokConfig), { ssr: false })
+const SyncPanel = dynamic(() => import('@/components/settings/sync-panel').then(m => m.SyncPanel), { ssr: false })
 const TemplateManager = dynamic(() => import('@/components/settings/template-manager').then(m => m.TemplateManager), { ssr: false })
 const QuickRepliesManager = dynamic(() => import('@/components/settings/quick-replies-manager').then(m => m.QuickRepliesManager), { ssr: false })
 const FieldsAndTagsPanel = dynamic(() => import('@/components/settings/fields-and-tags-panel').then(m => m.FieldsAndTagsPanel), { ssr: false })
@@ -130,6 +131,7 @@ export default function SettingsPage() {
       'ai-knowledge': <AiKnowledgeCard accountId={accountId} canEdit={canEditSettings} hasEmbeddingsKey={false} />,
       youtube: <YouTubeConfig />,
       tiktok: <TikTokConfig />,
+      sync: <SyncPanel />,
     }),
     [go],
   );

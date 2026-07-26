@@ -19,6 +19,7 @@ import {
   User,
   UsersRound,
   Video,
+  ArrowLeftRight,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
@@ -53,6 +54,7 @@ export const SETTINGS_SECTIONS = [
   'ai-knowledge',
   'youtube',
   'tiktok',
+  'sync',
 ] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
@@ -89,6 +91,7 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   'ai-knowledge': { id: 'ai-knowledge', label: 'Base de conocimiento', icon: BrainCircuit, group: 'workspace' },
   youtube: { id: 'youtube', label: 'YouTube', icon: Video, group: 'workspace' },
   tiktok: { id: 'tiktok', label: 'TikTok', icon: Music, group: 'workspace' },
+  sync: { id: 'sync', label: 'Sincronizacion', icon: ArrowLeftRight, group: 'workspace' },
 };
 
 export const RAIL_GROUPS: { label: string | null; group: SectionMeta['group'] }[] = [
