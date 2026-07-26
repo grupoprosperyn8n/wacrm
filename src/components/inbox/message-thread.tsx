@@ -51,6 +51,9 @@ import {
 } from "./message-composer";
 import { deleteAccountMedia } from "@/lib/storage/upload-media";
 import { TemplatePicker } from "./template-picker";
+import { ProductPanel } from "./actions/product-panel";
+import { PaymentPanel } from "./actions/payment-panel";
+import { BookingPanel } from "./actions/booking-panel";
 import { AiThreadBanner } from "./ai-thread-banner";
 import { buildReplyPreview } from "./reply-quote";
 import { toast } from "sonner";
@@ -205,6 +208,7 @@ export function MessageThread({
     }, 700);
   }, [isRefreshing, onRefresh]);
   const [replyTo, setReplyTo] = useState<ReplyDraft | null>(null);
+  const [showActions, setShowActions] = useState<"products" | "payments" | "bookings" | null>(null);
 
   // Profiles are bounded by RLS to rows the current user is allowed to
   // see — today that's just the current user, but the dropdown keeps the
@@ -503,6 +507,13 @@ export function MessageThread({
       }
     },
     [conversation, onNewMessage, onUpdateMessage]
+  );
+
+  const handleSendMessage = useCallback(
+    (text: string) => {
+      handleSend(text);
+    },
+    [handleSend]
   );
 
   const handleSendMedia = useCallback(
@@ -1181,6 +1192,32 @@ export function MessageThread({
       />
 
       {/* Composer */}
+      {/* Action panels */}
+      {showActions === 'products' && conversation && (
+        <div className="px-3"><ProductPanel conversationId={conversation.id} onSendMessage={handleSendMessage} onClose={() => setShowActions(null)} /></div>
+      )}
+      {showActions === 'payments' && conversation && (
+        <div className="px-3"><PaymentPanel conversationId={conversation.id} contactPhone={conversation.contact?.phone || ""} onSendMessage={handleSendMessage} onClose={() => setShowActions(null)} /></div>
+      )}
+      {showActions === 'bookings' && conversation && (
+        <div className="px-3"><BookingPanel conversationId={conversation.id} contactId={conversation.contact_id} contactName={conversation.contact?.name} onSendMessage={handleSendMessage} onClose={() => setShowActions(null)} /></div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-1 px-3 pb-1">
+        <button type="button" onClick={() => setShowActions(showActions === 'products' ? null : 'products')}
+          className={'text-xs px-2 py-1 rounded-md transition-colors ' + (showActions === 'products' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}>
+          Productos
+        </button>
+        <button type="button" onClick={() => setShowActions(showActions === 'payments' ? null : 'payments')}
+          className={'text-xs px-2 py-1 rounded-md transition-colors ' + (showActions === 'payments' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}>
+          Cobrar
+        </button>
+        <button type="button" onClick={() => setShowActions(showActions === 'bookings' ? null : 'bookings')}
+          className={'text-xs px-2 py-1 rounded-md transition-colors ' + (showActions === 'bookings' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}>
+          Turno
+        </button>
+      </div>
       <MessageComposer
         conversationId={conversation.id}
         sessionExpired={sessionInfo.expired}
