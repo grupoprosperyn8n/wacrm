@@ -6,7 +6,7 @@ import { FastApiConnector } from './connectors/fastapi'
 import { N8nConnector } from './connectors/n8n'
 import { GoogleSheetsConnector } from './connectors/sheets'
 import { supabaseAdmin } from '@/lib/automations/admin-client'
-import type { SyncIntegration, ConnectorType, EntityType, SyncResult, ConnectorInterface, ConnectorConfig } from './types'
+import type { SyncIntegration, ConnectorType, EntityType, SyncResult, ConnectorInterface, ConnectorConfig, DiscoverResult } from './types'
 
 export function getConnector(type: ConnectorType): ConnectorInterface {
   switch (type) {
@@ -20,6 +20,13 @@ export function getConnector(type: ConnectorType): ConnectorInterface {
     case 'excel': return new GoogleSheetsConnector() // Reuse sheets logic for CSV/Excel via API
     default: throw new Error(`Unknown connector type: ${type}`)
   }
+}
+
+export async function discoverResources(connectorType: ConnectorType, config: Record<string, unknown>, resourceType?: string): Promise<DiscoverResult> {
+  try {
+    const connector = getConnector(connectorType)
+    return await connector.discover(config, resourceType)
+  } catch (e) { return { success: false, resources: [], message: String(e) } }
 }
 
 export async function getConnectorConfig(integrationId: string): Promise<ConnectorConfig | null> {

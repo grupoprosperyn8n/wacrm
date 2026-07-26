@@ -1,5 +1,5 @@
 // Google Sheets connector - bidirectional sync with Google Sheets
-import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult } from '../types'
+import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult, type DiscoverResult } from '../types'
 
 interface SheetsConfig {
   spreadsheet_id: string   // Google Sheets ID
@@ -38,6 +38,25 @@ export class GoogleSheetsConnector extends BaseConnector {
       if (res.ok) return { success: true, message: `Conectado a ${(await res.json()).properties.title}` }
       return { success: false, message: `Error HTTP ${res.status}` }
     } catch (e) { return { success: false, message: String(e) } }
+  }
+
+  async discover(config: Record<string, unknown>, _resourceType?: string): Promise<DiscoverResult> {
+    const cfg = this.getConfig(config)
+    if (!cfg.spreadsheet_id) return { success: false, resources: [], message: 'Spreadsheet ID requerido' }
+    try {
+      const token = this.getAccessToken(cfg.credentials_json)
+      const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + cfg.spreadsheet_id + '?includeGridData=false', {
+        headers: { Authorization: 'Bearer ' + token },
+      })
+      if (!res.ok) return { success: false, resources: [], message: 'Error ' + res.status }
+      const d = await res.json()
+      const sheets = (d.sheets || []).map((s: any) => ({
+        id: s.properties.sheetId.toString(),
+        name: s.properties.title,
+        type: 'sheet' as const,
+      }))
+      return { success: true, resources: sheets, message: d.properties.title + ': ' + sheets.length + ' hoja(s)' }
+    } catch (e) { return { success: false, resources: [], message: String(e) } }
   }
 
   async push(connector: ConnectorConfig, entityType: EntityType, data: Record<string, unknown>[]): Promise<SyncResult> {

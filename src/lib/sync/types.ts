@@ -26,7 +26,7 @@ export interface SyncIntegration {
 export interface FieldMapping {
   wacrm_field: string
   external_field: string
-  transform?: string // optional transform function
+  transform?: string
   direction?: 'push' | 'pull' | 'both'
 }
 
@@ -39,7 +39,6 @@ export interface SyncResult {
 }
 
 export interface ConnectorConfig {
-  /** Unique id for this connector instance */
   id: string
   accountId: string
   config: Record<string, unknown>
@@ -47,26 +46,40 @@ export interface ConnectorConfig {
   entityTypes: EntityType[]
 }
 
+/** Resource discovery result - what the connector found in the external system */
+export interface DiscoverResult {
+  success: boolean
+  resources: DiscoveredResource[]
+  message?: string
+}
+
+export interface DiscoveredResource {
+  id: string
+  name: string
+  type: 'base' | 'table' | 'database' | 'schema' | 'endpoint' | 'workflow' | 'spreadsheet' | 'sheet'
+  children?: DiscoveredResource[]
+  fields?: { name: string; type?: string }[]
+}
+
 export interface ConnectorInterface {
-  /** Test connection to external system */
   testConnection(config: Record<string, unknown>): Promise<{ success: boolean; message: string }>
   
-  /** Push data TO external system */
+  /** Discover available resources (bases, tables, schemas, etc.) */
+  discover(config: Record<string, unknown>, resourceType?: string): Promise<DiscoverResult>
+  
   push(connector: ConnectorConfig, entityType: EntityType, data: Record<string, unknown>[]): Promise<SyncResult>
   
-  /** Pull data FROM external system */
   pull(connector: ConnectorConfig, entityType: EntityType): Promise<{ data: Record<string, unknown>[]; result: SyncResult }>
   
-  /** Transform wacrm data using field mappings */
   transformToExternal(data: Record<string, unknown>, mappings: FieldMapping[]): Record<string, unknown>
   
-  /** Transform external data to wacrm format */
   transformToWacrm(data: Record<string, unknown>, mappings: FieldMapping[]): Record<string, unknown>
 }
 
 /** Base connector with common transform logic */
 export abstract class BaseConnector implements ConnectorInterface {
   abstract testConnection(config: Record<string, unknown>): Promise<{ success: boolean; message: string }>
+  abstract discover(config: Record<string, unknown>, resourceType?: string): Promise<DiscoverResult>
   abstract push(connector: ConnectorConfig, entityType: EntityType, data: Record<string, unknown>[]): Promise<SyncResult>
   abstract pull(connector: ConnectorConfig, entityType: EntityType): Promise<{ data: Record<string, unknown>[]; result: SyncResult }>
 

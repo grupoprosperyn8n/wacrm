@@ -1,5 +1,5 @@
 // Postgres/Supabase direct connector - bidirectional sync with external databases
-import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult } from '../types'
+import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult, type DiscoverResult } from '../types'
 
 interface PgConfig {
   connection_string: string
@@ -21,6 +21,21 @@ export class PostgresConnector extends BaseConnector {
     if (!cfg.connection_string) return { success: false, message: 'Connection string requerida' }
     // Connection test is done via the API endpoint that proxies queries
     return { success: true, message: 'Configuracion valida (la conexion se prueba al sincronizar)' }
+  }
+
+  async discover(config: Record<string, unknown>, resourceType?: string): Promise<DiscoverResult> {
+    // Postgres discovery is done server-side via the sync API
+    // Returns available tables from information_schema
+    if (resourceType === 'tables') {
+      try {
+        const res = await fetch('/api/sync/discover?connectorType=postgres&resource=tables', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ connection_string: config.connection_string, schema: config.schema || 'public' }),
+        })
+        if (res.ok) { const d = await res.json(); return d }
+      } catch {}
+    }
+    return { success: true, resources: [] }
   }
 
   async push(connector: ConnectorConfig, entityType: EntityType, data: Record<string, unknown>[]): Promise<SyncResult> {

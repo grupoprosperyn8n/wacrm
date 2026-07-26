@@ -1,6 +1,6 @@
 // FastAPI connector - bidirectional sync via REST API
 // Connects to any FastAPI/Flask/Express endpoint that implements the sync protocol
-import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult } from '../types'
+import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult, type DiscoverResult } from '../types'
 
 interface FastApiConfig {
   url: string        // Base URL of the external API (e.g. https://api.misistema.com)
@@ -31,6 +31,34 @@ export class FastApiConnector extends BaseConnector {
       const res2 = await fetch(cfg.url, { method: 'HEAD', headers: this.headers(cfg) })
       return { success: res2.ok, message: res2.ok ? 'Conectado' : `HTTP ${res2.status}` }
     } catch (e) { return { success: false, message: String(e) } }
+  }
+
+  async discover(config: Record<string, unknown>, _resourceType?: string): Promise<DiscoverResult> {
+    const cfg = this.getConfig(config)
+    if (!cfg.url) return { success: false, resources: [], message: 'URL requerida' }
+    try {
+      // Try OpenAPI schema first
+      const res = await fetch(cfg.url + '/openapi.json', { headers: this.headers(cfg) })
+      if (res.ok) {
+        const spec = await res.json()
+        const paths = Object.keys(spec.paths || {}).filter(p => !p.includes('{'))
+        return {
+          success: true,
+          resources: paths.map(p => ({ id: p, name: p, type: 'endpoint' as const })),
+          message: 'OpenAPI descubierto: ' + paths.length + ' endpoints',
+        }
+      }
+      // Fallback: try common REST patterns
+      const common = ['/api/contacts', '/api/products', '/api/tasks', '/api/health', '/api/users']
+      const resources = []
+      for (const path of common) {
+        try {
+          const r = await fetch(cfg.url + path, { method: 'HEAD', headers: this.headers(cfg) })
+          if (r.ok || r.status === 401) resources.push({ id: path, name: path, type: 'endpoint' as const })
+        } catch {}
+      }
+      return { success: true, resources, message: resources.length + ' endpoint(s) encontrado(s)' }
+    } catch (e) { return { success: false, resources: [], message: String(e) } }
   }
 
   async push(connector: ConnectorConfig, entityType: EntityType, data: Record<string, unknown>[]): Promise<SyncResult> {

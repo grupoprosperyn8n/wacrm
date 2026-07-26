@@ -1,6 +1,6 @@
 // n8n connector - enhanced bidirectional sync with n8n workflows
 // n8n acts as middleware: wacrm pushes events to n8n, n8n can push data back
-import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult } from '../types'
+import { BaseConnector, type ConnectorConfig, type EntityType, type SyncResult, type DiscoverResult } from '../types'
 
 interface N8nConfig {
   webhook_url: string       // n8n webhook URL to receive events
@@ -27,6 +27,15 @@ export class N8nConnector extends BaseConnector {
       })
       return { success: res.ok, message: res.ok ? 'n8n responde correctamente' : `HTTP ${res.status}` }
     } catch (e) { return { success: false, message: String(e) } }
+  }
+
+  async discover(config: Record<string, unknown>, _resourceType?: string): Promise<DiscoverResult> {
+    const cfg = this.getConfig(config)
+    if (!cfg.webhook_url) return { success: false, resources: [], message: 'Webhook URL requerida' }
+    return { success: true, resources: [
+      { id: 'push', name: 'Push (wacrm -> n8n)', type: 'endpoint' },
+      { id: 'pull', name: 'Pull (n8n -> wacrm)', type: 'endpoint' },
+    ]}
   }
 
   async push(connector: ConnectorConfig, entityType: EntityType, data: Record<string, unknown>[]): Promise<SyncResult> {
