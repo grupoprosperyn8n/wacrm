@@ -62,7 +62,7 @@ export function ChannelMetricsCards({
     <section>
       <h3 className="mb-4 text-lg font-semibold">{t('channelCards.perChannelOverview')}</h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {metrics.map((m) => (
+        {metrics.filter(m => m.messagesToday > 0 || m.openConversations > 0 || m.totalContacts > 0).map((m) => (
           <ChannelCard key={m.channel} metric={m} />
         ))}
       </div>

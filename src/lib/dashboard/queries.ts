@@ -458,6 +458,14 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
     .slice(0, limit)
 }
 
+// --- Active channels from DB -----------------------------------------
+
+export async function loadActiveChannels(db: DB): Promise<string[]> {
+  const { data } = await db.from('channels').select('type, is_active').eq('is_active', true)
+  const channels = (data ?? []) as { type: string; is_active: boolean }[]
+  return channels.map(c => c.type)
+}
+
 // --- 6. Ecommerce metrics -------------------------------------------------
 
 export interface EcommerceMetrics {
