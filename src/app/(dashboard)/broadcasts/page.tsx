@@ -180,6 +180,11 @@ export default function BroadcastsPage() {
         </div>
       )}
 
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="rounded-lg border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Enviados</p><p className="text-2xl font-bold">{broadcasts.filter((b:any)=>b.status==='sent'||b.status==='completed').length}</p></div>
+        <div className="rounded-lg border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Pendientes</p><p className="text-2xl font-bold">{broadcasts.filter((b:any)=>b.status==='draft'||b.status==='scheduled').length}</p></div>
+        <div className="rounded-lg border border-border bg-card p-4"><p className="text-xs text-muted-foreground">Total</p><p className="text-2xl font-bold">{broadcasts.length}</p></div>
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
