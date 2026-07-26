@@ -769,11 +769,13 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
         <div className="absolute inset-0 bg-[radial-gradient(circle,var(--border)_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
         <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-0 px-4 py-10">
           <ResourcesProvider>
+            <div className="mb-6 w-full">
             <ChannelScopeSelector
               value={state.channel_types}
               onChange={(channel_types) => patchTop("channel_types", channel_types)}
               compact
             />
+            </div>
             <TriggerCard
               type={state.trigger_type}
               config={state.trigger_config}
