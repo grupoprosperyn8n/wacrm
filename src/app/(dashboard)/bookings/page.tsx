@@ -133,7 +133,12 @@ export default function BookingsPage() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setDate(new Date(year, month-1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="text-sm font-medium w-40 text-center">{MONTHS[month]} {year}</span>
+              <select value={month} onChange={e => setDate(new Date(year, parseInt(e.target.value), 1))} className="text-sm rounded border border-border bg-background px-2 py-1 w-28">
+                {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              </select>
+              <select value={year} onChange={e => setDate(new Date(parseInt(e.target.value), month, 1))} className="text-sm rounded border border-border bg-background px-2 py-1 w-24">
+                {Array.from({ length: 101 }, (_, i) => 1950 + i).map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
               <Button variant="outline" size="sm" onClick={() => setDate(new Date(year, month+1, 1))}><ChevronRight className="h-4 w-4" /></Button>
               <Button variant="ghost" size="sm" onClick={() => setDate(new Date())}>Hoy</Button>
             </div>
