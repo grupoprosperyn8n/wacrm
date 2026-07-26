@@ -9,6 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Plus, List, Calendar, Trash2, Clock, Columns3, Search, History, AlertTriangle, XCircle, CheckCircle2 } from 'lucide-react'
+import { WeekView } from '@/components/bookings/week-view'
+import { MonthView } from '@/components/bookings/month-view'
 import { cn } from '@/lib/utils'
 import { format, formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -16,6 +18,7 @@ import { es } from 'date-fns/locale'
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const DAYS = ['Dom','Lun','Mar','Mie','Jue','Vie','Sab']
 
+const weekDays = Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-d.getDay()+i);return d});
 function getBookingStatus(t: any): { label: string; color: string; icon: any } {
   if (t.status === 'cancelled') return { label: 'Anulado', color: 'bg-red-500/20 text-red-400', icon: XCircle }
   if (t.status === 'completed') return { label: 'Completado', color: 'bg-emerald-500/20 text-emerald-400', icon: CheckCircle2 }
@@ -37,7 +40,7 @@ export default function BookingsPage() {
   const [date, setDate] = useState(new Date()); const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState({ title: '', description: '', start_time: '', end_time: '', contact_name: '', contact_email: '', contact_phone: '', status: 'pending' })
-  const [saving, setSaving] = useState(false); const [tab, setTab] = useState('calendar')
+  const [saving, setSaving] = useState(false); const [tab, setTab] = useState('calendar'); const [viewMode, setViewMode] = useState('month')
   const [search, setSearch] = useState(''); const [filterStatus, setFilterStatus] = useState('all')
   const [dateFrom, setDateFrom] = useState(''); const [dateTo, setDateTo] = useState(''); const [daysAgo, setDaysAgo] = useState(''); const [quickDate, setQuickDate] = useState('all')
 
@@ -132,31 +135,56 @@ export default function BookingsPage() {
         <TabsContent value="calendar" className="mt-2">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setDate(new Date(year, month-1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+              <Button variant="outline" size="sm" onClick={() => {
+              if(viewMode==='day'){const d=new Date(dateFrom||today);d.setDate(d.getDate()-1);setDate(d);setDateFrom(d.toISOString().slice(0,10));setDateTo(d.toISOString().slice(0,10))}
+              else if(viewMode==='week'){const d=new Date();d.setDate(d.getDate()-7);const w=d.getDate()-d.getDay();setDateFrom(new Date(d.getFullYear(),d.getMonth(),w).toISOString().slice(0,10));setDateTo(new Date(d.getFullYear(),d.getMonth(),w+6).toISOString().slice(0,10));setDate(d)}
+              else setDate(new Date(year, month-1, 1))}}><ChevronLeft className="h-4 w-4" /></Button>
               <select value={month} onChange={e => setDate(new Date(year, parseInt(e.target.value), 1))} className="text-sm rounded border border-border bg-background px-2 py-1 w-28">
                 {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
               </select>
               <select value={year} onChange={e => setDate(new Date(parseInt(e.target.value), month, 1))} className="text-sm rounded border border-border bg-background px-2 py-1 w-24">
                 {Array.from({ length: 101 }, (_, i) => 1950 + i).map(y => <option key={y} value={y}>{y}</option>)}
               </select>
-              <Button variant="outline" size="sm" onClick={() => setDate(new Date(year, month+1, 1))}><ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="outline" size="sm" onClick={() => {
+              if(viewMode==='day'){const d=new Date(dateFrom||today);d.setDate(d.getDate()+1);setDate(d);setDateFrom(d.toISOString().slice(0,10));setDateTo(d.toISOString().slice(0,10))}
+              else if(viewMode==='week'){const d=new Date();d.setDate(d.getDate()+7);const w=d.getDate()-d.getDay();setDateFrom(new Date(d.getFullYear(),d.getMonth(),w).toISOString().slice(0,10));setDateTo(new Date(d.getFullYear(),d.getMonth(),w+6).toISOString().slice(0,10));setDate(d)}
+              else setDate(new Date(year, month+1, 1))}}><ChevronRight className="h-4 w-4" /></Button>
               <Button variant="ghost" size="sm" onClick={() => setDate(new Date())}>Hoy</Button>
+              <span className="w-px h-5 bg-border mx-1" />
+              <div className="flex rounded-lg border border-border overflow-hidden">
+                {['day','week','month'].map(m => (
+                  <button key={m} onClick={() => {
+                    setViewMode(m)
+                    if(m==='day'){const d=new Date().toISOString().slice(0,10);setDateFrom(d);setDateTo(d)}
+                    else if(m==='week'){const d=new Date();const w=d.getDate()-d.getDay();setDateFrom(new Date(d.getFullYear(),d.getMonth(),w).toISOString().slice(0,10));setDateTo(new Date(d.getFullYear(),d.getMonth(),w+6).toISOString().slice(0,10))}
+                    else if(m==='month'){const d=new Date();setDateFrom(new Date(d.getFullYear(),d.getMonth(),1).toISOString().slice(0,10));setDateTo(new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().slice(0,10))}
+                  }} className={'px-3 py-1 text-xs font-medium transition-colors '+(viewMode===m?'bg-primary text-primary-foreground':'text-muted-foreground hover:bg-muted')}>
+                    {m==='day'?'Dia':m==='week'?'Semana':'Mes'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <Card><CardContent className="p-3">
             {loading ? <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div> :
-            <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
-              {DAYS.map(d => <div key={d} className="bg-muted/50 px-2 py-2 text-xs font-medium text-muted-foreground text-center">{d}</div>)}
-              {Array.from({ length: firstDay }).map((_, i) => <div key={'e'+i} className="bg-card min-h-[90px] p-1" />)}
-              {Array.from({ length: daysInMonth }).map((_, i) => { const day = i+1; const dayBookings = getBookingsForDay(day); const isToday = new Date(year, month, day).toDateString() === today.toDateString()
-                return (<div key={day} className={cn(isToday?'bg-primary/5':'bg-card','min-h-[90px] p-1 border-t border-border/50')}>
-                  <span className={cn('inline-flex h-5 w-5 items-center justify-center rounded-full text-xs', isToday&&'bg-primary text-primary-foreground font-bold')}>{day}</span>
-                  <div className="mt-1 space-y-0.5">{dayBookings.slice(0,3).map((b:any) => {
-                    const st = getBookingStatus(b)
-                    return (<div key={b.id} onClick={()=>openEdit(b)} className={cn('rounded px-1 py-0.5 text-[10px] truncate cursor-pointer hover:opacity-80',st.color)}
-                      title={b.title+' - '+(b.contact_name||'')}>{new Date(b.start_time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} {b.title}</div>)})}
-                    {dayBookings.length>3&&<p className="text-[10px] text-muted-foreground px-1">+{dayBookings.length-3}</p>}</div></div>)})}
-            </div>}
+            viewMode === 'day' ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium mb-3 text-foreground">{today.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+                {bookings.filter(b => new Date(b.start_time).toDateString() === today.toDateString()).length === 0
+                  ? <p className="text-sm text-muted-foreground text-center py-8">Sin turnos para hoy</p>
+                  : bookings.filter(b => new Date(b.start_time).toDateString() === today.toDateString()).sort((a:any,b:any)=>new Date(a.start_time).getTime()-new Date(b.start_time).getTime()).map((b:any) => (
+                    <div key={b.id} onClick={()=>openEdit(b)} className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/30 cursor-pointer">
+                      <div className="text-center shrink-0 w-14"><p className="text-lg font-bold">{new Date(b.start_time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</p></div>
+                      <div className="flex-1"><p className="text-sm font-medium">{b.title}</p>{b.contact_name&&<p className="text-xs text-muted-foreground">{b.contact_name}</p>}</div>
+                      <Badge variant="outline" className={cn('text-[10px]',getBookingStatus(b).color)}>{getBookingStatus(b).label}</Badge>
+                    </div>
+                  ))}
+              </div>
+            ) : viewMode === 'week' ? (
+              <WeekView bookings={bookings} today={today} openEdit={openEdit} />
+            ) : (
+              <MonthView bookings={bookings} year={year} month={month} firstDay={firstDay} daysInMonth={daysInMonth} today={today} getBookingsForDay={getBookingsForDay} openEdit={openEdit} />
+            )}
           </CardContent></Card>
         </TabsContent>
 
@@ -175,7 +203,7 @@ export default function BookingsPage() {
                   <p className="text-sm font-medium">{b.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     {b.contact_name&&<span className="text-xs text-muted-foreground">{b.contact_name}</span>}
-                    <Badge variant="outline" className={cn('text-[10px]', st.color)}><st.icon className="h-3 w-3 mr-0.5" />{st.label}</Badge>
+                    <Badge variant="outline" className={cn('text-[10px]', getBookingStatus(b).color)}>{getBookingStatus(b).label}</Badge>
                   </div>
                 </div>
                 <select value={b.status} onChange={e=>quickStatus(b.id,e.target.value)} onClick={e=>e.stopPropagation()} className="text-xs rounded border border-border bg-background px-2 py-1">
@@ -214,7 +242,7 @@ export default function BookingsPage() {
                         className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:shadow-md transition-shadow active:opacity-50">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-sm font-medium">{b.title}</p>
-                          <Badge variant="outline" className={cn('text-[10px]', st.color)}>{st.label}</Badge>
+                          <Badge variant="outline" className={cn('text-[10px]', getBookingStatus(b).color)}>{getBookingStatus(b).label}</Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">{new Date(b.start_time).toLocaleString([],{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</p>
                         {b.contact_name && <p className="text-xs text-muted-foreground">{b.contact_name}</p>}
@@ -243,7 +271,7 @@ export default function BookingsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm">{b.title}</p>
-                    <Badge variant="outline" className={cn('text-[10px]', st.color)}><st.icon className="h-3 w-3 mr-0.5" />{st.label}</Badge>
+                    <Badge variant="outline" className={cn('text-[10px]', getBookingStatus(b).color)}>{getBookingStatus(b).label}</Badge>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
                     <span>{format(new Date(b.start_time), 'dd/MM/yy HH:mm')}</span>
