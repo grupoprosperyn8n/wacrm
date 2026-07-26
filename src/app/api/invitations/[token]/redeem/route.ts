@@ -21,6 +21,7 @@ import { NextResponse } from "next/server";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import { hashInviteToken } from "@/lib/auth/invitations";
+import { dispatchEntityEvent } from "@/lib/webhooks/dispatch";
 import {
   checkRateLimit,
   rateLimitResponse,
@@ -87,5 +88,6 @@ export async function POST(
 
   if (error) return rpcErrorToResponse(error);
 
+  dispatchEntityEvent(accountId as string, 'member', 'created', { userId: user.id, accountId }).catch(() => {});
   return NextResponse.json({ ok: true, accountId });
 }
