@@ -171,35 +171,26 @@ export function DealForm({
     };
 
     if (deal) {
-      const { error } = await supabase
-        .from("deals")
-        .update(payload)
-        .eq("id", deal.id);
-      if (error) {
-        toast.error(t("toastFailedSave"));
+      const res = await fetch("/api/deals/" + deal.id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d.error || t("toastFailedSave"));
         setSaving(false);
         return;
       }
     } else {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) {
-        toast.error(t("toastNotSignedIn"));
-        setSaving(false);
-        return;
-      }
-      if (!accountId) {
-        toast.error(t("toastNotLinked"));
-        setSaving(false);
-        return;
-      }
-      const { error } = await supabase
-        .from("deals")
-        .insert({ ...payload, user_id: user.id, account_id: accountId, status: "open" });
-      if (error) {
-        toast.error(t("toastFailedCreate"));
+      const res = await fetch("/api/deals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d.error || t("toastFailedCreate"));
         setSaving(false);
         return;
       }
@@ -214,12 +205,13 @@ export function DealForm({
   async function handleStatusChange(status: DealStatus) {
     if (!deal) return;
     setStatusAction(status);
-    const { error } = await supabase
-      .from("deals")
-      .update({ status })
-      .eq("id", deal.id);
+    const res = await fetch("/api/deals/" + deal.id, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
     setStatusAction(null);
-    if (error) {
+    if (!res.ok) {
       toast.error(t("toastFailedStatus"));
       return;
     }
@@ -233,9 +225,9 @@ export function DealForm({
   async function handleDelete() {
     if (!deal) return;
     setDeleting(true);
-    const { error } = await supabase.from("deals").delete().eq("id", deal.id);
+    const res = await fetch("/api/deals/" + deal.id, { method: "DELETE" });
     setDeleting(false);
-    if (error) {
+    if (!res.ok) {
       toast.error(t("toastFailedDelete"));
       return;
     }
