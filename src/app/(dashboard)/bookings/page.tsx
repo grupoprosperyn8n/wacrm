@@ -117,14 +117,20 @@ export default function BookingsPage() {
             {KANBAN_COLUMNS.map(col => {
               const items = bookings.filter((b:any) => b.status === col.key)
               return (
-                <div key={col.key} className="rounded-lg border border-border bg-muted/30">
+                <div key={col.key}
+                  onDragOver={(e)=>{e.preventDefault()}}
+                  onDrop={(e)=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');if(id){quickStatus(id,col.key)} }}
+                  className="rounded-lg border border-border bg-muted/30">
                   <div className="px-3 py-2 border-b border-border bg-card rounded-t-lg">
                     <h3 className="text-sm font-semibold flex items-center justify-between">{col.label} <Badge variant="secondary" className="text-[10px]">{items.length}</Badge></h3>
                   </div>
                   <div className="p-2 space-y-2 min-h-[200px]">
                     {items.length===0 && <p className="text-xs text-muted-foreground text-center py-4">Sin turnos</p>}
                     {items.map((b:any) => (
-                      <div key={b.id} onClick={()=>openEdit(b)} className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:shadow-md transition-shadow">
+                      <div key={b.id} onClick={()=>openEdit(b)}
+                        draggable
+                        onDragStart={(e)=>{e.dataTransfer.setData('text/plain', b.id);e.dataTransfer.setData('status', col.key)}}
+                        className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:shadow-md transition-shadow active:opacity-50">
                         <p className="text-sm font-medium">{b.title}</p>
                         <p className="text-xs text-muted-foreground mt-1">{new Date(b.start_time).toLocaleString([],{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</p>
                         {b.contact_name && <p className="text-xs text-muted-foreground">{b.contact_name}</p>}

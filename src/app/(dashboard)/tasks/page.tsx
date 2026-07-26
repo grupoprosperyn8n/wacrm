@@ -95,7 +95,10 @@ export default function TasksPage() {
               const items = tasks.filter((t:any) => t.status === col.key)
               const Icon = col.icon
               return (
-                <div key={col.key} className="rounded-lg border border-border bg-muted/30">
+                <div key={col.key}
+                  onDragOver={(e)=>{e.preventDefault()}}
+                  onDrop={(e)=>{e.preventDefault();const id=e.dataTransfer.getData('text/plain');if(id){quickStatus(id,col.key)} }}
+                  className="rounded-lg border border-border bg-muted/30">
                   <div className="px-3 py-2 border-b border-border bg-card rounded-t-lg">
                     <h3 className="text-sm font-semibold flex items-center justify-between">
                       <span className="flex items-center gap-2"><Icon className="h-4 w-4" />{col.label}</span>
@@ -105,7 +108,10 @@ export default function TasksPage() {
                   <div className="p-2 space-y-2 min-h-[200px]">
                     {items.length===0 && <p className="text-xs text-muted-foreground text-center py-4">Sin tareas</p>}
                     {items.map((t:any) => (
-                      <div key={t.id} onClick={()=>openEdit(t)} className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:shadow-md transition-shadow">
+                      <div key={t.id} onClick={()=>openEdit(t)}
+                        draggable
+                        onDragStart={(e)=>{e.dataTransfer.setData('text/plain', t.id);e.dataTransfer.setData('status', col.key)}}
+                        className="rounded-lg border border-border bg-card p-3 cursor-pointer hover:shadow-md transition-shadow active:opacity-50">
                         <p className="text-sm font-medium">{t.title}</p>
                         {t.description && <p className="text-xs text-muted-foreground mt-1 truncate">{t.description}</p>}
                         <div className="flex items-center justify-between mt-2">
