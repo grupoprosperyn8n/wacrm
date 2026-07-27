@@ -9,7 +9,7 @@ import { useTotalUnread } from "@/hooks/use-total-unread";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
   Bell, Bot, CalendarDays, CheckSquare, ChevronRight, CreditCard, Crown, GitBranch, LayoutDashboard,
-  LogOut, MessageSquare, Radio, RadioTower, RefreshCw, Settings, Shield,
+  LogOut, MessageSquare, Radio, RadioTower, RefreshCw, Settings, Shield, TrendingUp,
   ShoppingCart, ExternalLink, User, UserCog, Users, UsersRound, Workflow, X, Zap,
 } from "lucide-react";
 import type { AccountRole } from "@/lib/auth/roles";
@@ -39,6 +39,7 @@ const navItems = [
   { href: "/channels", labelKey: "channels", icon: RadioTower },
   { href: "/automations", labelKey: "automations", icon: Zap },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
+  { href: "/analytics", labelKey: "analytics", icon: TrendingUp },
   { href: "/ecommerce", labelKey: "ecommerce", icon: ShoppingCart },
   { href: "/webforms", labelKey: "webforms", icon: ExternalLink },
   { href: "/payments", labelKey: "payments", icon: CreditCard },
