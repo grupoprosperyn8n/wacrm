@@ -10,7 +10,7 @@ import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
   Bell, Bot, CalendarDays, CheckSquare, ChevronRight, CreditCard, Crown, GitBranch, LayoutDashboard,
   LogOut, MessageSquare, Radio, RadioTower, RefreshCw, Settings, Shield,
-  ShoppingCart, User, UserCog, Users, UsersRound, Workflow, X, Zap,
+  ShoppingCart, ExternalLink, User, UserCog, Users, UsersRound, Workflow, X, Zap,
 } from "lucide-react";
 import type { AccountRole } from "@/lib/auth/roles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +40,7 @@ const navItems = [
   { href: "/automations", labelKey: "automations", icon: Zap },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
   { href: "/ecommerce", labelKey: "ecommerce", icon: ShoppingCart },
+  { href: "/webforms", labelKey: "webforms", icon: ExternalLink },
   { href: "/payments", labelKey: "payments", icon: CreditCard },
   { href: "/sync", labelKey: "sync", icon: RefreshCw },
   { href: "/agents", labelKey: "aiAgents", icon: Bot },
