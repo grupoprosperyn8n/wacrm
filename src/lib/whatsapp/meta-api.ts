@@ -1042,3 +1042,75 @@ export async function downloadMedia(
   const buffer = Buffer.from(await response.arrayBuffer())
   return { buffer, contentType }
 }
+
+// ── WhatsApp Catalog ──────────────────────────────────────────────
+
+/**
+ * Send a product catalog message (opens Facebook catalog).
+ */
+export async function sendCatalogMessage(
+  args: { to: string; from: string; accessToken: string },
+  catalogId: string,
+  bodyText?: string,
+): Promise<{ messageId: string }> {
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: args.to,
+    type: 'interactive',
+    interactive: {
+      type: 'catalog_message',
+      body: { text: bodyText || 'Hace tu pedido:' },
+      action: { catalog_id: catalogId, name: 'catalog' },
+    },
+  }
+  const url = 'https://graph.facebook.com/v21.0/' + args.from + '/messages'
+  const accessToken = args.accessToken || (args as any).accessToken || ''
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + accessToken },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error('Catalog send error: ' + (err.error?.message || res.status))
+  }
+  return { messageId: (await res.json()).messages?.[0]?.id || '' }
+}
+
+/**
+ * Send a product carousel with up to 10 products.
+ */
+export async function sendCarouselMessage(
+  args: { to: string; from: string; accessToken: string },
+  catalogId: string,
+  products: { product_retailer_id: string; title?: string }[],
+  bodyText?: string,
+): Promise<{ messageId: string }> {
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: args.to,
+    type: 'interactive',
+    interactive: {
+      type: 'carousel',
+      body: { text: bodyText || 'Nuestros productos:' },
+      action: {
+        catalog_id: catalogId,
+        sections: [{ title: 'Productos', product_items: products.slice(0, 10).map(p => ({ product_retailer_id: p.product_retailer_id })) }],
+      },
+    },
+  }
+  const url = 'https://graph.facebook.com/v21.0/' + args.from + '/messages'
+  const accessToken = args.accessToken || (args as any).accessToken || ''
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + accessToken },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error('Carousel send error: ' + (err.error?.message || res.status))
+  }
+  return { messageId: (await res.json()).messages?.[0]?.id || '' }
+}
