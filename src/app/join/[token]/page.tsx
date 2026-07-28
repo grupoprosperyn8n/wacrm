@@ -67,25 +67,25 @@ type PeekResult = PeekOk | PeekFail;
 
 const ROLE_LABEL: Record<PeekOk['role'], string> = {
   admin: 'Admin',
-  agent: 'Agent',
-  viewer: 'Viewer',
+  agent: 'Agente',
+  viewer: 'Visualizador',
 };
 
 const FAIL_COPY: Record<PeekFail['reason'], { title: string; body: string }> = {
   not_found: {
-    title: 'Invite not found',
+    title: 'Invitación no encontrada',
     body: 'This link doesn’t match a valid invitation. Double-check the URL or ask the person who invited you to send a new one.',
   },
   used: {
-    title: 'Invite already used',
-    body: 'This invitation has already been accepted. If that wasn’t you, ask the account admin to send a fresh link.',
+    title: 'Invitación ya usada',
+    body: 'Esta invitación ya fue aceptada. If that wasn’t you, ask the account admin to send a fresh link.',
   },
   expired: {
-    title: 'Invite expired',
-    body: 'This invitation has expired. Ask the account admin to send a new one — they take a few seconds to generate.',
+    title: 'Invitación vencida',
+    body: 'Esta invitación venció. Ask the account admin to send a new one — they take a few seconds to generate.',
   },
   server_error: {
-    title: 'Something went wrong',
+    title: 'Algo salió mal',
     body: 'We couldn’t verify this invitation right now. Try refreshing the page in a moment.',
   },
 };
