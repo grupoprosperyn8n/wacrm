@@ -80,6 +80,7 @@ export function InviteMemberDialog({
   const [role, setRole] = useState<InviteRole>('agent');
   const [expiry, setExpiry] = useState<string>('7');
   const [label, setLabel] = useState('');
+  const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<CreatedInvite | null>(null);
 
@@ -112,6 +113,7 @@ export function InviteMemberDialog({
           role,
           expiresInDays: Number(expiry),
           label: trimmedLabel || undefined,
+          email: email.trim() || undefined,
         }),
       });
 
@@ -321,6 +323,11 @@ export function InviteMemberDialog({
                 <p className="text-xs text-muted-foreground">
                   {t('labelHint')}
                 </p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">Email del invitado (opcional)</Label>
+                <Input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="colaborador@empresa.com" className="bg-muted border-border text-foreground" />
+                <p className="text-xs text-muted-foreground">Si completás el email, le enviamos la invitación automáticamente.</p>
               </div>
             </div>
 

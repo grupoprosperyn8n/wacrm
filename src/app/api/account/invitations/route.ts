@@ -179,7 +179,7 @@ export async function POST(request: Request) {
     if (!limit.success) return rateLimitResponse(limit);
 
     const body = (await request.json().catch(() => null)) as
-      | { role?: unknown; expiresInDays?: unknown; label?: unknown }
+      | { role?: unknown; expiresInDays?: unknown; label?: unknown; email?: unknown }
       | null;
 
     const role = body?.role;
@@ -237,10 +237,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Send invite email if recipient email was provided
+    if (body?.email) {
+      const emailAddr = String(body.email).trim()
+      if (emailAddr) {
+        const { sendEmail, buildInviteEmail } = await import('@/lib/email/sender')
+        const inviterName = 'Un administrador'
+        const email = buildInviteEmail(inviterName, 'la cuenta', role as string, inviteUrl(token, getBaseUrl(request)))
+        sendEmail({ to: emailAddr, subject: email.subject, html: email.html, text: email.text })
+          .catch((e: Error) => console.error('[invite] email send failed:', e.message))
+      }
+    }
+
     return NextResponse.json(
       {
         invitation: data,
-        // Plaintext payload — visible to the admin exactly once.
         token,
         url: inviteUrl(token, getBaseUrl(request)),
         expiresInDays: expiryDays,
