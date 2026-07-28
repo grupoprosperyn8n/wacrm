@@ -27,6 +27,9 @@ const FacebookConfig = dynamic(() => import('@/components/settings/facebook-conf
 const InstagramConfig = dynamic(() => import('@/components/settings/instagram-config').then(m => m.InstagramConfig), { ssr: false })
 const YouTubeConfig = dynamic(() => import('@/components/settings/youtube-config').then(m => m.YouTubeConfig), { ssr: false })
 const TikTokConfig = dynamic(() => import('@/components/settings/tiktok-config').then(m => m.TikTokConfig), { ssr: false })
+const RoundRobinConfig = dynamic(() => import('@/components/settings/round-robin-config').then(m => m.RoundRobinConfig), { ssr: false })
+const SlackConfig = dynamic(() => import('@/components/settings/slack-config').then(m => m.SlackConfig), { ssr: false })
+const CalendarSettings = dynamic(() => import('@/components/settings/calendar-settings').then(m => m.CalendarSettings), { ssr: false })
 const SyncPanel = dynamic(() => import('@/components/settings/sync-panel').then(m => m.SyncPanel), { ssr: false })
 const TemplateManager = dynamic(() => import('@/components/settings/template-manager').then(m => m.TemplateManager), { ssr: false })
 const QuickRepliesManager = dynamic(() => import('@/components/settings/quick-replies-manager').then(m => m.QuickRepliesManager), { ssr: false })
@@ -131,6 +134,9 @@ export default function SettingsPage() {
       'ai-knowledge': <AiKnowledgeCard accountId={accountId} canEdit={canEditSettings} hasEmbeddingsKey={false} />,
       youtube: <YouTubeConfig />,
       tiktok: <TikTokConfig />,
+      'round-robin': <RoundRobinConfig />,
+      slack: <SlackConfig />,
+      calendar: <CalendarSettings />,
       sync: <SyncPanel />,
     }),
     [go],

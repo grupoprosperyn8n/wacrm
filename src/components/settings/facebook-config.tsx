@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Loader2, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import { SetupGuide } from '@/components/ui/setup-guide'
 import { toast } from 'sonner'
 
 type Status = 'connected' | 'disconnected' | 'unknown'
@@ -90,6 +91,18 @@ export function FacebookConfig() {
         <CardDescription>Conecta tu pagina de Facebook para recibir y responder mensajes</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <SetupGuide
+          title="Como conectar Facebook Messenger"
+          steps={[
+            { title: "Crear una pagina de Facebook", description: "Necesitas una pagina de Facebook para conectar Messenger.", url: "https://www.facebook.com/pages/create" },
+            { title: "Crear App en Facebook Developers", description: "Ve a Facebook Developers y crea una app tipo Business.", url: "https://developers.facebook.com" },
+            { title: "Agregar producto Messenger", description: "En tu app, agrega el producto Messenger y configura el webhook." },
+            { title: "Generar Page Access Token", description: "En Tools > Graph API Explorer, selecciona tu app y pagina, genera un token con permisos pages_messaging." },
+            { title: "Copiar Page ID y Token", description: "Completa los campos abajo con el Page ID y el Page Access Token generado." },
+            { title: "Configurar Webhook", description: "Usa la URL de webhook de abajo en Facebook Developers > Webhooks." },
+          ]}
+          warning="El token expira cada 60 dias. Recorda renovarlo antes del vencimiento."
+        />
         <div className="space-y-2">
           <Label>Page ID</Label>
           <Input value={config.page_id} onChange={e => setConfig(p => ({ ...p, page_id: e.target.value }))} placeholder="1234567890" />

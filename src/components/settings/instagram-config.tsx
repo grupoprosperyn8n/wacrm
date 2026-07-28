@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Loader2, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import { SetupGuide } from '@/components/ui/setup-guide'
 import { toast } from 'sonner'
 
 type Status = 'connected' | 'disconnected' | 'unknown'
@@ -85,6 +86,17 @@ export function InstagramConfig() {
         <CardDescription>Conecta tu cuenta profesional de Instagram para recibir y responder mensajes</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <SetupGuide
+          title="Como conectar Instagram"
+          steps={[
+            { title: "Cuenta profesional de Instagram", description: "Necesitas una cuenta de Instagram configurada como Creator o Business.", url: "https://help.instagram.com/502981923235377" },
+            { title: "Vincular con pagina de Facebook", description: "Tu cuenta de Instagram debe estar vinculada a una pagina de Facebook." },
+            { title: "Obtener Business Account ID", description: "En Graph API Explorer, conecta tu app y busca el ID de tu cuenta de Instagram Business." },
+            { title: "Generar Access Token", description: "Usa Facebook Graph API con permisos instagram_basic, instagram_content_publish, pages_messaging." },
+            { title: "Configurar Webhook", description: "Usa la URL de abajo en Facebook Developers > Webhooks > Instagram." },
+          ]}
+          warning="Necesitas una cuenta Business de Instagram. Las cuentas personales no funcionan."
+        />
         <div className="space-y-2">
           <Label>Business Account ID</Label>
           <Input value={config.business_account_id} onChange={e => setConfig(p => ({ ...p, business_account_id: e.target.value }))} placeholder="178414..." />

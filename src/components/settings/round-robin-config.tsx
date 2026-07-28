@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,7 @@ export function RoundRobinConfig() {
   const [loading, setLoading] = useState(true)
   const [agents, setAgents] = useState<AgentInfo[]>([])
 
-  async function loadAgents() {
+  const loadAgents = useCallback(async () => {
     if (!accountId) return
     setLoading(true)
     const { data, error } = await supabase
@@ -41,9 +41,9 @@ export function RoundRobinConfig() {
       setAgents(data ?? [])
     }
     setLoading(false)
-  }
+  }, [accountId])
 
-  useEffect(() => { loadAgents() }, [accountId])
+  useEffect(() => { loadAgents() }, [loadAgents])
 
   async function resetIndex(agentId: string) {
     const { error } = await supabase

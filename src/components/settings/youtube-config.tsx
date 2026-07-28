@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Loader2, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import { SetupGuide } from '@/components/ui/setup-guide'
 import { toast } from 'sonner'
 
 type Status = 'connected' | 'disconnected' | 'unknown'
@@ -68,6 +69,16 @@ export function YouTubeConfig() {
         <CardDescription>Conecta tu canal de YouTube para leer y responder comentarios</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <SetupGuide
+          title="Como conectar YouTube"
+          steps={[
+            { title: "Ir a Google Cloud Console", description: "Crea un proyecto y habilita la YouTube Data API v3.", url: "https://console.cloud.google.com/apis/library/youtube.googleapis.com" },
+            { title: "Crear API Key", description: "En Credenciales, crea una API Key (sin restricciones o con restriccion por IP)." },
+            { title: "Obtener Channel ID", description: "Anda a tu canal de YouTube > Configuracion > Configuracion avanzada > ID del canal." },
+            { title: "Copiar API Key y Channel ID", description: "Completa los campos abajo y haz clic en Verificar Conexion." },
+          ]}
+          warning="La YouTube Data API tiene cuotas gratuitas limitadas (10,000 unidades/dia)."
+        />
         <div className="space-y-2">
           <Label>API Key (YouTube Data API v3)</Label>
           <Input type="password" value={config.api_key} onChange={e => setConfig(p => ({ ...p, api_key: e.target.value }))}

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Loader2, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import { SetupGuide } from '@/components/ui/setup-guide'
 import { toast } from 'sonner'
 
 type Status = 'connected' | 'disconnected' | 'unknown'
@@ -62,6 +63,16 @@ export function TikTokConfig() {
         <CardDescription>Conecta tu cuenta de TikTok para mensajes (API disponible proximamente)</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <SetupGuide
+          title="Como conectar TikTok"
+          steps={[
+            { title: "Ir a TikTok Developers", description: "Crea una app en TikTok Developers.", url: "https://developers.tiktok.com" },
+            { title: "Solicitar acceso a Business API", description: "Necesitas acceso a TikTok Business API con permisos de mensajeria." },
+            { title: "Generar Access Token", description: "Sigue el flujo OAuth para obtener el access_token." },
+            { title: "Obtener Open ID", description: "El Open ID identifica al usuario de TikTok en tu app." },
+          ]}
+          warning="TikTok requiere que tu app pase revision antes de acceder a la API de mensajeria."
+        />
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
           <p className="text-xs text-amber-400 font-medium">Nota: TikTok aun no tiene API publica de mensajeria. Podes dejar configurado el acceso para cuando esté disponible.</p>
         </div>

@@ -1,5 +1,7 @@
 import {
+  ArrowLeftRight,
   BrainCircuit,
+  Calendar,
   ClipboardList,
   Coins,
   CreditCard,
@@ -17,9 +19,9 @@ import {
   Smartphone,
   Tags,
   User,
+  Users,
   UsersRound,
   Video,
-  ArrowLeftRight,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
@@ -55,6 +57,9 @@ export const SETTINGS_SECTIONS = [
   'youtube',
   'tiktok',
   'sync',
+  'round-robin',
+  'slack',
+  'calendar',
 ] as const;
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
@@ -92,6 +97,9 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   youtube: { id: 'youtube', label: 'YouTube', icon: Video, group: 'workspace' },
   tiktok: { id: 'tiktok', label: 'TikTok', icon: Music, group: 'workspace' },
   sync: { id: 'sync', label: 'Sincronizacion', icon: ArrowLeftRight, group: 'workspace' },
+  'round-robin': { id: 'round-robin', label: 'Round Robin', icon: Users, group: 'workspace' },
+  slack: { id: 'slack', label: 'Slack', icon: MessageCircle, group: 'workspace' },
+  calendar: { id: 'calendar', label: 'Google Calendar', icon: Calendar, group: 'workspace' },
 };
 
 export const RAIL_GROUPS: { label: string | null; group: SectionMeta['group'] }[] = [

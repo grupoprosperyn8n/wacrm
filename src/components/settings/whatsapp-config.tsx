@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   RotateCcw,
 } from 'lucide-react';
+import { SetupGuide } from '@/components/ui/setup-guide'
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslations } from 'next-intl';
@@ -22,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 import { SettingsPanelHead } from './settings-panel-head';
 import {
   Accordion,
@@ -563,6 +565,16 @@ export function WhatsAppConfig() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+        <SetupGuide
+          title="Como conectar WhatsApp"
+          steps={[
+            { title: "Opcion 1: WhatsApp Cloud API (recomendado)", description: "Usa credenciales de Meta Business Suite. Phone Number ID + Access Token." },
+            { title: "Opcion 2: Conexion via QR (proximamente)", description: "Escanea QR desde tu celular. Sin Facebook Business." },
+            { title: "Obtener credenciales", url: "https://business.facebook.com", description: "Meta Business Suite > WhatsApp > Configuracion de API." },
+          ]}
+          warning="La API Cloud tiene costos por conversacion iniciada por la empresa."
+        />
+
             <div className="space-y-2">
               <Label className="text-muted-foreground">{t('phoneNumberId')}</Label>
               <Input
