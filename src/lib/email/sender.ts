@@ -1,52 +1,102 @@
 // Email sender utility for wacrm
-// Uses Resend (free tier: 100 emails/day) or SMTP as fallback
+// Checks env vars first (Coolify), then falls back to DB config (Settings UI)
+// Supports: Resend API, SMTP (nodemailer)
+
+import nodemailer from 'nodemailer'
+import { supabaseAdmin } from '@/lib/automations/admin-client'
 
 const RESEND_API = 'https://api.resend.com/emails'
 
-interface EmailParams {
+export interface EmailParams {
   to: string
   subject: string
   html: string
   text?: string
 }
 
-export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string }> {
-  const apiKey = process.env.RESEND_API_KEY
-  const fromEmail = process.env.FROM_EMAIL || 'noreply@wacrm.app'
+interface EmailConfig {
+  host?: string
+  port?: number
+  user?: string
+  pass?: string
+  from_email?: string
+  resend_key?: string
+}
 
-  if (apiKey) {
-    // Send via Resend
+async function loadDbConfig(accountId?: string): Promise<EmailConfig> {
+  if (!accountId) return {}
+  try {
+    const db = supabaseAdmin()
+    const { data } = await db.from('app_settings').select('value').eq('key', 'email_config').single()
+    if (data?.value) return data.value as EmailConfig
+  } catch {}
+  return {}
+}
+
+export async function sendEmail(params: EmailParams, accountId?: string): Promise<{ success: boolean; error?: string }> {
+  // Priority 1: Resend API key from env (Coolify)
+  const envResendKey = process.env.RESEND_API_KEY
+  if (envResendKey) {
     try {
+      const from = process.env.FROM_EMAIL || 'noreply@wacrm.app'
       const res = await fetch(RESEND_API, {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: fromEmail, to: params.to, subject: params.subject, html: params.html, text: params.text || '' }),
-      })
-      if (res.ok) return { success: true }
-      const d = await res.json().catch(() => ({}))
-      return { success: false, error: d.message || 'Resend error: ' + res.status }
-    } catch (e) { return { success: false, error: String(e) } }
-  }
-
-  // If SMTP is configured, use it
-  const smtpHost = process.env.SMTP_HOST
-  if (smtpHost) {
-    try {
-      const res = await fetch(smtpHost, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: params.to, subject: params.subject, html: params.html,
-          text: params.text, from: process.env.FROM_EMAIL || 'noreply@wacrm.app',
-          smtp_user: process.env.SMTP_USER, smtp_pass: process.env.SMTP_PASS,
-          smtp_port: process.env.SMTP_PORT || '587',
-        }),
+        headers: { 'Authorization': 'Bearer ' + envResendKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from, to: params.to, subject: params.subject, html: params.html, text: params.text || '' }),
       })
       if (res.ok) return { success: true }
     } catch {}
   }
 
-  return { success: false, error: 'No email provider configured. Set RESEND_API_KEY or SMTP_HOST.' }
+  // Priority 2: SMTP from env (Coolify)
+  const envSmtpHost = process.env.SMTP_HOST
+  if (envSmtpHost) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: envSmtpHost,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_PORT === '465',
+        auth: { user: process.env.SMTP_USER || '', pass: process.env.SMTP_PASS || '' },
+      })
+      await transporter.sendMail({
+        from: process.env.FROM_EMAIL || 'noreply@wacrm.app',
+        to: params.to, subject: params.subject, html: params.html, text: params.text,
+      })
+      return { success: true }
+    } catch (e) { return { success: false, error: String(e) } }
+  }
+
+  // Priority 3: DB config (from Settings UI)
+  const dbConfig = await loadDbConfig(accountId)
+  if (dbConfig.resend_key) {
+    try {
+      const from = dbConfig.from_email || 'noreply@wacrm.app'
+      const res = await fetch(RESEND_API, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + dbConfig.resend_key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from, to: params.to, subject: params.subject, html: params.html, text: params.text || '' }),
+      })
+      if (res.ok) return { success: true }
+    } catch {}
+  }
+
+  if (dbConfig.host) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: dbConfig.host,
+        port: dbConfig.port || 587,
+        secure: dbConfig.port === 465,
+        auth: { user: dbConfig.user || '', pass: dbConfig.pass || '' },
+      })
+      await transporter.sendMail({
+        from: dbConfig.from_email || 'noreply@wacrm.app',
+        to: params.to, subject: params.subject, html: params.html, text: params.text,
+      })
+      return { success: true }
+    } catch (e) { return { success: false, error: String(e) } }
+  }
+
+  return { success: false, error: 'No email provider configured. Configure SMTP in Settings > Email or set SMTP_HOST/RESEND_API_KEY in Coolify env vars.' }
 }
 
 export function buildInviteEmail(inviterName: string, accountName: string, role: string, inviteUrl: string): { subject: string; html: string; text: string } {
